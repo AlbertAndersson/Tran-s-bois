@@ -210,7 +210,7 @@ Prioriterat:
 - lager/direct supplier-regler
 - launch gate som gör att sortimentet **inte blir publikt/orderbart före 1 januari 2027**
 
-P6 förblir testmode tills merchant, provider, kostnad och produktionsupplägg har godkänts uttryckligen.
+P6 förblir testmode under P7. **Stripe är vald som målprovider för P8**, men merchant, aktuell prisbild, produktionsupplägg och aktivering ska godkännas uttryckligen innan skarp drift. Stripe-Swish ska verifieras för BoIS-kontot eftersom Stripe 2026-09-27 märker Swish som Beta.
 
 ## P6 verifieringsskärpning efter första stagingleverans
 En granskning efter P6:s första deploy fann att `admin_simulate_paid` fortfarande gick direkt via P5. Separat branch `chatgpt/p6-payment-hardening-20260927` tar bort den alternativa vägen, binder signerade event till order/session/valuta/belopp, serialiserar behandling per betalning och visar betalreferens/event. Tidigare live-verifiering avser första P6-implementationen; denna skärpning kräver egen CI och stagingdeploy innan den räknas som live.
@@ -222,3 +222,13 @@ En granskning efter P6:s första deploy fann att `admin_simulate_paid` fortfaran
 - P6 migration, syntetisk checkout/Test-Swish/PAID, medlem ACTIVE, Nordic ELIGIBLE, upprepad PAID utan nya effekter och avstängd mailtransport: **pass**.
 - Snapshot före/efter migration: 38 icke-BoIS-tabeller, samma hash: **pass**.
 - Ingen verklig provider eller leverantörsmejl aktiverad.
+
+
+## Payment provider-beslut inför P8
+- Provider: **Stripe**.
+- P7 påverkas inte och ska inte implementera Stripe.
+- P8 ska implementera Stripe bakom befintlig P6 provider-adapter.
+- Kort är målmetod.
+- Swish är önskat via Stripe men produktionsåtkomst måste verifieras för merchant-kontot eftersom Stripe märker Swish som Beta 2026-09-27.
+- Ingen Stripe-aktivering, merchantkostnad eller extern kostnad är godkänd ännu.
+- Se `docs/P8-PAYMENT-STRIPE.md`.
