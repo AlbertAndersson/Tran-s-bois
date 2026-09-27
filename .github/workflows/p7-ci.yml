@@ -1,0 +1,55 @@
+name: P7 Assortment CI
+
+on:
+  push:
+    branches: [main, "chatgpt/**"]
+    paths:
+      - "server/p7_*.php"
+      - "server/p7-migrate.php"
+      - "server/p3_db.php"
+      - "tests/p7-*.php"
+      - "data/p7-assortment.json"
+      - "site/commerce/assortment-preview.html"
+      - "site/commerce/assets/assortment-preview.js"
+      - "site/commerce/assets/admin.js"
+      - ".github/workflows/p7-ci.yml"
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: bois_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+    env:
+      BOIS_P3_TEST_DB_HOST: 127.0.0.1
+      BOIS_P3_TEST_DB_PORT: 3306
+      BOIS_P3_TEST_DB_NAME: bois_test
+      BOIS_P3_TEST_DB_USER: root
+      BOIS_P3_TEST_DB_PASSWORD: root
+    steps:
+      - uses: actions/checkout@v5
+      - name: PHP syntax and model
+        run: |
+          php -l server/p7_assortment.php
+          php -l server/p7-migrate.php
+          php -l tests/p7-model-smoke.php
+          php tests/p7-model-smoke.php
+      - name: JSON and JavaScript syntax
+        run: |
+          python3 -m json.tool data/p7-assortment.json >/dev/null
+          node --check site/commerce/assets/admin.js
