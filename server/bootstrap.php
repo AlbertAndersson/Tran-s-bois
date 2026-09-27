@@ -7,7 +7,9 @@ function bois_load_config(): array
 {
     $path = getenv('BOIS_CONFIG_PATH');
     if (!is_string($path) || $path === '') {
-        $path = dirname(__DIR__, 2) . '/.bois-p1/config.php';
+        $outside = dirname(__DIR__, 2) . '/.bois-p1/config.php';
+        $local = __DIR__ . '/config.php';
+        $path = is_file($outside) ? $outside : $local;
     }
     if (!is_file($path)) {
         throw new RuntimeException('Runtime configuration is missing.');
