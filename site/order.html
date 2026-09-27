@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="theme-color" content="#063d86">
+  <title>Tranås BoIS – Orderstatus</title>
+  <link rel="stylesheet" href="assets/styles.css">
+  <link rel="stylesheet" href="assets/p2.css">
+  <script src="config.js" defer></script>
+  <script src="catalog.js" defer></script>
+  <script src="assets/order.js" defer></script>
+</head>
+<body>
+  <header class="admin-header"><div class="admin-bar"><a class="brand" href="index.html"><img src="https://cdn06.svenskalag.se/img/clubmarks/6245_w.png?3=" alt="Tranås BoIS"><div>Tranås BoIS<small>ORDERSTATUS</small></div></a><span class="demo-pill" id="environmentLabel">DEMO</span></div></header>
+  <main class="p2-narrow">
+    <a class="p2-back" href="index.html">← Till beställningssidan</a>
+    <section class="p2-order-card">
+      <p class="eyebrow blue">DIN BESTÄLLNING</p>
+      <h1 id="orderHeading">Orderstatus</h1>
+      <p class="sub" id="orderIntro">Laddar ordern…</p>
+      <div id="orderError" class="form-error" hidden></div>
+      <div id="orderContent" hidden>
+        <div class="order-number" id="orderId"></div>
+        <dl class="p2-order-details">
+          <div><dt>Status</dt><dd id="orderStatus"></dd></div>
+          <div><dt>Beställningsperiod</dt><dd id="orderPeriod"></dd></div>
+          <div><dt>Lag</dt><dd id="orderTeam"></dd></div>
+          <div><dt>Spelare</dt><dd id="orderPlayer"></dd></div>
+          <div><dt>Produkt</dt><dd id="orderProduct"></dd></div>
+          <div><dt>Storlek tröja</dt><dd id="orderShirt"></dd></div>
+          <div><dt>Storlek byxa</dt><dd id="orderShorts"></dd></div>
+          <div><dt>Nummer</dt><dd id="orderNumberValue"></dd></div>
+          <div><dt>Summa</dt><dd id="orderTotal"></dd></div>
+          <div><dt>Betalning</dt><dd>Inte aktiverad i P2</dd></div>
+        </dl>
+        <div class="p2-cancel-box" id="cancelBox">
+          <h2>Behöver något ändras?</h2>
+          <p>Under P2 kan en testbeställning avbrytas digitalt så länge den inte har markerats som beställd hos leverantören.</p>
+          <button class="ghost p2-danger" id="cancelBtn" type="button">Avbryt testbeställning</button>
+          <p class="modal-small">Skarpa regler om ångerrätt och personligt tryck fastställs i BoIS slutliga villkor före lansering.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

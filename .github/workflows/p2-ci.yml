@@ -1,0 +1,56 @@
+name: P2 production-prep CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "site/**"
+      - "server/**"
+      - "tests/**"
+      - "docs/P2-PRODUCTION-PREP.md"
+      - ".github/workflows/p2-ci.yml"
+  pull_request:
+    paths:
+      - "site/**"
+      - "server/**"
+      - "tests/**"
+      - "docs/P2-PRODUCTION-PREP.md"
+      - ".github/workflows/p2-ci.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: PHP syntax
+        run: |
+          php -l server/bootstrap.php
+          php -l server/api.php
+          php -l server/config.example.php
+
+      - name: Smoke tests
+        run: |
+          php tests/p1-smoke.php
+          php tests/p2-smoke.php
+
+      - name: JavaScript syntax
+        run: |
+          node --check site/catalog.js
+          node --check site/assets/app.js
+          node --check site/assets/admin.js
+          node --check site/assets/order.js
+
+      - name: P2 artifact checks
+        run: |
+          test -f site/order.html
+          test -f site/privacy.html
+          test -f site/terms.html
+          grep -q "admin_summary_export" server/api.php
+          grep -q "cancel_order" server/api.php
+          grep -q "order_period_id" server/bootstrap.php
+          grep -q "productionReady: false" site/catalog.js
+          ! grep -R -E "sk_live_|pk_live_|STRIPE_SECRET|SWISH_CERT" site server

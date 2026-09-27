@@ -17,15 +17,17 @@ jobs:
   deploy:
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: \${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Validate JavaScript
         run: |
+          node --check site/catalog.js
           node --check site/assets/app.js
           node --check site/assets/admin.js
+          node --check site/assets/order.js
       - name: Configure Pages
         uses: actions/configure-pages@v5
       - name: Upload static demo only

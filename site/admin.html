@@ -7,7 +7,9 @@
   <meta name="theme-color" content="#063d86">
   <title>Tranås BoIS – Ledarvy</title>
   <link rel="stylesheet" href="assets/styles.css">
+  <link rel="stylesheet" href="assets/p2.css">
   <script src="config.js" defer></script>
+  <script src="catalog.js" defer></script>
   <script src="assets/admin.js" defer></script>
 </head>
 <body class="admin-body">
@@ -20,7 +22,7 @@
 
   <main class="admin-main">
     <section id="loginPanel" class="login-card" hidden>
-      <p class="eyebrow blue">P1 STAGING</p>
+      <p class="eyebrow blue">P2 STAGING</p>
       <h1>Logga in i ledarvyn</h1>
       <p class="sub">Ange den tillfälliga adminnyckeln för testmiljön. Nyckeln sparas bara i den här webbläsarfliken.</p>
       <form id="loginForm">
@@ -33,8 +35,8 @@
 
     <section id="dashboard">
       <div class="admin-top">
-        <div><p class="eyebrow blue">BESTÄLLNINGSÖVERSIKT</p><h1>Matchställ</h1><div class="muted" id="dashboardSubtitle">Demodata visar hur föreningen kan arbeta med inkomna beställningar.</div></div>
-        <div class="actions"><a class="ghost" href="index.html">← Beställningssidan</a><button class="ghost" id="logoutBtn" hidden>Logga ut</button><button class="btn compact" id="csvBtn">Exportera CSV</button></div>
+        <div><p class="eyebrow blue">BESTÄLLNINGSÖVERSIKT</p><h1>Matchställ</h1><div class="muted" id="dashboardSubtitle">Demodata visar hur föreningen kan arbeta med inkomna beställningar.</div><div class="p2-admin-period" id="adminPeriod"></div></div>
+        <div class="actions"><a class="ghost" href="index.html">← Beställningssidan</a><button class="ghost" id="logoutBtn" hidden>Logga ut</button><button class="ghost" id="summaryCsvBtn">Sammanställning CSV</button><button class="btn compact" id="csvBtn">Detaljerad CSV</button></div>
       </div>
 
       <div class="cards kpi-grid">
@@ -51,10 +53,15 @@
         <button class="ghost small" id="refreshBtn" type="button">Uppdatera</button>
       </section>
 
+      <section class="p2-summary-card">
+        <div class="p2-summary-head"><div><span class="p2-label">LEVERANTÖRSUNDERLAG</span><h2>Sammanställning</h2></div><span class="muted">Summeras automatiskt från aktuellt filter.</span></div>
+        <div class="table-wrap"><table class="p2-summary-table"><thead><tr><th>Lag</th><th>Produkt</th><th>Tröja</th><th>Byxa</th><th>Antal</th></tr></thead><tbody id="summaryBody"></tbody></table></div>
+      </section>
+
       <div class="panel table-panel">
         <div class="table-wrap"><table><thead><tr><th>Order</th><th>Spelare</th><th>Lag</th><th>Tröja</th><th>Byxa</th><th>Nr</th><th>Kontakt</th><th>Summa</th><th>Status</th></tr></thead><tbody id="ordersBody"></tbody></table></div>
         <div class="empty-state" id="emptyState" hidden>Inga beställningar matchar filtret.</div>
-        <div class="foot" id="tableFoot">P1-demo.</div>
+        <div class="foot" id="tableFoot">P2-demo.</div>
       </div>
     </section>
   </main>

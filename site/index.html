@@ -7,7 +7,9 @@
   <meta name="robots" content="noindex,nofollow">
   <title>Tranås BoIS – Beställ matchställ</title>
   <link rel="stylesheet" href="assets/styles.css">
+  <link rel="stylesheet" href="assets/p2.css">
   <script src="config.js" defer></script>
+  <script src="catalog.js" defer></script>
   <script src="assets/app.js" defer></script>
 </head>
 <body>
@@ -39,6 +41,11 @@
       <b>Demo:</b> Inga uppgifter sparas och ingen betalning genomförs.
     </div>
 
+    <section class="p2-period" aria-label="Beställningsperiod">
+      <div><span class="p2-label">BESTÄLLNINGSPERIOD</span><strong id="periodLabel">Matchställ 2026/27</strong></div>
+      <div id="periodState">Produktionsutkast – slutdatum fastställs av BoIS.</div>
+    </section>
+
     <div class="stepbar" aria-label="Beställningssteg">
       <div class="step"><strong>1</strong> Välj matchställ</div>
       <div class="step"><strong>2</strong> Fyll i spelare & storlek</div>
@@ -49,8 +56,8 @@
       <div class="grid">
         <section class="card product-card">
           <div class="pad">
-            <h2>Matchställ Knatte</h2>
-            <p class="sub">Matchtröja och matchbyxa i Tranås BoIS färger.</p>
+            <h2 id="productTitle">Matchställ Knatte</h2>
+            <p class="sub" id="productDescription">Matchtröja och matchbyxa i Tranås BoIS färger.</p>
             <div class="kit" aria-label="Illustration av matchställ">
               <div class="jersey"><div class="jersey-body"></div><div class="shorts-ill"></div></div>
             </div>
@@ -66,27 +73,25 @@
         <section class="card form-card">
           <div class="pad">
             <h2>Spelarens uppgifter</h2>
-            <p class="sub">Lag, storlekar och priser är exempel tills BoIS fastställt det skarpa sortimentet.</p>
+            <p class="sub">Lag är hämtade från BoIS nuvarande lagytor. Produkter, storlekar och priser är konfigurerbara och fastställs slutligt före lansering.</p>
 
             <div class="field"><label for="team">Lag <span class="req">*</span></label>
-              <select id="team" name="team" required>
-                <option value="">Välj lag</option><option>P9</option><option>F9</option><option>P13</option><option>F14</option><option>P16</option><option>Skridsko- & bandyskola</option>
-              </select>
+              <select id="team" name="team" required><option value="">Välj lag</option></select>
             </div>
             <div class="row">
               <div class="field"><label for="shirt">Storlek tröja <span class="req">*</span></label>
-                <select id="shirt" name="shirt_size" required><option value="">Välj</option><option>128</option><option>140</option><option>152</option><option>164</option><option>XS</option><option>S</option></select>
+                <select id="shirt" name="shirt_size" required><option value="">Välj</option></select>
               </div>
               <div class="field"><label for="shorts">Storlek byxa <span class="req">*</span></label>
-                <select id="shorts" name="shorts_size" required><option value="">Välj</option><option>128</option><option>140</option><option>152</option><option>164</option><option>XS</option><option>S</option></select>
+                <select id="shorts" name="shorts_size" required><option value="">Välj</option></select>
               </div>
             </div>
             <div class="row">
               <div class="field"><label for="player">Spelarnamn <span class="req">*</span></label><input id="player" name="player_name" autocomplete="off" maxlength="80" placeholder="T.ex. Erik Andersson" required></div>
-              <div class="field"><label for="number">Nummer <span class="req">*</span></label><input id="number" name="number" inputmode="numeric" pattern="[0-9]{1,2}" maxlength="2" placeholder="T.ex. 10" required></div>
+              <div class="field"><label for="number">Nummer 1–99 <span class="req">*</span></label><input id="number" name="number" inputmode="numeric" pattern="[0-9]{1,2}" maxlength="2" placeholder="T.ex. 10" required></div>
             </div>
-            <label class="toggle"><input id="nameprint" name="name_print" type="checkbox" checked><span><b>Namntryck på tröjan</b><small>Spelarens efternamn trycks på ryggen.</small></span></label>
-            <label class="toggle"><input id="numberprint" name="number_print" type="checkbox" checked><span><b>Nummertryck</b><small>Numret från fältet ovan används på tröjan.</small></span></label>
+            <label class="toggle"><input id="nameprint" name="name_print" type="checkbox" checked><span><b id="namePrintLabel">Namntryck på tröjan</b><small>Spelarens efternamn trycks på ryggen.</small></span></label>
+            <label class="toggle"><input id="numberprint" name="number_print" type="checkbox" checked><span><b id="numberPrintLabel">Nummertryck</b><small>Numret från fältet ovan används på tröjan.</small></span></label>
 
             <h2 class="section-title">Kontaktuppgifter</h2>
             <div class="field"><label for="parent">Förälders namn <span class="req">*</span></label><input id="parent" name="parent_name" autocomplete="name" maxlength="80" placeholder="T.ex. Anna Andersson" required></div>
@@ -95,7 +100,7 @@
               <div class="field"><label for="phone">Telefon <span class="req">*</span></label><input id="phone" name="phone" type="tel" autocomplete="tel" maxlength="25" placeholder="070-123 45 67" required></div>
             </div>
             <div class="honeypot" aria-hidden="true"><label>Webbplats<input id="website" name="website" tabindex="-1" autocomplete="off"></label></div>
-            <label class="consent"><input id="consent" name="consent" type="checkbox" required><span>Jag godkänner att uppgifterna används för att hantera beställningen. <em id="stagingPrivacy">I testmiljön ska endast testuppgifter användas.</em></span></label>
+            <label class="consent"><input id="consent" name="consent" type="checkbox" required><span>Jag godkänner <a href="terms.html" target="_blank">beställningsvillkoren</a> och har tagit del av <a href="privacy.html" target="_blank">informationen om personuppgifter</a>. <em id="stagingPrivacy">I testmiljön ska endast testuppgifter användas.</em></span></label>
             <p class="form-error" id="formError" role="alert" hidden></p>
           </div>
         </section>
@@ -103,12 +108,12 @@
         <aside class="card summary-card summary">
           <div class="pad">
             <h2>Din beställning</h2>
-            <div class="line"><span>Matchtröja</span><b>449 kr</b></div>
-            <div class="line"><span>Matchbyxa</span><b>349 kr</b></div>
-            <div class="line" id="nameLine"><span>Namntryck</span><b>100 kr</b></div>
-            <div class="line" id="numberLine"><span>Nummertryck</span><b>100 kr</b></div>
+            <div class="line"><span id="shirtLineLabel">Matchtröja</span><b id="shirtLinePrice">449 kr</b></div>
+            <div class="line"><span id="shortsLineLabel">Matchbyxa</span><b id="shortsLinePrice">349 kr</b></div>
+            <div class="line" id="nameLine"><span id="nameLineLabel">Namntryck</span><b id="nameLinePrice">100 kr</b></div>
+            <div class="line" id="numberLine"><span id="numberLineLabel">Nummertryck</span><b id="numberLinePrice">100 kr</b></div>
             <div class="line total"><span>Totalt</span><span id="total">998 kr</span></div>
-            <div class="price-note"><b>Konceptpris:</b> priserna är exempel och fastställs med BoIS före lansering.</div>
+            <div class="price-note" id="priceNote"><b>Konceptpris:</b> priserna är exempel och fastställs med BoIS före lansering.</div>
             <button class="btn" id="orderBtn" type="submit">Visa beställningsflödet →</button>
             <div class="secure" id="paymentNote">Betalning kopplas på först efter föreningens godkännande.</div>
             <a class="adminlink" href="admin.html">Visa ledarvyn →</a>
@@ -119,12 +124,15 @@
 
     <section class="benefits" id="fragor">
       <div class="benefit"><b>För föräldrar</b><span>Mobilvänlig beställning utan mejltrådar, lappar eller separata formulär.</span></div>
-      <div class="benefit"><b>För ledare</b><span>Automatisk lista per lag, storlek, namn och nummer med leverantörsexport.</span></div>
+      <div class="benefit"><b>För ledare</b><span>Automatisk lista och sammanställning per lag, storlek, namn och nummer med leverantörsexport.</span></div>
       <div class="benefit"><b>För föreningen</b><span>Ingen lagerfunktion och inga onödiga system. Så liten och kostnadssnål lösning som möjligt.</span></div>
     </section>
   </main>
 
-  <footer>Tranås BoIS beställningsportal · P1 utvecklingsversion · Betalning är inte aktiverad.</footer>
+  <footer>
+    <span>Tranås BoIS beställningsportal · P2 produktionsförberedelse · Betalning är inte aktiverad.</span>
+    <span class="footer-links"><a href="privacy.html">Personuppgifter</a><a href="terms.html">Villkor</a></span>
+  </footer>
 
   <dialog id="confirmationDialog">
     <div class="modal">
@@ -133,6 +141,7 @@
       <p id="confirmationText"></p>
       <div class="order-number" id="orderNumber" hidden></div>
       <p class="modal-small" id="confirmationSmall"></p>
+      <a class="ghost p2-status-link" id="orderStatusLink" href="order.html" hidden>Visa orderstatus</a>
       <button class="btn" type="button" id="closeDialog">Klart</button>
     </div>
   </dialog>
