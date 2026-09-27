@@ -39,6 +39,7 @@
       {public_id:'BOIS-DEMO-KIT1',customer_name:'Test Förälder',customer_email:'test@example.invalid',total_ore:99800,payment_status:'NOT_ENABLED',fulfillment_status:'ON_HOLD',created_at:'2026-09-27 14:00:00',items:[{sku:'MATCHKIT-STAGING',fulfillment_type:'BATCH_SUPPLIER'}]},
       {public_id:'BOIS-DEMO-MEM1',customer_name:'Test Medlem',customer_email:'member@example.invalid',total_ore:300000,payment_status:'NOT_ENABLED',fulfillment_status:'ON_HOLD',created_at:'2026-09-27 14:05:00',items:[{sku:'MEM-ADULT',fulfillment_type:'DIGITAL_MEMBERSHIP'},{sku:'NW-GYM-ANNUAL',fulfillment_type:'MEMBER_BENEFIT'}]}
     ]});
+    if(action==='admin_payments') return Promise.resolve({payments:[],events:[],outbox:[]});
     if(action==='admin_batch_now') return Promise.resolve({batches:[],waiting:{waiting_order_count:2,waiting_item_count:2,threshold_qty:8,max_wait_hours:168,oldest_wait_hours:12,threshold_remaining:6}});
     if(action==='admin_run_worker') return Promise.resolve({batches:[],mail:{transport:'disabled',processed:0,sent:0,failed:0},waiting:{waiting_order_count:2,waiting_item_count:2,threshold_qty:8,max_wait_hours:168,oldest_wait_hours:12,threshold_remaining:6}});
     return Promise.resolve({ok:true});
@@ -103,6 +104,16 @@
     $('catalog').innerHTML=products.map(p=>
       '<tr><td><b>'+esc(p.name)+'</b></td><td>'+esc(p.category)+'</td><td><span class="chip">'+esc(p.fulfillment_type)+'</span></td><td>'+(p.is_public?'Ja':'Nej')+'</td><td>'+(p.is_orderable?'Ja':'Nej')+'</td></tr>'
     ).join('');
+  }
+
+  function renderPayments(body){
+    const payments=body.payments||[],events=body.events||[];
+    $('payments').innerHTML=payments.length?payments.map(p=>
+      '<tr><td>'+esc(p.public_id)+'</td><td>'+esc(p.provider_ref||'–')+'</td><td>'+esc(p.status)+'</td><td>'+c.money(p.amount_ore)+'</td><td>'+esc(p.effects_status)+'</td></tr>'
+    ).join(''):'<tr><td colspan="5">Inga betalningar.</td></tr>';
+    $('paymentEvents').innerHTML=events.length?events.map(e=>
+      '<tr><td>'+esc(e.event_id)+'</td><td>'+esc(e.event_type)+'</td><td>'+esc(e.status)+'</td><td>'+esc(e.attempts)+'</td><td>'+esc(e.last_error||'–')+'</td></tr>'
+    ).join(''):'<tr><td colspan="5">Inga betalhändelser.</td></tr>';
   }
 
 
@@ -186,8 +197,8 @@
   function showP4Error(message){$('p4Error').textContent=message;$('p4Error').hidden=false;}
 
   async function load() {
-    const [ordersBody,catalogBody,batchesBody,p4Body]=await Promise.all([
-      api('admin_orders'),api('admin_catalog'),api('admin_batches'),api('admin_p4')
+    const [ordersBody,catalogBody,batchesBody,p4Body,paymentBody]=await Promise.all([
+      api('admin_orders'),api('admin_catalog'),api('admin_batches'),api('admin_p4'),api('admin_payments')
     ]);
     orders=ordersBody.orders||[];
     const products=catalogBody.products||[],stats=catalogBody.stats||{};
@@ -198,6 +209,7 @@
     renderOrders();
     renderCatalog(products);
     renderP4(p4Body);
+    renderPayments(paymentBody);
     $('login').hidden=true;$('dashboard').hidden=false;
   }
 

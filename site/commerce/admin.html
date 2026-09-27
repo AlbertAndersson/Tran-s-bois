@@ -30,12 +30,12 @@
 
   <section id="dashboard" hidden>
     <div class="section-head">
-      <div><h2>Commerce Core + Batchmotor</h2><p>MySQL-order, matchställskö, leverantörsbatcher och e-post-outbox.</p></div>
+      <div><h2>Commerce Core + betalning</h2><p>MySQL-order, medlemskap, betalhändelser, matchställsbatcher och outbox.</p></div>
       <button class="btn ghost" id="logout">Logga ut</button>
     </div>
 
     <div class="notice blue">
-      <b>Staging:</b> P4 hanterar medlemskap och Nordic Wellness-flödet. P5 hanterar matchställsbatcher. Betalning och externa utskick är fortfarande avstängda.
+      <b>Staging:</b> Endast signerad mockbetalning är aktiv. Riktiga betalningar och externa utskick är avstängda.
     </div>
 
     <div class="kpis">
@@ -116,6 +116,16 @@
         <tbody id="orders"></tbody>
       </table>
     </div>
+
+    <h3 style="color:var(--blue);margin-top:28px">Betalningar och händelser</h3>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Order</th><th>Referens</th><th>Status</th><th>Belopp</th><th>Effekter</th></tr></thead>
+      <tbody id="payments"></tbody>
+    </table></div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Event-ID</th><th>Typ</th><th>Status</th><th>Försök</th><th>Fel</th></tr></thead>
+      <tbody id="paymentEvents"></tbody>
+    </table></div>
 
     <h3 style="color:var(--blue);margin-top:28px">Katalog</h3>
     <div class="table-wrap">

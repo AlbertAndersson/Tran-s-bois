@@ -129,6 +129,10 @@ if(($adminPaid['result']['status']??'')!=='PAID') throw new RuntimeException('Ad
 $adminEvents=$pdo->prepare("SELECT COUNT(*) FROM bois_payment_events WHERE order_id=(SELECT id FROM bois_orders WHERE public_id=?) AND signature_verified=1 AND status='PROCESSED'");
 $adminEvents->execute([$adminOrder['public_id']]);
 if((int)$adminEvents->fetchColumn()!==1) throw new RuntimeException('Admin mock skipped signed event.');
+$publicPayment=bois_p6_public_payment($pdo,$adminOrder['public_id']);
+if($publicPayment['status']!=='PAID' || !$publicPayment['reference']){
+    throw new RuntimeException('Public payment reference or status missing.');
+}
 
 $kit=p6_order($pdo,[[
     'sku'=>'MATCHKIT-STAGING','quantity'=>1,
@@ -153,6 +157,15 @@ if(($kitState['payment_status']??'')!=='PAID' || ($kitState['fulfillment_status'
     throw new RuntimeException('Paid match kit did not enter batch queue.');
 }
 
+[$partialRaw,$partialTs,$partialSig]=p6_signed($pdo,$config,$kitSession,'payment.refunded','evt-refund-partial',1000);
+$partial=bois_p6_process_webhook_raw($pdo,$config,$partialRaw,$partialTs,$partialSig);
+if(($partial['result']['status']??'')!=='PARTIALLY_REFUNDED') throw new RuntimeException('Partial refund failed.');
+$partialRepeat=bois_p6_process_webhook_raw($pdo,$config,$partialRaw,$partialTs,$partialSig);
+if(empty($partialRepeat['duplicate'])) throw new RuntimeException('Partial refund replay was processed twice.');
+$kitReview=$pdo->prepare("SELECT fulfillment_status FROM bois_orders WHERE public_id=?");
+$kitReview->execute([$kit['public_id']]);
+if($kitReview->fetchColumn()!=='REVIEW_REQUIRED') throw new RuntimeException('Partial refund did not require review.');
+
 $failedOrder=p6_order($pdo,[['sku'=>'MEM-YOUTH','quantity'=>1,'metadata'=>['member_name'=>'P6 Nekad']]],'p6-failed');
 $failedCheckout=bois_p6_checkout($pdo,$config,$failedOrder['public_id'],$failedOrder['public_token'],'card');
 $failedSession=bois_p6_session($pdo,$failedCheckout['session_ref'],$failedCheckout['session_token']);
@@ -164,6 +177,13 @@ $unpaidMemberships=(int)$pdo->query(
     "SELECT COUNT(*) FROM bois_memberships WHERE status='ACTIVE' AND member_name='P6 Nekad'"
 )->fetchColumn();
 if($unpaidMemberships!==0) throw new RuntimeException('Failed payment activated membership.');
+
+$cancelOrder=p6_order($pdo,[['sku'=>'MEM-SENIOR','quantity'=>1,'metadata'=>['member_name'=>'P6 Avbruten']]],'p6-cancelled');
+$cancelCheckout=bois_p6_checkout($pdo,$config,$cancelOrder['public_id'],$cancelOrder['public_token'],'card');
+$cancelSession=bois_p6_session($pdo,$cancelCheckout['session_ref'],$cancelCheckout['session_token']);
+[$cancelRaw,$cancelTs,$cancelSig]=p6_signed($pdo,$config,$cancelSession,'payment.cancelled','evt-cancelled');
+$cancel=bois_p6_process_webhook_raw($pdo,$config,$cancelRaw,$cancelTs,$cancelSig);
+if(($cancel['result']['status']??'')!=='CANCELLED') throw new RuntimeException('Cancellation failed.');
 
 $refundSession=bois_p6_session($pdo,$checkout['session_ref'],$checkout['session_token']);
 [$refundRaw,$refundTs,$refundSig]=p6_signed(

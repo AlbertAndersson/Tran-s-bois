@@ -9,7 +9,11 @@ on:
       - "server/p4_membership.php"
       - "server/commerce-api.php"
       - "site/commerce/payment.html"
+      - "site/commerce/order.html"
+      - "site/commerce/admin.html"
       - "site/commerce/assets/payment.js"
+      - "site/commerce/assets/order.js"
+      - "site/commerce/assets/admin.js"
       - "site/commerce/assets/membership.js"
       - "site/commerce/assets/matchkit.js"
       - "tests/p6-smoke.php"
@@ -22,7 +26,11 @@ on:
       - "server/p4_membership.php"
       - "server/commerce-api.php"
       - "site/commerce/payment.html"
+      - "site/commerce/order.html"
+      - "site/commerce/admin.html"
       - "site/commerce/assets/payment.js"
+      - "site/commerce/assets/order.js"
+      - "site/commerce/assets/admin.js"
       - "site/commerce/assets/membership.js"
       - "site/commerce/assets/matchkit.js"
       - "tests/p6-smoke.php"
@@ -77,6 +85,7 @@ jobs:
           node --check site/commerce/assets/membership.js
           node --check site/commerce/assets/matchkit.js
           node --check site/commerce/assets/admin.js
+          node --check site/commerce/assets/order.js
 
       - name: P6 safety checks
         run: |

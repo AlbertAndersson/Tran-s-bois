@@ -723,6 +723,25 @@ function bois_p6_admin_payments(PDO $pdo): array
     return ['payments'=>$payments,'events'=>$events,'outbox'=>$outbox];
 }
 
+function bois_p6_public_payment(PDO $pdo,string $publicId): array
+{
+    $stmt=$pdo->prepare(
+        "SELECT p.provider_ref,p.method,p.status,p.paid_at,p.refunded_at
+         FROM bois_payments p JOIN bois_orders o ON o.id=p.order_id
+         WHERE o.public_id=? LIMIT 1"
+    );
+    $stmt->execute([$publicId]);
+    $payment=$stmt->fetch();
+    if(!$payment) throw new OutOfBoundsException('Betalningen finns inte.');
+    return [
+        'status'=>$payment['status'],
+        'method'=>$payment['method'],
+        'reference'=>$payment['provider_ref'],
+        'paid_at'=>$payment['paid_at'],
+        'refunded_at'=>$payment['refunded_at'],
+    ];
+}
+
 function bois_p6_retry_outbox(PDO $pdo,int $id): array
 {
     $stmt=$pdo->prepare(

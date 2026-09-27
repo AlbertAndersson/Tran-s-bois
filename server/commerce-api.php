@@ -154,6 +154,7 @@ try {
         $id=bois_p3_clean_string($_GET['id']??'',40);
         $token=bois_p3_clean_string($_GET['token']??'',80);
         $order=bois_p3_public_order($pdo,$id,$token);
+        $order['payment']=bois_p6_public_payment($pdo,$id);
         $order['p4']=bois_p4_public_status_for_order($pdo,$id);
         commerce_respond(['ok'=>true,'order'=>$order]);
     }

@@ -13,6 +13,10 @@
     const o=body.order;
     $('intro').textContent='Här visas status direkt från Commerce Core.';
     $('content').hidden=false;$('orderId').textContent=o.public_id;$('status').textContent=o.status;$('payment').textContent=o.payment_status;$('fulfillment').textContent=o.fulfillment_status;$('total').textContent=c.money(o.total_ore);
+    if(o.payment?.reference){
+      $('paymentReference').textContent='Betalreferens: '+o.payment.reference+(o.payment.method?' · '+o.payment.method:'');
+      $('paymentReference').hidden=false;
+    }
     $('items').innerHTML=(o.items||[]).map(i=>'<tr><td><b>'+i.product_name+'</b></td><td>'+i.variant_name+'</td><td>'+i.quantity+'</td><td><span class="chip">'+i.fulfillment_type+'</span></td><td>'+c.money(i.line_total_ore)+'</td></tr>').join('');
     const p4=o.p4||{};
     const memberships=p4.memberships||[],benefits=p4.benefits||[];
