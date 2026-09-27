@@ -8,9 +8,9 @@ Datum: 2026-09-27
 - **P3 – Commerce Core / MySQL: COMPLETE**
 - **P4 – Membership & Nordic Wellness: COMPLETE / LIVE STAGING VERIFIED**
 - **P5 – Match kit batching: COMPLETE / LIVE STAGING VERIFIED**
-- **P6 – Payment: NEXT**
+- **P6 – Payment: COMPLETE / LIVE STAGING VERIFIED**
 
-Betalning: **AVSTÄNGD**  
+Betalning: **ISOLERAD MOCK/TESTMODE I STAGING – RIKTIG PROVIDER AVSTÄNGD**  
 Extern mejlsändning: **AVSTÄNGD I STAGING**  
 Ny extern kostnad: **0 kr**
 
@@ -19,7 +19,8 @@ Ny extern kostnad: **0 kr**
 - Medlemskap + gym: https://alberiq.se/bois-shop-p3/membership.html
 - Matchställ: https://alberiq.se/bois-shop-p3/match-kit.html
 - Orderstatus: https://alberiq.se/bois-shop-p3/order.html
-- Shopadmin P4 + P5: https://alberiq.se/bois-shop-p3/admin.html
+- Shopadmin P4 + P5 + P6: https://alberiq.se/bois-shop-p3/admin.html
+- Testbetalning P6: https://alberiq.se/bois-shop-p3/payment.html
 - API health: https://alberiq.se/bois-shop-p3/commerce-api.php?action=health
 
 Staging använder endast testuppgifter.
@@ -111,6 +112,30 @@ Staging:
 - cc = `erik@example.invalid`
 - `mail_transport = disabled`
 
+## P6 – Payment
+P6 använder en isolerad `mock`-provider i staging. Ingen verklig betaltransaktion eller extern provider är aktiverad.
+
+Kärnflöde:
+- serverstyrd checkout
+- Test-Swish och Test-kort
+- signerad HMAC-SHA256-webhook med timestamp-tolerans
+- unik `(provider,event_id)` för webhook-idempotens
+- `effects_status` för retry-säker downstream-applicering
+- verifierad `PAID` återanvänder P4/P5:s gemensamma betalgräns
+- medlemskap/Nordic/matchställ kan inte gå vidare före `PAID`
+- refunds sätter finansiell status och `REVIEW_REQUIRED` för fulfillment
+- kvitto/refund-outbox har retry/backoff
+- `payment_mail_transport = disabled`
+- stagingkvitton tvingas till `customer@example.invalid`
+
+Payment states:
+- `PENDING`
+- `PAID`
+- `FAILED`
+- `CANCELLED`
+- `PARTIALLY_REFUNDED`
+- `REFUNDED`
+
 ## Verifiering
 
 ### GitHub CI / MySQL 8.4
@@ -132,37 +157,57 @@ P5:
 - dubblettskydd: pass
 - retry: pass
 
+P6 – GitHub Actions run `36324968897`:
+- PHP syntax: pass
+- MySQL payment smoke: pass
+- korrekt signerad webhook: pass
+- ogiltig signatur nekas: pass
+- event-idempotens: pass
+- P4 först efter verifierad PAID: pass
+- P5-kö först efter verifierad PAID: pass
+- refund state machine: pass
+- receipt outbox retry: pass
+- real payment sent: no
+- real email sent: no
+
 ### AlberIQ / Simply
-- P4 + P5 migration: pass
-- filrättigheter korrigerade och verifierade: pass
+Senast verifierad P6-deploy: workflow run `36325200482`, conclusion **success**.
+
+- P6 migration: pass
+- filrättigheter/privat runtime: pass
 - icke-BoIS-tabeller oförändrade: pass
-- API `phase=P4+P5`: pass
-- ny medlem + gym live: pass
-- befintlig medlem + gym live: pass
-- adminverifiering live: pass
-- Nordic-status till ACTIVATED live: pass
-- Nordic CSV live: pass
-- offentlig orderstatus med medlems-/förmånsstatus: pass
+- API `phase=P6`: pass
+- `payment_enabled=true` i isolerat staging-testmode: pass
+- `payment_provider=mock`: pass
+- serverstyrd checkout live: pass
+- Test-Swish live: pass
+- verifierad PAID → medlemskap ACTIVE: pass
+- verifierad PAID → Nordic ELIGIBLE: pass
+- andra PAID-eventet applicerar inte P4/P5 igen: pass
 - P5-regel 8 / 168h bevarad: pass
-- payment_enabled=false
-- mail_transport=disabled
+- payment mail transport disabled: pass
+- real payment provider: no
+- new external cost: 0
 
 ## Drift
 Aktiv deployment:
 - `work-capture/.github/workflows/simply-deploy-bois-p4.yml`
 
-Äldre P3- och P5-deployworkflow är pensionerade så de inte kan skriva över P4+P5.
+Workflowen är nu uppgraderad till P6. Äldre P3- och P5-deployworkflow är pensionerade så de inte kan skriva över aktuell staging.
 
 ## Kostnad
 **Ny extern kostnad: 0 kr.**
 
-## Nästa fas – P6 Payment
-P6 ska lägga till:
-- Swish/kort
-- betalwebhook
-- idempotent betalstatus
-- refunds
-- kvitto/orderbekräftelse
-- fel-/retryhantering
+## Nästa fas – P7 2027 assortment
+P7 ska förbereda supporter-/merchsortimentet för lansering efter Intersport-avtalets slut.
 
-Riktig `PAID` ska anropa samma P4/P5-logik som stagingens simulerade betalning. Medlemskap, Nordic eligibility och matchställsbatchning behöver därför inte byggas om.
+Prioriterat:
+- verkliga leverantörer och inköpspriser
+- försäljningspriser/marginal
+- SKU/artikelnummer och varianter
+- produktbilder och produktcopy
+- fulfillment per produkt
+- lager/direct supplier-regler
+- launch gate som gör att sortimentet **inte blir publikt/orderbart före 1 januari 2027**
+
+P6 förblir testmode tills merchant, provider, kostnad och produktionsupplägg har godkänts uttryckligen.
