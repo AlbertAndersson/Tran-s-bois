@@ -73,7 +73,7 @@
       $('success').innerHTML =
         '<b>Testorder skapad.</b><div class="order-id" style="margin-top:10px">' + order.public_id + '</div>' +
         '<div class="small" style="margin-top:8px">Betalning: ' + order.payment_status + '. Total: ' + c.money(order.total_ore) + '</div>' +
-        (c.cfg.apiBase ? '<a class="btn ghost block" style="margin-top:12px" href="order.html?id=' + encodeURIComponent(order.public_id) + '&token=' + encodeURIComponent(order.public_token) + '">Visa orderstatus</a>' : '');
+        (c.cfg.apiBase ? '<a class="btn block" style="margin-top:12px" href="payment.html?id=' + encodeURIComponent(order.public_id) + '&token=' + encodeURIComponent(order.public_token) + '">Gå till testbetalning →</a><a class="btn ghost block" style="margin-top:8px" href="order.html?id=' + encodeURIComponent(order.public_id) + '&token=' + encodeURIComponent(order.public_token) + '">Visa orderstatus</a>' : '');
       $('success').hidden = false;
     } catch (error) {
       $('error').textContent = error.message;
