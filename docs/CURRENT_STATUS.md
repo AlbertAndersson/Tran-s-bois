@@ -189,3 +189,68 @@ Bygg parallellt när Nordic Wellness-flödet är bekräftat:
 - förnyelsemodell
 
 P6 betalning ska fortfarande komma efter att merchant/betalningsmottagare är beslutad.
+
+
+## P5 – Match kit batching
+**Status: COMPLETE / LIVE STAGING VERIFIED**
+
+### Regel
+- tröskel: 8 betalda matchställ
+- max väntetid: 168 timmar / 7 dagar
+- manuell åtgärd: Skicka batch nu
+
+### Säkerhetsvillkor
+En matchställsrad får endast batchas när:
+- ordern är PAID
+- raden är BATCH_SUPPLIER
+- raden är WAITING_BATCH
+- raden inte redan finns i bois_batch_items
+
+UNIQUE-regler och transaktion/radlåsning hindrar samma orderrad från att skickas i två batcher.
+
+### P5 levererar
+- unikt batch-ID
+- trigger reason: THRESHOLD / MAX_WAIT / MANUAL
+- leverantörs-CSV
+- SHA-256-snapshot av CSV
+- e-post-outbox
+- attempts / not_before / retry / last_error / sent_at
+- exponentiell retry, FAILED efter fem försök
+- status BATCHED och senare SENT_TO_SUPPLIER efter lyckad transport
+- batchhistorik i shopadmin
+- CSV-download från admin
+- stagingfunktion för att simulera PAID
+
+### CI-verifiering
+MySQL 8.4:
+- 8 betalda testställ → exakt 1 THRESHOLD-batch: pass
+- dubblettskydd: pass
+- CSV hash/deterministisk export: pass
+- failed mail → RETRY: pass
+- retry → SENT: pass
+- manuell batch under tröskel: pass
+- 7-dagarsregel → MAX_WAIT: pass
+- real email sent: no
+
+### AlberIQ live-staging
+- API phase=P5: pass
+- storage_driver=mysql: pass
+- threshold=8: pass
+- max_wait_hours=168: pass
+- åtta live-testorder + simulerad betalning → THRESHOLD-batch: pass
+- leverantörs-CSV: pass
+- mottagare tvingad till supplier@example.invalid: pass
+- mail_transport=disabled: pass
+- worker skickar 0 externa mail: pass
+- icke-BoIS-tabeller oförändrade: pass
+
+### Drift
+P3-deployworkflowen har pensionerats så den inte kan skriva över P5.
+P5-deployworkflowen är nu den aktiva stagingdeployen.
+
+### Kostnad
+Ny extern kostnad: **0 kr**.
+
+### Nästa
+P4 – Membership & Gym när Nordic Wellness-processen för medlemsverifiering/aktivering är bekräftad.
+P6 kopplar sedan riktig betalning och anropar P5:s befintliga PAID-händelse.
