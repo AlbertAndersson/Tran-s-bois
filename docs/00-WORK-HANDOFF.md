@@ -23,7 +23,8 @@ Verifiera alltid aktuell HEAD innan du ändrar något.
 5. `docs/P4-MEMBERSHIP-NORDIC.md`
 6. `docs/P5-MATCHKIT-BATCHING.md`
 7. `docs/P6-PAYMENT.md`
-8. `docs/NEXT-THREAD-PROMPT.md`
+8. `docs/P8-PAYMENT-STRIPE.md`
+9. `docs/NEXT-THREAD-PROMPT.md`
 
 ## Aktiv deployment
 
@@ -259,13 +260,14 @@ Verifiering:
 ## Öppna blockers före produktion
 
 ### Payment – produktion
-P6-staging är klar. Före skarp betalning återstår:
+P6-staging är klar och **Stripe är vald som målprovider för P8**. Före skarp betalning återstår:
 - vem är merchant/betalningsmottagare?
-- verklig Swish/kort-provider
-- provideravgift
-- merchant onboarding/KYC
-- produktionscredentials/certifikat
+- aktuell Stripe-prisbild och uttryckligt kostnadsgodkännande
+- merchant onboarding/KYC och kontoägarskap
+- verifiera att Stripe-Swish är tillgängligt i production för BoIS-kontot (Swish är märkt Beta av Stripe 2026-09-27)
+- produktionscredentials/secrets
 - verklig webhook-konfiguration
+- beslut Stripe Checkout kontra Payment Element
 - slutlig refund-policy för medlemskap/Nordic/matchställ
 
 Aktivera ingen kostnad eller betaltjänst utan uttryckligt godkännande.
@@ -312,6 +314,8 @@ Arbeta med:
 11. launch gate
 
 **Hård invariant:** supporter-/merchprodukter får inte bli publika/orderbara före **1 januari 2027**.
+
+**P7-avgränsning:** Stripe-valet är dokumenterat för P8. P7 får inte implementera Stripe, skapa Stripe-konto eller aktivera någon betaltjänst.
 
 ## Definition av nästa bra stopp
 
