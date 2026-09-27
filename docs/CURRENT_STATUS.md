@@ -3,74 +3,77 @@
 Datum: 2026-09-27
 
 ## Status
-**P1 – skarp beställningsmotor utan betalning: COMPLETE / STAGING VERIFIED**
+**P1: COMPLETE**  
+**P2 – produktionsförberedelse: TECH COMPLETE / BOIS DATA PENDING**  
+**P2 staging: VERIFIED**
 
-## Publik demo
-- Kunddemo: https://albertandersson.github.io/Tran-s-bois/
-- Ledarvy: https://albertandersson.github.io/Tran-s-bois/admin.html
-- GitHub Pages publicerar endast den statiska `site/`-ytan.
-- Publika demon sparar inga personuppgifter och genomför ingen betalning.
+## Adresser
+- Kund/staging: https://alberiq.se/bois-bestallning-p1/
+- Ledarvy: https://alberiq.se/bois-bestallning-p1/admin.html
+- Orderstatus: https://alberiq.se/bois-bestallning-p1/order.html
+- Personuppgiftsutkast: https://alberiq.se/bois-bestallning-p1/privacy.html
+- Villkorsutkast: https://alberiq.se/bois-bestallning-p1/terms.html
+- Publik no-data-demo: https://albertandersson.github.io/Tran-s-bois/
 
-## P1 staging
-- Kund: https://alberiq.se/bois-bestallning-p1/
-- Admin: https://alberiq.se/bois-bestallning-p1/admin.html
-- Staging använder endast testuppgifter.
-- Orderlagring: en privat JSON-fil per order.
+## P2 levererat
+- Konfigurerbar laglista, beställningsperiod, produkt, storlekar och priser.
+- Order schema version 2 med produkt-, period- och leverantörsmetadata.
+- Servervalidering av lag, storlek, produkt, period och tröjnummer 1–99.
 - Unika ordernummer och idempotent registrering.
+- Säker publik orderstatus via ordernummer + slumpad token.
+- Digital avbeställning medan ordern är Ny/Kontrollerad.
 - Statusflöde: Ny → Kontrollerad → Klar för leverantör → Beställd / Avbruten.
-- Ledarvy: sök, lagfilter, statusfilter och statusändring.
-- CSV-export till leverantör.
-- Betalning: AVSTÄNGD.
-- Ny extern kostnad: **0 kr**.
+- Ledarvy med sök, lagfilter och statusfilter.
+- Automatisk leverantörssammanställning per lag/produkt/storlek.
+- Detaljerad CSV-export.
+- Aggregerad leverantörs-CSV.
+- Produktionsutkast för GDPR/personuppgifter och beställningsvillkor.
+- Betalning fortsatt avstängd.
 
 ## Verifiering
-Senaste automatiserade end-to-end-körningen på Simply:
-- PHP syntax + P1 smoke test: pass
-- HTTPS health: pass
-- kundsida: pass
-- adminvy: pass
+GitHub CI:
+- PHP syntax: pass
+- P1 smoke: pass
+- P2 smoke: pass
+- JavaScript syntax: pass
+- P2 artifact/security checks: pass
+- GitHub Pages deploy: pass
+
+AlberIQ/Simply end-to-end:
+- schema version 2: pass
+- health + skrivbar privat lagring: pass
+- kundsida/admin/orderstatus/villkorssidor: pass
 - skapa testorder: pass
+- publik orderstatus: pass
+- digital avbeställning: pass
 - admin list orders: pass
 - statusändring: pass
-- CSV-export: pass
-- skydd av `config.php`, backendkod och orderfil: pass
-- Simply WAF-verifiering: löst med identifierad deploy-check user-agent
+- detaljerad CSV: pass
+- sammanställnings-CSV: pass
+- runtime-konfiguration/orderdata utanför webbroot: pass
 
 ## Säkerhet
-- Ingen betalningsnyckel eller kundcredential finns i publika repot.
-- Adminnyckel genereras vid staging-deploy och committas inte.
-- Servervalidering och serverberäknade priser.
-- Rate limiting + honeypot.
-- API-svar har no-store.
-- Auditlogg för order- och statusändringar.
-- Känsliga stagingfiler skyddas via serverregler.
-- Produktionsversion ska flytta runtime-konfiguration/orderdata utanför webbrot.
+- Runtime-konfiguration och orderdata ligger utanför webbroot.
+- Adminnyckel genereras vid deploy och finns inte i publikt repo.
+- Servern räknar pris och validerar beställningen.
+- Rate limiting, honeypot och auditlogg.
+- Publik orderstatus kräver en 128-bitars slumpad token.
+- GitHub Pages sparar inga personuppgifter.
+- Staging är endast avsedd för testuppgifter.
 
-## Kostnadsspärr
-Inga nya abonnemang eller betaltjänster har aktiverats. P1 använder GitHub Pages + redan befintlig AlberIQ/Simply-hosting.
+## Kostnad
+**Ny extern kostnad: 0 kr.**
 
-## Nästa steg – P2 / produktionsförberedelse
-1. Erik/BoIS bekräftar verkliga lag, produkter, storlekar och priser.
-2. Bekräfta exakt orderformat som klädleverantören vill ha.
-3. Ersätt stagingvärden med skarpa produktdata.
-4. Lägg skarp integritetsinformation, köpvillkor och orderbekräftelse.
-5. Bestäm slutlig domän/subdomän.
-6. Först efter uttryckligt godkännande: koppla Swish/kort och betalstatus.
+Inga betaltjänster eller nya abonnemang har aktiverats. P2 använder befintlig AlberIQ/Simply-hosting och GitHub.
 
+## Kvar före skarp lansering
+1. Erik/BoIS bekräftar verkliga produkter, priser och storlekar.
+2. BoIS/leverantören bekräftar artikel-/leverantörskoder och önskat orderformat.
+3. BoIS bekräftar vilka lag som ska vara öppna och sista beställningsdag.
+4. Föreningens fullständiga säljar-/kontaktuppgifter, rättslig grund, lagringstid och personuppgiftsupplägg fylls i.
+5. Leverans/utlämning, reklamation och slutlig regel för personligt tryck/ångerrätt fastställs.
+6. Slutlig domän/subdomän beslutas.
+7. Först efter uttryckligt godkännande kopplas Swish/kort och betalstatus.
 
-## Slutverifiering av source
-- P1-källkoden återställd och verifierad på `main`.
-- Source-restaurering: `5384421198abb7f781f7b6e0ecd4dc8a88ac8e15`.
-- Korrigering av admin-JavaScript: `399fa7032b42de012769ff46fea99ebabc5ad9cd`.
-- Efter korrigeringen passerade GitHub Pages: checkout, JavaScript-validering, Pages-konfiguration, artifact-upload och deploy.
-- Simply-staging kontrollerades på nytt: kundsida och adminvy svarar, API health returnerar `ok:true`, `mode:staging` och `storage_writable:true`.
-
-
-## Hostingflytt 2026-09-27
-- P1-staging flyttad från DMA Motor till AlberIQ.
-- Ny adress: https://alberiq.se/bois-bestallning-p1/
-- Ny adminadress: https://alberiq.se/bois-bestallning-p1/admin.html
-- Runtime-konfiguration och orderdata ligger utanför webbroot på AlberIQ-hostingen.
-- Den tidigare DMA-adressen är borttagen: `https://test.dmamotor.se/bois-p1/` svarar inte längre med BoIS-sidan.
-- BoIS deployment-workflow är borttagen ur `AlbertAndersson/Dmamotor` så sidan inte kan återskapas där av misstag.
-- Ny extern kostnad: **0 kr**.
+## Drift
+Den gamla P1-deployen är pensionerad efter verifierad P2-deploy. DMA Motor innehåller inte längre BoIS-sidan eller dess deployflöde.
