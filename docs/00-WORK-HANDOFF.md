@@ -8,7 +8,8 @@ Detta är den primära överlämningen för en ny utvecklingstråd. GitHub är s
 
 - Repo: `AlbertAndersson/Tran-s-bois`
 - Branch: `main`
-- Handoff-bas vid skapandet: `d1fdd3336ca386cd4703d75f3a257c6532dcc15e`
+- P6 implementation merge: `64ac0ed2b1624fb425195c5042f964f0ceb8a2a3`
+- Verifiera alltid aktuell `main` HEAD; closeout-dokumentation kan ligga senare än implementation-committen
 - Deployment/secrets: `AlbertAndersson/work-capture`
 
 Verifiera alltid aktuell HEAD innan du ändrar något.
@@ -21,19 +22,21 @@ Verifiera alltid aktuell HEAD innan du ändrar något.
 4. `docs/P3-COMMERCE-CORE.md`
 5. `docs/P4-MEMBERSHIP-NORDIC.md`
 6. `docs/P5-MATCHKIT-BATCHING.md`
-7. `docs/NEXT-THREAD-PROMPT.md`
+7. `docs/P6-PAYMENT.md`
+8. `docs/NEXT-THREAD-PROMPT.md`
 
 ## Aktiv deployment
 
 Aktiv workflow i deployment-repot:
 `AlbertAndersson/work-capture/.github/workflows/simply-deploy-bois-p4.yml`
 
-Senast verifierad P4+P5-deploy:
-- run: `36323453297`
+Senast verifierad P6-deploy:
+- run: `36325200482`
 - conclusion: **success**
-- deploy-fix commit: `a586d24d9e76e9c04203509958bbb87e95e73a14`
+- deployment commit i `work-capture`: `903621e4be684b15848ff94d688d789ee4871b19`
+- source implementation merge i shop-repot: `64ac0ed2b1624fb425195c5042f964f0ceb8a2a3`
 
-Äldre P3/P5 deployworkflows är pensionerade så de inte kan skriva över P4+P5.
+Äldre P3/P5 deployworkflows är pensionerade så de inte kan skriva över aktuell P6-staging.
 
 ## Aktiv staging
 
@@ -42,9 +45,10 @@ Senast verifierad P4+P5-deploy:
 - Matchställ: https://alberiq.se/bois-shop-p3/match-kit.html
 - Orderstatus: https://alberiq.se/bois-shop-p3/order.html
 - Shopadmin: https://alberiq.se/bois-shop-p3/admin.html
+- Testbetalning: https://alberiq.se/bois-shop-p3/payment.html
 - API health: https://alberiq.se/bois-shop-p3/commerce-api.php?action=health
 
-**Obs:** URL-sökvägen heter fortfarande `bois-shop-p3`, men miljön kör nu P4 + P5. Byt inte sökväg innan slutlig produktionsdomän är beslutad.
+**Obs:** URL-sökvägen heter fortfarande `bois-shop-p3`, men miljön kör nu P4 + P5 + P6. Byt inte sökväg innan slutlig produktionsdomän är beslutad.
 
 Staging får endast innehålla testuppgifter.
 
@@ -55,12 +59,12 @@ Staging får endast innehålla testuppgifter.
 - P3 – Commerce Core / MySQL: **COMPLETE**
 - P4 – Membership & Nordic Wellness: **COMPLETE / LIVE STAGING VERIFIED**
 - P5 – Match kit batching: **COMPLETE / LIVE STAGING VERIFIED**
-- P6 – Payment: **NEXT**
-- P7 – 2027 assortment: **NOT STARTED**
+- P6 – Payment: **COMPLETE / LIVE STAGING VERIFIED**
+- P7 – 2027 assortment: **NEXT**
 - P8 – production launch: **NOT STARTED**
 - P9 – sales engine: **NOT STARTED**
 
-Betalning är avstängd. Extern mejlsändning är avstängd i staging. Ny extern driftkostnad hittills: **0 kr**.
+P6-betalning kör isolerad `mock`/testmode i staging. Riktig payment provider är avstängd. Extern mejlsändning är avstängd i staging. Ny extern driftkostnad hittills: **0 kr**.
 
 ## Affärsbeslut
 
@@ -197,6 +201,48 @@ I staging:
 - `mail_transport = disabled`
 - verkliga mejl kan inte skickas
 
+## P6 – Payment
+
+P6 är **COMPLETE / LIVE STAGING VERIFIED**.
+
+Staging:
+- `payment_provider = mock`
+- Test-Swish och Test-kort
+- ingen verklig provider/merchant är aktiverad
+- `payment_mail_transport = disabled`
+- payment-kvitton tvingas till `customer@example.invalid`
+- ny extern kostnad: **0 kr**
+
+Betalningsgränsen:
+1. servern skapar checkout/session
+2. provider-event verifieras med HMAC-SHA256 + timestamp
+3. `(provider,event_id)` är unik och förhindrar dubbelprocessning
+4. payment → `PAID`
+5. samma verifierade PAID-handler driver P4/P5
+6. `effects_status` gör downstream retry-säker
+7. medlemskap/Nordic/matchställ går aldrig vidare före verifierad PAID
+
+State machine:
+- `PENDING`
+- `PAID`
+- `FAILED`
+- `CANCELLED`
+- `PARTIALLY_REFUNDED`
+- `REFUNDED`
+
+Refund:
+- uppdaterar finansiell status
+- order/fulfillment går till `REVIEW_REQUIRED`
+- redan startat medlems-/partner-/leverantörsflöde backas inte automatiskt
+
+Verifiering:
+- P6 GitHub CI run `36324968897`: **success**
+- Simply live deploy run `36325200482`: **success**
+- icke-BoIS-tabeller oförändrade: pass
+- live Test-Swish → PAID → medlem ACTIVE/Nordic ELIGIBLE: pass
+- extra PAID-event applicerar inte P4/P5 igen: pass
+- payment mail transport disabled: pass
+
 ## Säkerhetsinvariants
 
 1. GitHub är source of truth.
@@ -212,16 +258,17 @@ I staging:
 
 ## Öppna blockers före produktion
 
-### Payment / P6
+### Payment – produktion
+P6-staging är klar. Före skarp betalning återstår:
 - vem är merchant/betalningsmottagare?
-- Swish/kort-upplägg
-- provider
-- webhook
-- refunds
-- receipt/order confirmation
-- eventuell providerkostnad
+- verklig Swish/kort-provider
+- provideravgift
+- merchant onboarding/KYC
+- produktionscredentials/certifikat
+- verklig webhook-konfiguration
+- slutlig refund-policy för medlemskap/Nordic/matchställ
 
-Aktivera ingen kostnad utan uttryckligt godkännande.
+Aktivera ingen kostnad eller betaltjänst utan uttryckligt godkännande.
 
 ### Matchställ
 - verkligt inköps-/försäljningspris
@@ -247,33 +294,32 @@ Aktivera ingen kostnad utan uttryckligt godkännande.
 - slutliga villkor/integritet/säljaruppgifter
 - riktiga mejlmottagare
 
-## Nästa fas – P6 Payment
+## Nästa fas – P7 2027 assortment
 
-Målet är att koppla in riktig payment event source utan att bygga om P4/P5.
+Målet är att göra supporter-/merchsortimentet kommersiellt och tekniskt lanseringsklart utan att bryta avtalsgränsen.
 
-P6 bör innehålla:
-1. serverstyrd checkout
-2. Swish/kort via vald provider
-3. webhook-signaturverifiering
-4. idempotens
-5. payment state machine
-6. verifierad `PAID` → gemensam handler
-7. P4 membership/benefit activation
-8. P5 matchställskö
-9. refunds/cancellations
-10. kvitto/orderbekräftelse
-11. retry/felhantering
-12. testmode utan produktionskostnad
+Arbeta med:
+1. leverantörer
+2. verkliga inköpspriser
+3. rekommenderade försäljningspriser och marginal
+4. SKU/artikelnummer
+5. storlekar/varianter
+6. produktbilder och copy
+7. fulfillmentmodell per produkt
+8. lager/direct-supplier-regler
+9. returer/reklamationsflöde
+10. produktdata i Commerce Core
+11. launch gate
+
+**Hård invariant:** supporter-/merchprodukter får inte bli publika/orderbara före **1 januari 2027**.
 
 ## Definition av nästa bra stopp
 
-P6 stagingklar när:
-- provider testmode eller isolerad payment mock fungerar
-- en verifierad webhook ger exakt en `PAID`
-- samma event kan inte dubbelprocessas
-- medlemskap aktiveras exakt en gång
-- Nordic entitlement uppdateras exakt en gång
-- matchställ hamnar i batchkö exakt en gång
-- refunds har definierade state transitions
-- inga externa leverantörsmejl skickas i staging
-- inga nya verkliga kostnader är aktiverade
+P7 stagingklar när:
+- prioriterat 2027-sortiment har verifierad leverantör
+- inköpspris, försäljningspris och marginal är dokumenterade
+- SKU/varianter är strukturerade
+- fulfillment är definierat per produkt
+- produkter kan granskas i staging/admin
+- launch gate förhindrar publik/orderbar exponering före 1 januari 2027
+- inga nya externa kostnader är aktiverade utan godkännande
