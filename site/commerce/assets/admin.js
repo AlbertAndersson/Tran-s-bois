@@ -27,6 +27,14 @@
       waiting:{waiting_order_count:2,waiting_item_count:2,threshold_qty:8,max_wait_hours:168,oldest_wait_hours:12,threshold_remaining:6},
       batches:[{public_id:'BATCH-DEMO-001',trigger_reason:'MANUAL',order_count:2,item_count:2,status:'QUEUED',outbox_status:'PENDING',attempts:0,created_at:'2026-09-27 14:30:00',to_email:'supplier@example.invalid',cc_email:'erik@example.invalid'}]
     });
+    if(action==='admin_p4') return Promise.resolve({
+      stats:{active_members:1,pending_member_verification:1,eligible_gym:1,sent_to_nordic:0,ready_for_pickup:0,activated_gym:0},
+      members:[{id:1,member_name:'Demo Medlem',membership_type:'adult',status:'ACTIVE',valid_from:'2026-09-27',valid_to:'2027-09-27',source:'ORDER',email:'member@example.invalid'}],
+      entitlements:[
+        {id:1,order_public_id:'BOIS-DEMO-MEM1',customer_name:'Demo Medlem',customer_email:'member@example.invalid',member_name:'Demo Medlem',member_status:'ACTIVE',status:'ELIGIBLE',partner_ref:null},
+        {id:2,order_public_id:'BOIS-DEMO-GYM2',customer_name:'Befintlig Medlem',customer_email:'existing@example.invalid',member_name:null,member_status:null,status:'PENDING_MEMBER_VERIFICATION',partner_ref:null}
+      ]
+    });
     if(action==='admin_orders') return Promise.resolve({orders:[
       {public_id:'BOIS-DEMO-KIT1',customer_name:'Test Förälder',customer_email:'test@example.invalid',total_ore:99800,payment_status:'NOT_ENABLED',fulfillment_status:'ON_HOLD',created_at:'2026-09-27 14:00:00',items:[{sku:'MATCHKIT-STAGING',fulfillment_type:'BATCH_SUPPLIER'}]},
       {public_id:'BOIS-DEMO-MEM1',customer_name:'Test Medlem',customer_email:'member@example.invalid',total_ore:300000,payment_status:'NOT_ENABLED',fulfillment_status:'ON_HOLD',created_at:'2026-09-27 14:05:00',items:[{sku:'MEM-ADULT',fulfillment_type:'DIGITAL_MEMBERSHIP'},{sku:'NW-GYM-ANNUAL',fulfillment_type:'MEMBER_BENEFIT'}]}
@@ -76,7 +84,7 @@
 
   function renderOrders() {
     $('orders').innerHTML=orders.length ? orders.map(o=>{
-      const canSim=c.cfg.apiBase && matchKitOrder(o) && o.payment_status!=='PAID';
+      const canSim=c.cfg.apiBase && o.payment_status!=='PAID';
       return '<tr>'+
         '<td><b>'+esc(o.public_id)+'</b><div class="small">'+esc(o.created_at)+'</div></td>'+
         '<td>'+esc(o.customer_name)+'<div class="small">'+esc(o.customer_email)+'</div></td>'+
@@ -97,9 +105,89 @@
     ).join('');
   }
 
+
+  function p4Status(status){
+    return '<span class="p4-status '+esc(status||'')+'">'+esc(status||'–')+'</span>';
+  }
+
+  function renderP4(body){
+    const stats=body.stats||{},members=body.members||[],entitlements=body.entitlements||[];
+    $('activeMembersKpi').textContent=stats.active_members??0;
+    $('pendingVerifyKpi').textContent=stats.pending_member_verification??0;
+    $('eligibleGymKpi').textContent=stats.eligible_gym??0;
+    $('activatedGymKpi').textContent=stats.activated_gym??0;
+
+    $('members').innerHTML=members.length?members.map(m=>
+      '<tr><td><b>'+esc(m.member_name)+'</b></td><td>'+esc(m.membership_type)+'</td><td>'+p4Status(m.status)+'</td>'+
+      '<td>'+esc(m.valid_from||'–')+' → '+esc(m.valid_to||'–')+'</td><td>'+esc(m.source)+'</td><td>'+esc(m.email||'')+'</td></tr>'
+    ).join(''):'<tr><td colspan="6">Inga aktiva medlemsrader ännu.</td></tr>';
+
+    $('entitlements').innerHTML=entitlements.length?entitlements.map(e=>{
+      let action='–';
+      if(e.status==='PENDING_MEMBER_VERIFICATION'){
+        action='<button class="btn ghost p4-action p4-verify" data-order="'+esc(e.order_public_id)+'" data-name="'+esc(e.customer_name||'')+'">Verifiera medlem</button>';
+      }else if(e.status==='ELIGIBLE'){
+        action='<button class="btn ghost p4-action p4-transition" data-id="'+Number(e.id)+'" data-status="SENT_TO_PARTNER">Skickad till Nordic</button>';
+      }else if(e.status==='SENT_TO_PARTNER'){
+        action='<button class="btn ghost p4-action p4-transition" data-id="'+Number(e.id)+'" data-status="READY_FOR_PICKUP">Klar att hämta</button>';
+      }else if(e.status==='READY_FOR_PICKUP'){
+        action='<button class="btn ghost p4-action p4-transition" data-id="'+Number(e.id)+'" data-status="ACTIVATED">Aktiverad</button>';
+      }
+      return '<tr>'+
+        '<td><b>'+esc(e.order_public_id)+'</b></td>'+
+        '<td>'+esc(e.customer_name)+'<div class="small">'+esc(e.customer_email)+'</div></td>'+
+        '<td>'+esc(e.member_name||'Ej verifierad')+'<div class="small">'+esc(e.member_status||'')+'</div></td>'+
+        '<td>'+p4Status(e.status)+'</td>'+
+        '<td>'+esc(e.partner_ref||'–')+'</td>'+
+        '<td>'+action+'</td>'+
+      '</tr>';
+    }).join(''):'<tr><td colspan="6">Inga Nordic-ärenden ännu.</td></tr>';
+
+    document.querySelectorAll('.p4-verify').forEach(btn=>btn.addEventListener('click',()=>verifyExistingMember(btn.dataset.order,btn.dataset.name)));
+    document.querySelectorAll('.p4-transition').forEach(btn=>btn.addEventListener('click',()=>transitionBenefit(Number(btn.dataset.id),btn.dataset.status)));
+  }
+
+  async function verifyExistingMember(publicId,defaultName){
+    clearP4Messages();
+    const memberName=prompt('Medlemmens namn:',defaultName||'');
+    if(!memberName) return;
+    const membershipType=prompt('Medlemstyp: adult, youth eller senior','adult')||'adult';
+    const externalRef=prompt('Eventuellt medlemsnummer/referens (kan lämnas tomt):','')||'';
+    try{
+      await post('admin_verify_existing_member',{public_id:publicId,member_name:memberName,membership_type:membershipType,external_member_ref:externalRef});
+      showP4Message('Medlemskapet verifierades och Nordic-förmånen är nu eligible.');
+      await load();
+    }catch(error){showP4Error(error.message);}
+  }
+
+  async function transitionBenefit(id,status){
+    clearP4Messages();
+    let partnerRef='';
+    if(status==='SENT_TO_PARTNER') partnerRef=prompt('Nordic-referens om sådan finns (valfritt):','')||'';
+    try{
+      await post('admin_benefit_status',{entitlement_id:id,status,partner_ref:partnerRef});
+      showP4Message('Nordic-status uppdaterad till '+status+'.');
+      await load();
+    }catch(error){showP4Error(error.message);}
+  }
+
+  async function downloadNordicCsv(){
+    if(!c.cfg.apiBase){alert('CSV hämtas från riktig staging.');return;}
+    const response=await fetch(c.cfg.apiBase+'?action=admin_nordic_export',{headers:auth()});
+    if(!response.ok){alert('Nordic-exporten kunde inte hämtas.');return;}
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(await response.blob());
+    a.download='tranas-bois-nordic-wellness.csv';
+    a.click();URL.revokeObjectURL(a.href);
+  }
+
+  function clearP4Messages(){$('p4Message').hidden=true;$('p4Error').hidden=true;}
+  function showP4Message(message){$('p4Message').textContent=message;$('p4Message').hidden=false;}
+  function showP4Error(message){$('p4Error').textContent=message;$('p4Error').hidden=false;}
+
   async function load() {
-    const [ordersBody,catalogBody,batchesBody]=await Promise.all([
-      api('admin_orders'),api('admin_catalog'),api('admin_batches')
+    const [ordersBody,catalogBody,batchesBody,p4Body]=await Promise.all([
+      api('admin_orders'),api('admin_catalog'),api('admin_batches'),api('admin_p4')
     ]);
     orders=ordersBody.orders||[];
     const products=catalogBody.products||[],stats=catalogBody.stats||{};
@@ -109,6 +197,7 @@
     renderBatches(batchesBody.batches||[]);
     renderOrders();
     renderCatalog(products);
+    renderP4(p4Body);
     $('login').hidden=true;$('dashboard').hidden=false;
   }
 
@@ -121,7 +210,8 @@
     clearMessages();
     try {
       const result=await post('admin_simulate_paid',{public_id:publicId});
-      showMessage('Testordern markerades betald. '+((result.result.auto_batches||[]).length?'En automatisk batch skapades.':'Den väntar nu på batch.'));
+      const p4Text=(result.p4?.members?.length||result.p4?.benefits?.length)?' Medlems-/förmånsstatus uppdaterades också.':'';
+      showMessage('Testordern markerades betald. '+((result.result.auto_batches||[]).length?'En automatisk batch skapades.':'Ingen ny matchställsbatch skapades.')+p4Text);
       await load();
     } catch(error) { showError(error.message); }
   }
@@ -174,6 +264,7 @@
   $('logout').addEventListener('click',()=>{token='';sessionStorage.removeItem('boisP3Admin');$('dashboard').hidden=true;$('login').hidden=false;});
   $('batchNow').addEventListener('click',createBatchNow);
   $('runWorker').addEventListener('click',runWorker);
+  $('nordicExport').addEventListener('click',downloadNordicCsv);
 
   if(!c.cfg.apiBase){load();} else if(token){load().catch(()=>{});}
 })();

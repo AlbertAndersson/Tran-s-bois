@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 require __DIR__ . '/p3_db.php';
 require __DIR__ . '/p5_batch.php';
+require __DIR__ . '/p4_membership.php';
 
 function commerce_respond(array $data, int $status=200): never
 {
@@ -67,6 +68,7 @@ try {
     $config=bois_p3_load_config();
     $pdo=bois_p3_pdo($config);
     bois_p5_apply_schema($pdo);
+    bois_p4_apply_schema($pdo);
     commerce_check_origin($config);
 
     if(($_SERVER['REQUEST_METHOD']??'')==='OPTIONS'){
@@ -84,13 +86,15 @@ try {
         commerce_respond([
             'ok'=>true,
             'service'=>'tranas-bois-commerce-api',
-            'phase'=>'P5',
+            'phase'=>'P4+P5',
             'mode'=>$config['mode'],
             'storage_driver'=>'mysql',
             'payment_enabled'=>false,
             'mail_transport'=>$config['mail_transport'] ?? 'disabled',
             'batch_threshold_qty'=>$waiting['threshold_qty'],
             'batch_max_wait_hours'=>$waiting['max_wait_hours'],
+            'membership_workflow'=>'manual_verify_ready',
+            'nordic_workflow'=>'manual_partner_handoff',
             'db'=>$pdo->query("SELECT DATABASE()")->fetchColumn() ? 'ok' : 'unknown',
         ]);
     }
@@ -101,13 +105,16 @@ try {
 
     if($action==='orders'&&$method==='POST'){
         $order=bois_p3_create_order($pdo,commerce_body());
+        bois_p4_register_order($pdo,(string)$order['public_id']);
         commerce_respond(['ok'=>true,'order'=>$order],201);
     }
 
     if($action==='order'&&$method==='GET'){
         $id=bois_p3_clean_string($_GET['id']??'',40);
         $token=bois_p3_clean_string($_GET['token']??'',80);
-        commerce_respond(['ok'=>true,'order'=>bois_p3_public_order($pdo,$id,$token)]);
+        $order=bois_p3_public_order($pdo,$id,$token);
+        $order['p4']=bois_p4_public_status_for_order($pdo,$id);
+        commerce_respond(['ok'=>true,'order'=>$order]);
     }
 
     if($action==='admin_orders'&&$method==='GET'){
@@ -122,7 +129,61 @@ try {
             'products'=>bois_p3_catalog($pdo,true),
             'stats'=>bois_p3_stats($pdo),
             'batch_waiting'=>bois_p5_waiting_summary($pdo),
+            'p4_stats'=>bois_p4_stats($pdo),
         ]);
+    }
+
+
+    if($action==='admin_p4'&&$method==='GET'){
+        commerce_require_admin($config);
+        commerce_respond([
+            'ok'=>true,
+            'stats'=>bois_p4_stats($pdo),
+            'members'=>bois_p4_admin_members($pdo),
+            'entitlements'=>bois_p4_admin_entitlements($pdo),
+        ]);
+    }
+
+    if($action==='admin_verify_existing_member'&&$method==='POST'){
+        commerce_require_admin($config);
+        $data=commerce_body();
+        $publicId=bois_p3_clean_string($data['public_id']??'',40);
+        $memberName=bois_p3_clean_string($data['member_name']??'',160);
+        $membershipType=bois_p3_clean_string($data['membership_type']??'adult',40);
+        $externalRef=bois_p3_clean_string($data['external_member_ref']??'',120);
+        if($memberName==='') throw new InvalidArgumentException('Medlemsnamn krävs.');
+        commerce_respond([
+            'ok'=>true,
+            'result'=>bois_p4_verify_existing_member(
+                $pdo,$config,$publicId,$memberName,$membershipType,$externalRef!==''?$externalRef:null
+            )
+        ]);
+    }
+
+    if($action==='admin_benefit_status'&&$method==='POST'){
+        commerce_require_admin($config);
+        $data=commerce_body();
+        $id=(int)($data['entitlement_id']??0);
+        $status=bois_p3_clean_string($data['status']??'',50);
+        $partnerRef=bois_p3_clean_string($data['partner_ref']??'',160);
+        $notes=bois_p3_clean_string($data['notes']??'',500);
+        if($id<1||$status==='') throw new InvalidArgumentException('Ogiltig förmånsuppdatering.');
+        commerce_respond([
+            'ok'=>true,
+            'entitlement'=>bois_p4_transition_entitlement(
+                $pdo,$id,$status,$partnerRef!==''?$partnerRef:null,$notes!==''?$notes:null
+            )
+        ]);
+    }
+
+    if($action==='admin_nordic_export'&&$method==='GET'){
+        commerce_require_admin($config);
+        http_response_code(200);
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename="tranas-bois-nordic-wellness.csv"');
+        header('Cache-Control: no-store');
+        echo bois_p4_export_eligible_csv($pdo);
+        exit;
     }
 
     if($action==='admin_batches'&&$method==='GET'){
@@ -138,9 +199,12 @@ try {
         commerce_require_admin($config);
         $data=commerce_body();
         $publicId=bois_p3_clean_string($data['public_id']??'',40);
+        $payment=bois_p5_mark_order_paid($pdo,$config,$publicId);
+        $p4=bois_p4_apply_paid_order($pdo,$config,$publicId);
         commerce_respond([
             'ok'=>true,
-            'result'=>bois_p5_mark_order_paid($pdo,$config,$publicId),
+            'result'=>$payment,
+            'p4'=>$p4,
             'waiting'=>bois_p5_waiting_summary($pdo),
         ]);
     }

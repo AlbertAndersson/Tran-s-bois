@@ -1,0 +1,67 @@
+name: P4 Membership and Nordic CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "server/p4_*.php"
+      - "server/commerce-api.php"
+      - "site/commerce/admin.html"
+      - "site/commerce/assets/admin.js"
+      - "site/commerce/assets/p5.css"
+      - "tests/p4-smoke.php"
+      - "docs/P4-MEMBERSHIP-NORDIC.md"
+      - ".github/workflows/p4-ci.yml"
+  pull_request:
+    paths:
+      - "server/p4_*.php"
+      - "server/commerce-api.php"
+      - "site/commerce/admin.html"
+      - "site/commerce/assets/admin.js"
+      - "site/commerce/assets/p5.css"
+      - "tests/p4-smoke.php"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: bois_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+    env:
+      BOIS_P3_TEST_DB_HOST: 127.0.0.1
+      BOIS_P3_TEST_DB_PORT: 3306
+      BOIS_P3_TEST_DB_NAME: bois_test
+      BOIS_P3_TEST_DB_USER: root
+      BOIS_P3_TEST_DB_PASSWORD: root
+
+    steps:
+      - uses: actions/checkout@v5
+      - name: PHP syntax
+        run: |
+          php -l server/p4_membership.php
+          php -l server/p4-migrate.php
+          php -l server/commerce-api.php
+      - name: P4 MySQL smoke
+        run: php tests/p4-smoke.php
+      - name: Admin JavaScript syntax
+        run: node --check site/commerce/assets/admin.js
+      - name: P4 privacy and safety checks
+        run: |
+          grep -q "PENDING_MEMBER_VERIFICATION" server/p4_membership.php
+          grep -q "ELIGIBLE" server/p4_membership.php
+          grep -q "READY_FOR_PICKUP" server/p4_membership.php
+          grep -q "ACTIVATED" server/p4_membership.php
+          ! grep -Ri "personnummer" site/commerce server/p4_membership.php

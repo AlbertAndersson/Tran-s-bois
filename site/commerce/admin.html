@@ -2,7 +2,7 @@
 <html lang="sv">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow">
-  <title>BoIS Shopadmin – P5</title>
+  <title>BoIS Shopadmin – P4 + P5</title>
   <link rel="stylesheet" href="assets/commerce.css"><link rel="stylesheet" href="assets/p5.css">
   <script src="config.js" defer></script>
   <script src="assets/common.js" defer></script>
@@ -11,7 +11,7 @@
 <body>
 <header class="header">
   <div class="nav">
-    <a class="brand" href="index.html"><img src="https://cdn06.svenskalag.se/img/clubmarks/6245_w.png?3=" alt="Tranås BoIS"><div>TRANÅS BoIS<small>SHOPADMIN · P5</small></div></a>
+    <a class="brand" href="index.html"><img src="https://cdn06.svenskalag.se/img/clubmarks/6245_w.png?3=" alt="Tranås BoIS"><div>TRANÅS BoIS<small>SHOPADMIN</small></div></a>
     <span class="env" data-env>P5 DEMO</span>
   </div>
 </header>
@@ -19,7 +19,7 @@
 <main class="wrap">
   <section id="login" class="form-card" style="max-width:520px;margin:25px auto">
     <span class="tag">ADMIN</span>
-    <h1>P5 Shopadmin</h1>
+    <h1>BoIS Shopadmin</h1>
     <p class="sub">Staging kräver den tillfälliga adminnyckeln från deployen.</p>
     <form id="loginForm">
       <div class="field"><label for="token">Adminnyckel</label><input id="token" type="password" autocomplete="off" required></div>
@@ -35,7 +35,7 @@
     </div>
 
     <div class="notice blue">
-      <b>P5 staging:</b> “Skicka batch nu” skapar batch, CSV och e-post-outbox men skickar inget externt mejl. Staging använder endast <code>example.invalid</code>-adresser.
+      <b>Staging:</b> P4 hanterar medlemskap och Nordic Wellness-flödet. P5 hanterar matchställsbatcher. Betalning och externa utskick är fortfarande avstängda.
     </div>
 
     <div class="kpis">
@@ -64,6 +64,41 @@
       </div>
       <div id="batchMessage" class="success" hidden></div>
       <div id="batchError" class="error" hidden></div>
+    </section>
+
+
+    <section class="card" style="margin:24px 0">
+      <div class="section-head" style="margin:0 0 14px">
+        <div>
+          <h2 style="font-size:24px">Medlemskap & Nordic Wellness</h2>
+          <p>BoIS verifierar medlemskap och styr gymkortet genom eligibility → Nordic → klart att hämta → aktiverat.</p>
+        </div>
+        <button class="btn ghost" id="nordicExport">Export Nordic CSV</button>
+      </div>
+      <div class="p5-progress">
+        <div><strong id="activeMembersKpi">0</strong><span>aktiva medlemmar</span></div>
+        <div><strong id="pendingVerifyKpi">0</strong><span>väntar medlemskontroll</span></div>
+        <div><strong id="eligibleGymKpi">0</strong><span>gymkort eligible</span></div>
+        <div><strong id="activatedGymKpi">0</strong><span>gymkort aktiverade</span></div>
+      </div>
+      <div id="p4Message" class="success" hidden></div>
+      <div id="p4Error" class="error" hidden></div>
+
+      <h3 style="color:var(--blue);margin-top:22px">Nordic Wellness-ärenden</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Order</th><th>Kund</th><th>Medlem</th><th>Status</th><th>Nordic ref</th><th>Åtgärd</th></tr></thead>
+          <tbody id="entitlements"></tbody>
+        </table>
+      </div>
+
+      <h3 style="color:var(--blue);margin-top:22px">Medlemsregister</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Medlem</th><th>Typ</th><th>Status</th><th>Giltighet</th><th>Källa</th><th>E-post</th></tr></thead>
+          <tbody id="members"></tbody>
+        </table>
+      </div>
     </section>
 
     <h3 style="color:var(--blue)">Batchhistorik</h3>
