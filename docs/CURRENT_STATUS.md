@@ -2,43 +2,57 @@
 
 Datum: 2026-09-27
 
-## Klart
-- Privat GitHub-repo etablerat som source of truth.
-- Fristående kunddemo byggd.
-- Responsiv mobil/desktop-layout i BoIS blå/vit/röd profil.
-- Fält för lag, tröj-/byxstorlek, spelarnamn, nummer och kontaktuppgifter.
-- Dynamisk ordersummering.
-- Demoknapp för betalning som aldrig startar en riktig betalning.
-- Separat ledar/admin-demo med orderlista och CSV-export.
-- Inga credentials eller tokens i repo.
-- Inga betaltjänster aktiverade.
+## Status
+**P1 – skarp beställningsmotor utan betalning: COMPLETE / STAGING VERIFIED**
 
-## Nästa efter Eriks feedback
-1. Bekräfta exakt produktsortiment, storlekar och priser.
-2. Bekräfta vilka lag som ska kunna beställa.
-3. Fastställ leverantörens önskade orderformat.
-4. Koppla riktig orderlagring.
-5. Koppla betalning (Swish/kort) först efter föreningens godkännande.
-6. Lägg på domän/subdomän och skarpa villkor/integritet.
-
-## Kostnadsspärr
-Projektet ska tills vidare kunna utvecklas och demonstreras utan nya löpande kostnader.
-
-
-## Publicering
-- GitHub Pages-workflow skapad.
-- Första körningen stoppades i "Configure Pages" eftersom GitHub App-token inte får skapa/aktivera Pages-siten administrativt.
-- Ingen kostnad eller uppgradering har accepterats.
-- Nästa steg: aktivera Pages-källa "GitHub Actions" manuellt i repo-inställningen om det redan ingår i kontots plan. Om GitHub visar en betald uppgradering ska den inte accepteras; välj då annan kostnadsfri publiceringsväg.
-- SharePoint-projektmapp skapad: "Tranås BoIS – Webbshop" med statusdokument och konceptbild.
-
-
-## Live-demo aktiverad
-- GitHub Pages: AKTIV.
+## Publik demo
 - Kunddemo: https://albertandersson.github.io/Tran-s-bois/
 - Ledarvy: https://albertandersson.github.io/Tran-s-bois/admin.html
-- Senaste egen Pages-deploy: success.
-- Publik åtkomst verifierad externt 2026-09-27.
-- Repo är nu publikt för att möjliggöra kostnadsfri GitHub Pages-publicering.
-- Inga betalningar, orderlagring eller betaltjänster är aktiverade.
-- Nya löpande kostnader: 0 kr.
+- GitHub Pages publicerar endast den statiska `site/`-ytan.
+- Publika demon sparar inga personuppgifter och genomför ingen betalning.
+
+## P1 staging
+- Kund: https://test.dmamotor.se/bois-p1/
+- Admin: https://test.dmamotor.se/bois-p1/admin.html
+- Staging använder endast testuppgifter.
+- Orderlagring: en privat JSON-fil per order.
+- Unika ordernummer och idempotent registrering.
+- Statusflöde: Ny → Kontrollerad → Klar för leverantör → Beställd / Avbruten.
+- Ledarvy: sök, lagfilter, statusfilter och statusändring.
+- CSV-export till leverantör.
+- Betalning: AVSTÄNGD.
+- Ny extern kostnad: **0 kr**.
+
+## Verifiering
+Senaste automatiserade end-to-end-körningen på Simply:
+- PHP syntax + P1 smoke test: pass
+- HTTPS health: pass
+- kundsida: pass
+- adminvy: pass
+- skapa testorder: pass
+- admin list orders: pass
+- statusändring: pass
+- CSV-export: pass
+- skydd av `config.php`, backendkod och orderfil: pass
+- Simply WAF-verifiering: löst med identifierad deploy-check user-agent
+
+## Säkerhet
+- Ingen betalningsnyckel eller kundcredential finns i publika repot.
+- Adminnyckel genereras vid staging-deploy och committas inte.
+- Servervalidering och serverberäknade priser.
+- Rate limiting + honeypot.
+- API-svar har no-store.
+- Auditlogg för order- och statusändringar.
+- Känsliga stagingfiler skyddas via serverregler.
+- Produktionsversion ska flytta runtime-konfiguration/orderdata utanför webbrot.
+
+## Kostnadsspärr
+Inga nya abonnemang eller betaltjänster har aktiverats. P1 använder GitHub Pages + redan befintlig Simply-hosting.
+
+## Nästa steg – P2 / produktionsförberedelse
+1. Erik/BoIS bekräftar verkliga lag, produkter, storlekar och priser.
+2. Bekräfta exakt orderformat som klädleverantören vill ha.
+3. Ersätt stagingvärden med skarpa produktdata.
+4. Lägg skarp integritetsinformation, köpvillkor och orderbekräftelse.
+5. Bestäm slutlig domän/subdomän.
+6. Först efter uttryckligt godkännande: koppla Swish/kort och betalstatus.
