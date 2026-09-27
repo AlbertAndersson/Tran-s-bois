@@ -15,6 +15,8 @@ Läs först:
 5. `docs/P4-MEMBERSHIP-NORDIC.md`
 6. `docs/P5-MATCHKIT-BATCHING.md`
 7. `docs/P6-PAYMENT.md`
+8. `docs/P7-2027-ASSORTMENT.md`
+9. `docs/P8-PAYMENT-STRIPE.md`
 
 Deployment ligger i `AlbertAndersson/work-capture`. Aktiv workflow är:
 `.github/workflows/simply-deploy-bois-p4.yml`
@@ -43,23 +45,19 @@ P6 staging använder:
 - receipt/refund outbox
 - `payment_mail_transport = disabled`
 
-Riktig payment provider, merchant-onboarding och providerkostnad är **inte** aktiverade.
+Riktig payment provider, merchant-onboarding och providerkostnad är **inte** aktiverade. **Stripe är vald som målprovider för P8**, men detta är endast ett dokumenterat framtida beslut under P7.
 
 **Nästa fas är P7 – 2027 assortment.**
 
-Bygg P7 så supporter-/merchsortimentet blir lanseringsklart men fortsatt dolt/orderblockerat före **1 januari 2027**.
+P7 ska **inte** implementera Stripe. Stripe hör till P8 production launch. P7 får endast bevara kompatibiliteten med den befintliga provider-adaptern och dokumentera eventuella beroenden som upptäcks.
 
-Prioritera:
-- leverantörer
-- inköpspris
-- försäljningspris och marginal
-- SKU/artikelnummer
-- storlekar/varianter
-- produktbilder/copy
-- fulfillmentmodell
-- lager/direct supplier
-- returer/reklamationer
-- launch gate
+Genomför P7 enligt `docs/P7-2027-ASSORTMENT.md`. Dela arbetet i **P7A–P7D** och committa efter varje verifierbart delsteg. Supporter-/merchsortimentet ska bli lanseringsklart men fortsatt dolt/orderblockerat före **1 januari 2027**.
+
+P7A–D:
+- **P7A:** assortment research + commercial model med tydlig VERIFIED / ESTIMATE / TBD-status
+- **P7B:** Commerce Core schema/catalog för leverantör, inköpspris, pris, marginal, SKU/varianter och fulfillment
+- **P7C:** admin + intern staging-preview av 2027-sortimentet
+- **P7D:** serverstyrd launch gate + P4–P6 regression + dokumentationscloseout
 
 Säkerställ att:
 - inget 2027-sortiment blir publikt/orderbart före 1 januari 2027
@@ -68,6 +66,8 @@ Säkerställ att:
 - staging bara använder testuppgifter
 - inga riktiga externa mejl skickas
 - inga nya kostnader eller betaltjänster aktiveras utan uttryckligt godkännande
+- Stripe-konto/onboarding/credentials eller Stripe-kod inte skapas i P7
+- P8-planen behåller Stripe som vald provider och verifierar senare Swish-tillgänglighet för BoIS-kontot
 
 Behåll affärsreglerna:
 - ungdomsmedlemskap 200 kr
@@ -76,7 +76,7 @@ Behåll affärsreglerna:
 - Nordic Wellness gymkort 2 650 kr för aktiv medlem
 - matchställ 998 kr är endast staging/testpris
 
-Dokumentera löpande i GitHub och synka handoff/status till Google Drive.
+Hitta inte på leverantör, inköpspris eller SKU; märk osäkra uppgifter `TBD`/`ESTIMATE`. Dokumentera löpande i GitHub och synka handoff/status till Google Drive.
 
 ## Kontroll före P7
 Kontrollera P6-skärpningen på `chatgpt/p6-payment-hardening-20260927` och dess CI/deploystatus. Adminens staging-simulering ska nu gå via signerad P6-mock. Kundvy och adminvy ska visa betalreferens respektive event. Fortsätt inte anta att den första P6-deployen inkluderar dessa ändringar förrän ny stagingdeploy har verifierats.

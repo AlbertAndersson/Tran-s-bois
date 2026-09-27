@@ -169,12 +169,15 @@ Mocken genererar internt samma signerade webhook som en extern provider skulle a
 
 P6 aktiverar inte någon verklig provider.
 
+Providerbeslut efter P6: **Stripe är vald som målprovider för P8**.
+
 Följande beslut kvarstår:
 - vem är merchant/betalningsmottagare?
-- vald Swish/kort-provider
-- provideravgift
-- merchant onboarding
-- produktionscredentials/certifikat
+- aktuell Stripe-prisbild och kostnadsgodkännande
+- merchant onboarding och kontoägarskap
+- verifierad produktionsåtkomst till Stripe-Swish för BoIS-kontot (Stripe märker Swish som Beta 2026-09-27)
+- Stripe Checkout kontra Payment Element
+- produktionscredentials/secrets
 - verklig webhook-konfiguration
 - refund-policy mot medlemskap/Nordic/matchställ
 
@@ -253,7 +256,7 @@ Live verifierat:
 
 P7 – 2027 assortment.
 
-P6:s riktiga produktionsprovider är en separat P8/produktionsfråga och får inte aktiveras utan uttryckligt godkännande av provider, merchant-upplägg och kostnad.
+P6:s riktiga produktionsprovider är en separat P8/produktionsfråga. **Stripe är vald som provider**, men får inte implementeras/aktiveras under P7 och får inte gå live utan uttryckligt godkännande av merchant-upplägg och aktuell kostnad. Se `docs/P8-PAYMENT-STRIPE.md`.
 
 ## Uppföljande P6-granskning 2026-09-27
 Första leveransen slogs samman i en implementation-commit trots den önskade uppdelningen P6A–D. Granskningen hittade en kvarvarande alternativ PAID-väg i admin. Skärpningen på `chatgpt/p6-payment-hardening-20260927` gör att adminens stagingtest skapar checkout och ett signerat mock-event genom P6. Den kräver också exakt order-ID, sessionsreferens, valuta och belopp, nekar återanvänt event-ID med ändrad payload och använder MySQL named lock per betalreferens över eventclaim och P4/P5-effekter. Publik ordervy visar en testbetalningsreferens; admin visar betalningar och event. Regressionerna omfattar dessa kontroller, CANCELLED och PARTIALLY_REFUNDED. Ny CI och stagingverifiering dokumenteras efter slutförd körning.
