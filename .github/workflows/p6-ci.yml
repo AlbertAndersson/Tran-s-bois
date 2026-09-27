@@ -1,0 +1,87 @@
+name: P6 Payment CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "server/p6_*.php"
+      - "server/p5_batch.php"
+      - "server/p4_membership.php"
+      - "server/commerce-api.php"
+      - "site/commerce/payment.html"
+      - "site/commerce/assets/payment.js"
+      - "site/commerce/assets/membership.js"
+      - "site/commerce/assets/matchkit.js"
+      - "tests/p6-smoke.php"
+      - "docs/P6-PAYMENT.md"
+      - ".github/workflows/p6-ci.yml"
+  pull_request:
+    paths:
+      - "server/p6_*.php"
+      - "server/p5_batch.php"
+      - "server/p4_membership.php"
+      - "server/commerce-api.php"
+      - "site/commerce/payment.html"
+      - "site/commerce/assets/payment.js"
+      - "site/commerce/assets/membership.js"
+      - "site/commerce/assets/matchkit.js"
+      - "tests/p6-smoke.php"
+      - "docs/P6-PAYMENT.md"
+      - ".github/workflows/p6-ci.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: bois_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+
+    env:
+      BOIS_P3_TEST_DB_HOST: 127.0.0.1
+      BOIS_P3_TEST_DB_PORT: 3306
+      BOIS_P3_TEST_DB_NAME: bois_test
+      BOIS_P3_TEST_DB_USER: root
+      BOIS_P3_TEST_DB_PASSWORD: root
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: PHP syntax
+        run: |
+          php -l server/p6_payment.php
+          php -l server/p6-migrate.php
+          php -l server/p5_batch.php
+          php -l server/p4_membership.php
+          php -l server/commerce-api.php
+
+      - name: P6 MySQL smoke
+        run: php tests/p6-smoke.php
+
+      - name: Payment JavaScript syntax
+        run: |
+          node --check site/commerce/assets/payment.js
+          node --check site/commerce/assets/membership.js
+          node --check site/commerce/assets/matchkit.js
+
+      - name: P6 safety checks
+        run: |
+          grep -q "hash_hmac('sha256'" server/p6_payment.php
+          grep -q "bois_payment_events" server/p6_payment.php
+          grep -q "effects_status" server/p6_payment.php
+          grep -q "REVIEW_REQUIRED" server/p6_payment.php
+          grep -q "customer@example.invalid" server/p6_payment.php
+          grep -q "P6_VERIFIED_WEBHOOK" server/p6_payment.php
+          ! grep -R -E "sk_live_|pk_live_|BEGIN PRIVATE KEY|SWISH_CERT|merchant_secret" server site/commerce
