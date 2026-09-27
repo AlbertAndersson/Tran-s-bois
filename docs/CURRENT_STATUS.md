@@ -4,76 +4,188 @@ Datum: 2026-09-27
 
 ## Status
 **P1: COMPLETE**  
-**P2 – produktionsförberedelse: TECH COMPLETE / BOIS DATA PENDING**  
-**P2 staging: VERIFIED**
+**P2: COMPLETE**  
+**P3 – Commerce Core: COMPLETE / MYSQL STAGING VERIFIED**
 
-## Adresser
-- Kund/staging: https://alberiq.se/bois-bestallning-p1/
-- Ledarvy: https://alberiq.se/bois-bestallning-p1/admin.html
-- Orderstatus: https://alberiq.se/bois-bestallning-p1/order.html
-- Personuppgiftsutkast: https://alberiq.se/bois-bestallning-p1/privacy.html
-- Villkorsutkast: https://alberiq.se/bois-bestallning-p1/terms.html
-- Publik no-data-demo: https://albertandersson.github.io/Tran-s-bois/
+Betalning: **AVSTÄNGD**  
+Leverantörsutskick: **AVSTÄNGT**  
+Ny extern kostnad: **0 kr**
 
-## P2 levererat
-- Konfigurerbar laglista, beställningsperiod, produkt, storlekar och priser.
-- Order schema version 2 med produkt-, period- och leverantörsmetadata.
-- Servervalidering av lag, storlek, produkt, period och tröjnummer 1–99.
-- Unika ordernummer och idempotent registrering.
-- Säker publik orderstatus via ordernummer + slumpad token.
-- Digital avbeställning medan ordern är Ny/Kontrollerad.
-- Statusflöde: Ny → Kontrollerad → Klar för leverantör → Beställd / Avbruten.
-- Ledarvy med sök, lagfilter och statusfilter.
-- Automatisk leverantörssammanställning per lag/produkt/storlek.
-- Detaljerad CSV-export.
-- Aggregerad leverantörs-CSV.
-- Produktionsutkast för GDPR/personuppgifter och beställningsvillkor.
-- Betalning fortsatt avstängd.
+## Aktiva stagingadresser
+- P3 shop: https://alberiq.se/bois-shop-p3/
+- Medlemskap + gym: https://alberiq.se/bois-shop-p3/membership.html
+- Matchställ: https://alberiq.se/bois-shop-p3/match-kit.html
+- Orderstatus: https://alberiq.se/bois-shop-p3/order.html
+- Shopadmin: https://alberiq.se/bois-shop-p3/admin.html
+- P3 health: https://alberiq.se/bois-shop-p3/commerce-api.php?action=health
+
+P2-staging finns kvar på:
+- https://alberiq.se/bois-bestallning-p1/
+
+## Affärsbeslut 2026-09-27
+Erik och Albert har bekräftat att följande får säljas redan nu:
+- medlemskap
+- Nordic Wellness gymkort för medlem
+- matchställ
+
+Övrigt supporter-/merchsortiment hålls dolt till 1 januari 2027.
+
+Bekräftade medlemspriser:
+- ungdom 200 kr
+- vuxen 350 kr
+- pensionär 300 kr
+
+Nordic Wellness gymkort:
+- 2 650 kr för aktiv BoIS-medlem
+
+Matchställ:
+- batch-/ordermodell är byggd
+- 998 kr är fortsatt endast staging/testpris
+- verkligt pris och leverantörsdata krävs före skarp försäljning
+
+## P3 levererat
+
+### MySQL Commerce Core
+P3 har en riktig MySQL-datamodell med separata `bois_`-tabeller:
+- `bois_schema_migrations`
+- `bois_products`
+- `bois_variants`
+- `bois_customers`
+- `bois_orders`
+- `bois_order_items`
+- `bois_memberships`
+- `bois_payments`
+- `bois_suppliers`
+- `bois_fulfillment_rules`
+- `bois_supplier_batches`
+- `bois_batch_items`
+- `bois_email_outbox`
+- `bois_events`
+
+### Publik katalog i P3
+Endast tre produktgrupper är publika/orderbara:
+1. Medlemskap
+   - MEM-YOUTH – 200 kr
+   - MEM-ADULT – 350 kr
+   - MEM-SENIOR – 300 kr
+2. Nordic Wellness
+   - NW-GYM-ANNUAL – 2 650 kr
+3. Matchställ
+   - MATCHKIT-STAGING – 998 kr testpris
+
+### Dolda 2027-produkter
+- BoIS 1941 Hoodie
+- Supporter-T-shirt
+- Bandyförälder Hoodie
+- Mössa + halsduk
+- BoIS Gym Pack
+- Knatte Pack
+- Presentkort
+
+Dessa är `is_public = false` och `is_orderable = false`.
+
+### Fulfillment-modell
+- `DIGITAL_MEMBERSHIP`
+- `MEMBER_BENEFIT`
+- `BATCH_SUPPLIER`
+- `DIRECT_SUPPLIER`
+- `DIGITAL_GIFT`
+
+Fulfillment-reglerna är ännu inte aktiverade för utskick.
+
+### Medlemskap + gym
+- medlemskap och gym kan testbeställas i samma order
+- vuxen + gym ger 3 000 kr i Commerce Core
+- gym utan medlemskap nekas om inte testflaggan "befintlig medlem" anges
+- medlemskap skapas i databasen som `PENDING_PAYMENT`
+- riktig medlemsverifiering byggs i P4
+
+### Matchställ
+Orderraden sparar:
+- lag
+- spelarnamn
+- tröjnummer
+- tröjstorlek
+- byxstorlek
+- namntryck
+- nummertryck
+
+Fulfillment är `BATCH_SUPPLIER`, men ordern ligger i `ON_HOLD` eftersom betalning inte är aktiverad.
+
+## Betalningsspärr
+Varje P3-order skapas som:
+- orderstatus: `PENDING_PAYMENT`
+- payment_status: `NOT_ENABLED`
+- fulfillment_status: `ON_HOLD`
+
+P3 skapar därför inga riktiga leverantörsorder och aktiverar inga medlemskap.
 
 ## Verifiering
-GitHub CI:
+
+### GitHub CI
+- MySQL 8.4 container: pass
 - PHP syntax: pass
-- P1 smoke: pass
-- P2 smoke: pass
+- PDO MySQL: pass
+- P3 MySQL smoke: pass
+- membership + gym order: pass
+- gym membership guard: pass
+- match kit metadata: pass
 - JavaScript syntax: pass
-- P2 artifact/security checks: pass
-- GitHub Pages deploy: pass
+- secret/payment safety checks: pass
 
-AlberIQ/Simply end-to-end:
-- schema version 2: pass
-- health + skrivbar privat lagring: pass
-- kundsida/admin/orderstatus/villkorssidor: pass
-- skapa testorder: pass
-- publik orderstatus: pass
-- digital avbeställning: pass
-- admin list orders: pass
-- statusändring: pass
-- detaljerad CSV: pass
-- sammanställnings-CSV: pass
-- runtime-konfiguration/orderdata utanför webbroot: pass
+### AlberIQ / Simply end-to-end
+- Commerce API health: pass
+- storage_driver=mysql: pass
+- betalning avstängd: pass
+- tre publika produkter: pass
+- membership + gym testorder: pass
+- total vuxen + gym = 3 000 kr: pass
+- offentlig orderstatus: pass
+- matchställ med BATCH_SUPPLIER: pass
+- lagmetadata P13: pass
+- admin läser MySQL-order: pass
+- 10 katalogprodukter totalt inkl. dolda 2027-produkter: pass
+- supplier_batches = 0: pass
+- email_outbox = 0: pass
+- p3_db.php direktåtkomst blockerad: pass
+- p3-migrate.php direktåtkomst blockerad: pass
+- icke-BoIS-tabeller före/efter migration: oförändrade
 
-## Säkerhet
-- Runtime-konfiguration och orderdata ligger utanför webbroot.
-- Adminnyckel genereras vid deploy och finns inte i publikt repo.
-- Servern räknar pris och validerar beställningen.
-- Rate limiting, honeypot och auditlogg.
-- Publik orderstatus kräver en 128-bitars slumpad token.
-- GitHub Pages sparar inga personuppgifter.
-- Staging är endast avsedd för testuppgifter.
+## Databassäkerhet
+P3 staging använder befintlig Simply/MySQL-infrastruktur med strikt `bois_`-prefix.
+
+Detta är endast en kostnadsfri staginglösning:
+- inga riktiga kund-/medlemsuppgifter ska användas
+- inga befintliga icke-BoIS-tabeller får ändras
+- produktion ska ha dedikerad BoIS-databas/credential
 
 ## Kostnad
 **Ny extern kostnad: 0 kr.**
 
-Inga betaltjänster eller nya abonnemang har aktiverats. P2 använder befintlig AlberIQ/Simply-hosting och GitHub.
+Ingen ny hosting, betaltjänst, mailtjänst eller betalprovider har aktiverats.
 
-## Kvar före skarp lansering
-1. Erik/BoIS bekräftar verkliga produkter, priser och storlekar.
-2. BoIS/leverantören bekräftar artikel-/leverantörskoder och önskat orderformat.
-3. BoIS bekräftar vilka lag som ska vara öppna och sista beställningsdag.
-4. Föreningens fullständiga säljar-/kontaktuppgifter, rättslig grund, lagringstid och personuppgiftsupplägg fylls i.
-5. Leverans/utlämning, reklamation och slutlig regel för personligt tryck/ångerrätt fastställs.
-6. Slutlig domän/subdomän beslutas.
-7. Först efter uttryckligt godkännande kopplas Swish/kort och betalstatus.
+## Nästa fas
+Rekommenderad nästa operativa fas:
 
-## Drift
-Den gamla P1-deployen är pensionerad efter verifierad P2-deploy. DMA Motor innehåller inte längre BoIS-sidan eller dess deployflöde.
+### P5 – Match kit batching
+Bygg:
+- konfigurerbar tröskel X, startförslag 8–10 order
+- max väntetid, startförslag 7 dagar
+- batch-ID
+- låsning/idempotens så samma order aldrig skickas två gånger
+- leverantörs-CSV
+- mail till leverantör + kopia Erik
+- email outbox + retry
+- "Skicka batch nu" i admin
+- full batchhistorik
+
+### P4 – Membership & Gym
+Bygg parallellt när Nordic Wellness-flödet är bekräftat:
+- riktig medlemsstatus
+- medlemsperiod
+- eligibility
+- gymaktivering
+- befintlig medlemskontroll
+- förnyelsemodell
+
+P6 betalning ska fortfarande komma efter att merchant/betalningsmottagare är beslutad.
