@@ -31,3 +31,14 @@ Projektet ska tills vidare kunna utvecklas och demonstreras utan nya löpande ko
 - Ingen kostnad eller uppgradering har accepterats.
 - Nästa steg: aktivera Pages-källa "GitHub Actions" manuellt i repo-inställningen om det redan ingår i kontots plan. Om GitHub visar en betald uppgradering ska den inte accepteras; välj då annan kostnadsfri publiceringsväg.
 - SharePoint-projektmapp skapad: "Tranås BoIS – Webbshop" med statusdokument och konceptbild.
+
+
+## Live-demo aktiverad
+- GitHub Pages: AKTIV.
+- Kunddemo: https://albertandersson.github.io/Tran-s-bois/
+- Ledarvy: https://albertandersson.github.io/Tran-s-bois/admin.html
+- Senaste egen Pages-deploy: success.
+- Publik åtkomst verifierad externt 2026-09-27.
+- Repo är nu publikt för att möjliggöra kostnadsfri GitHub Pages-publicering.
+- Inga betalningar, orderlagring eller betaltjänster är aktiverade.
+- Nya löpande kostnader: 0 kr.
