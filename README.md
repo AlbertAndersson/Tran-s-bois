@@ -1,25 +1,27 @@
-# Tranås BoIS – webbshop / beställningsportal
+# Tranås BoIS – beställningsportal
 
 Fristående, kostnadssnål beställningsportal för Tranås BoIS matchställ.
 
 ## Mål
 - Mobilvänlig beställning för föräldrar.
 - Lag, storlek, spelarnamn och nummer i samma flöde.
-- Betalning med Swish/kort i skarp version.
 - Automatisk orderlista per lag.
-- CSV/Excel-export till leverantör.
+- Statusflöde och CSV-export till leverantör.
 - Ingen lagerhantering.
 - Ingen koppling till Intersport.
+- Betalning med Swish/kort kopplas först efter separat godkännande.
 - Så låg fast driftkostnad som möjligt.
 
-## Demo
-- `index.html`: kundflöde.
-- `admin.html`: ledarvy med demodata och CSV-export.
-- Betalning är **inte** aktiverad i demon.
-- Priser är **endast exempel**.
+## Struktur
+- `site/` – kundflöde och ledarvy.
+- `server/` – P1 PHP-API och filbaserad ordermotor.
+- `tests/` – smoke-test för ordermotorn.
+- `docs/` – status och teknisk dokumentation.
+
+## Miljöer
+**GitHub Pages** publicerar endast `site/`. Där sparas inga orderuppgifter och sidan fungerar som live-demo.
+
+**P1 staging** använder samma frontend tillsammans med PHP-API:t. Staging ska endast användas med testuppgifter och har ingen betalning.
 
 ## Kostnadsprincip
-Inga betaltjänster, abonnemang eller externa kostnader får aktiveras utan uttryckligt godkännande.
-
-## Publicering
-Repo innehåller en GitHub Pages-workflow. Den försöker använda Pages utan köp eller uppgradering. Om kontots GitHub-plan inte medger Pages från privat repo ska vi välja en kostnadsfri publiceringsväg i stället.
+Inga betaltjänster, abonnemang eller externa kostnader får aktiveras utan uttryckligt godkännande. P1 är byggd utan externa paket eller betalda tjänster.
