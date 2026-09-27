@@ -398,7 +398,7 @@ function bois_p3_public_id(): string
     return 'BOIS-' . gmdate('ymd') . '-' . strtoupper(substr(bin2hex(random_bytes(5)), 0, 7));
 }
 
-function bois_p3_catalog(PDO $pdo, bool $includeHidden=false): array
+function bois_p3_catalog(PDO $pdo, bool $includeHidden=false, ?DateTimeImmutable $asOf=null): array
 {
     $where = $includeHidden ? '1=1' : 'p.is_public=1';
     $sql =
@@ -413,6 +413,8 @@ function bois_p3_catalog(PDO $pdo, bool $includeHidden=false): array
     $products = [];
     foreach ($pdo->query($sql) as $row) {
         $key = (string)$row['product_key'];
+        $available=!function_exists('bois_p7_launch_allowed') || bois_p7_launch_allowed($pdo,$key,$asOf);
+        if(!$includeHidden && !$available) continue;
         if (!isset($products[$key])) {
             $products[$key] = [
                 'product_key'=>$key,
@@ -422,8 +424,8 @@ function bois_p3_catalog(PDO $pdo, bool $includeHidden=false): array
                 'price_ore'=>$row['product_price_ore'] === null ? null : (int)$row['product_price_ore'],
                 'currency'=>(string)$row['currency'],
                 'fulfillment_type'=>(string)$row['fulfillment_type'],
-                'is_public'=>(bool)$row['is_public'],
-                'is_orderable'=>(bool)$row['is_orderable'],
+                'is_public'=>(bool)$row['is_public'] && $available,
+                'is_orderable'=>(bool)$row['is_orderable'] && $available,
                 'active_from'=>$row['active_from'],
                 'metadata'=>$row['product_metadata_json'] ? json_decode((string)$row['product_metadata_json'],true) : [],
                 'variants'=>[],
@@ -453,7 +455,7 @@ function bois_p3_bool(mixed $value): bool
     return $value === true || $value === 1 || $value === '1' || $value === 'true' || $value === 'on';
 }
 
-function bois_p3_resolve_variant(PDO $pdo, string $sku): array
+function bois_p3_resolve_variant(PDO $pdo, string $sku, ?DateTimeImmutable $asOf=null): array
 {
     $stmt = $pdo->prepare(
         "SELECT v.id variant_id,v.sku,v.name variant_name,v.price_ore variant_price_ore,v.metadata_json variant_metadata_json,
@@ -467,6 +469,10 @@ function bois_p3_resolve_variant(PDO $pdo, string $sku): array
     $stmt->execute([$sku]);
     $row = $stmt->fetch();
     if (!$row || !(bool)$row['is_public'] || !(bool)$row['is_orderable']) {
+        throw new InvalidArgumentException('Produkten kan inte beställas.');
+    }
+    if(function_exists('bois_p7_launch_allowed') &&
+       !bois_p7_launch_allowed($pdo,(string)$row['product_key'],$asOf)){
         throw new InvalidArgumentException('Produkten kan inte beställas.');
     }
     return $row;
@@ -519,7 +525,7 @@ function bois_p3_validate_line_meta(array $variant, array $meta): array
     return [];
 }
 
-function bois_p3_create_order(PDO $pdo, array $input): array
+function bois_p3_create_order(PDO $pdo, array $input, ?DateTimeImmutable $asOf=null): array
 {
     if (bois_p3_clean_string($input['website'] ?? '',200) !== '') {
         throw new InvalidArgumentException('Beställningen kunde inte tas emot.');
@@ -558,7 +564,7 @@ function bois_p3_create_order(PDO $pdo, array $input): array
         if (!is_array($line)) throw new InvalidArgumentException('Ogiltig orderrad.');
         $sku = bois_p3_clean_string($line['sku'] ?? '',100);
         $qty = max(1,min(10,(int)($line['quantity'] ?? 1)));
-        $variant = bois_p3_resolve_variant($pdo,$sku);
+        $variant = bois_p3_resolve_variant($pdo,$sku,$asOf);
         $meta = bois_p3_validate_line_meta($variant,is_array($line['metadata'] ?? null) ? $line['metadata'] : []);
         $unit = $variant['variant_price_ore'] !== null ? (int)$variant['variant_price_ore'] : (int)$variant['product_price_ore'];
         $lineTotal = $unit * $qty;

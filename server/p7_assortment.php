@@ -155,3 +155,49 @@ function bois_p7_admin_assortment(PDO $pdo): array
     }
     return array_values($products);
 }
+
+function bois_p7_restricted_product(string $productKey): bool
+{
+    return !in_array($productKey,['membership','nordic-gym','match-kit'],true);
+}
+
+function bois_p7_launch_allowed(PDO $pdo,string $productKey,?DateTimeImmutable $at=null): bool
+{
+    if(!bois_p7_restricted_product($productKey)) return true;
+    $at=($at ?? new DateTimeImmutable('now',new DateTimeZone('Europe/Stockholm')))
+        ->setTimezone(new DateTimeZone('Europe/Stockholm'));
+    if($at->format('Y-m-d')<'2027-01-01') return false;
+
+    $stmt=$pdo->prepare(
+        "SELECT a.*,p.is_public,p.is_orderable,p.price_ore
+         FROM bois_p7_assortment a JOIN bois_products p ON p.id=a.product_id
+         WHERE p.product_key=? LIMIT 1"
+    );
+    $stmt->execute([$productKey]);
+    $a=$stmt->fetch();
+    if(!$a || !$a['approved'] || !$a['is_public'] || !$a['is_orderable'] ||
+       $at->format('Y-m-d')<(string)$a['launch_date'] ||
+       $a['verification_status']!=='VERIFIED' || $a['supplier_status']!=='VERIFIED' ||
+       $a['sku_status']!=='VERIFIED' || $a['price_status']!=='VERIFIED' ||
+       $a['supplier_id']===null || $a['supplier_sku']===null ||
+       $a['purchase_price_ore']===null || $a['decoration_cost_ore']===null ||
+       $a['shipping_handling_ore']===null || $a['sale_price_ore']===null ||
+       $a['sale_price_ex_vat_ore']===null || $a['moq']===null || $a['lead_time_days']===null ||
+       $a['price_ore']===null || (int)$a['price_ore']!==(int)$a['sale_price_ore'] ||
+       count(json_decode((string)$a['blockers_json'],true) ?: [])>0){
+        return false;
+    }
+
+    $variants=$pdo->prepare(
+        "SELECT COUNT(*) total,
+                SUM(CASE WHEN pv.supplier_sku IS NULL OR pv.verification_status<>'VERIFIED' OR
+                              v.id IS NULL OR v.price_ore IS NULL OR v.active<>1
+                         THEN 1 ELSE 0 END) invalid_count
+         FROM bois_p7_variants pv
+         LEFT JOIN bois_variants v ON v.product_id=pv.product_id AND v.sku=pv.supplier_sku
+         WHERE pv.product_id=?"
+    );
+    $variants->execute([(int)$a['product_id']]);
+    $v=$variants->fetch();
+    return (int)$v['total']>0 && (int)$v['invalid_count']===0;
+}
