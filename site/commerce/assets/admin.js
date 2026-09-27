@@ -84,7 +84,7 @@
 
   function renderOrders() {
     $('orders').innerHTML=orders.length ? orders.map(o=>{
-      const canSim=c.cfg.apiBase && o.payment_status!=='PAID';
+      const canSim=c.cfg.apiBase && ['NOT_ENABLED','PENDING','FAILED','CANCELLED'].includes(o.payment_status);
       return '<tr>'+
         '<td><b>'+esc(o.public_id)+'</b><div class="small">'+esc(o.created_at)+'</div></td>'+
         '<td>'+esc(o.customer_name)+'<div class="small">'+esc(o.customer_email)+'</div></td>'+
@@ -206,12 +206,13 @@
   }
 
   async function simulatePaid(publicId) {
-    if(!confirm('Simulera att denna TESTORDER är betald? Detta används bara i P5 staging.')) return;
+    if(!confirm('Simulera verifierad mockbetalning för denna TESTORDER?')) return;
     clearMessages();
     try {
       const result=await post('admin_simulate_paid',{public_id:publicId});
-      const p4Text=(result.p4?.members?.length||result.p4?.benefits?.length)?' Medlems-/förmånsstatus uppdaterades också.':'';
-      showMessage('Testordern markerades betald. '+((result.result.auto_batches||[]).length?'En automatisk batch skapades.':'Ingen ny matchställsbatch skapades.')+p4Text);
+      const effects=result.result?.result?.effects||{};
+      const p4Text=(effects.p4?.members?.length||effects.p4?.benefits?.length)?' Medlems-/förmånsstatus uppdaterades också.':'';
+      showMessage('Testordern markerades betald via signerad mockhändelse. '+((effects.p5?.auto_batches||[]).length?'En automatisk batch skapades.':'Ingen ny matchställsbatch skapades.')+p4Text);
       await load();
     } catch(error) { showError(error.message); }
   }

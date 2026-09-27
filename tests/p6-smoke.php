@@ -78,6 +78,23 @@ try{
 }
 if(!$bad) throw new RuntimeException('Invalid signature was accepted.');
 
+foreach([
+    ['order_public_id'=>'BOIS-WRONG'],
+    ['currency'=>'EUR'],
+    ['currency'=>''],
+    ['amount_ore'=>(int)$session['total_ore']+1],
+] as $index=>$change){
+    $invalid=bois_p6_event_payload($config,$session,'payment.succeeded','evt-invalid-'.$index);
+    $invalid=array_replace($invalid,$change);
+    $invalidRaw=json_encode($invalid,JSON_THROW_ON_ERROR);
+    $invalidTs=(string)time();
+    $rejected=false;
+    try{
+        bois_p6_process_webhook_raw($pdo,$config,$invalidRaw,$invalidTs,'sha256='.bois_p6_signature($config,$invalidRaw,$invalidTs));
+    }catch(InvalidArgumentException){$rejected=true;}
+    if(!$rejected) throw new RuntimeException('Signed mismatched webhook was accepted.');
+}
+
 $paid=bois_p6_process_webhook_raw($pdo,$config,$raw,$ts,$sig);
 if(($paid['result']['status']??'')!=='PAID') throw new RuntimeException('Paid webhook failed.');
 
@@ -95,6 +112,23 @@ if((string)bois_p4_admin_members($pdo)[0]['valid_to']!==$validTo) throw new Runt
 $second=bois_p6_process_webhook_raw($pdo,$config,$raw2,$ts2,$sig2);
 if(($second['result']['effects']['already_applied']??false)!==true) throw new RuntimeException('Second PAID event reapplied downstream effects.');
 if((string)bois_p4_admin_members($pdo)[0]['valid_to']!==$validTo) throw new RuntimeException('Second PAID event extended membership.');
+
+$reused=json_decode($raw,true,64,JSON_THROW_ON_ERROR);
+$reused['amount_ore']=(int)$session['total_ore']+1;
+$reusedRaw=json_encode($reused,JSON_THROW_ON_ERROR);
+$reusedTs=(string)time();
+$rejected=false;
+try{
+    bois_p6_process_webhook_raw($pdo,$config,$reusedRaw,$reusedTs,'sha256='.bois_p6_signature($config,$reusedRaw,$reusedTs));
+}catch(DomainException){$rejected=true;}
+if(!$rejected) throw new RuntimeException('Reused event ID with different content was accepted.');
+
+$adminOrder=p6_order($pdo,[['sku'=>'MEM-YOUTH','quantity'=>1,'metadata'=>['member_name'=>'P6 Admin']]],'p6-admin');
+$adminPaid=bois_p6_admin_simulate_paid($pdo,$config,$adminOrder['public_id']);
+if(($adminPaid['result']['status']??'')!=='PAID') throw new RuntimeException('Admin mock did not use verified P6 path.');
+$adminEvents=$pdo->prepare("SELECT COUNT(*) FROM bois_payment_events WHERE order_id=(SELECT id FROM bois_orders WHERE public_id=?) AND signature_verified=1 AND status='PROCESSED'");
+$adminEvents->execute([$adminOrder['public_id']]);
+if((int)$adminEvents->fetchColumn()!==1) throw new RuntimeException('Admin mock skipped signed event.');
 
 $kit=p6_order($pdo,[[
     'sku'=>'MATCHKIT-STAGING','quantity'=>1,
@@ -144,7 +178,7 @@ $refundState=$refundOrder->fetch();
 if(($refundState['payment_status']??'')!=='REFUNDED' || ($refundState['fulfillment_status']??'')!=='REVIEW_REQUIRED'){
     throw new RuntimeException('Refund did not enter manual fulfillment review.');
 }
-if(bois_p4_stats($pdo)['active_members']!==1) throw new RuntimeException('Refund silently revoked membership; manual review invariant broken.');
+if(bois_p4_stats($pdo)['active_members']!==2) throw new RuntimeException('Refund silently revoked membership; manual review invariant broken.');
 
 $outbox=bois_p6_admin_payments($pdo)['outbox'];
 if(count($outbox)<3) throw new RuntimeException('Expected payment receipt outbox rows.');

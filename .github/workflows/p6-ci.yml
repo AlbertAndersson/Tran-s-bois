@@ -66,6 +66,7 @@ jobs:
           php -l server/p5_batch.php
           php -l server/p4_membership.php
           php -l server/commerce-api.php
+          php -l tests/p6-smoke.php
 
       - name: P6 MySQL smoke
         run: php tests/p6-smoke.php
@@ -75,6 +76,7 @@ jobs:
           node --check site/commerce/assets/payment.js
           node --check site/commerce/assets/membership.js
           node --check site/commerce/assets/matchkit.js
+          node --check site/commerce/assets/admin.js
 
       - name: P6 safety checks
         run: |

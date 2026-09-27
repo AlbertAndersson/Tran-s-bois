@@ -258,12 +258,10 @@ try {
         commerce_require_admin($config);
         $data=commerce_body();
         $publicId=bois_p3_clean_string($data['public_id']??'',40);
-        $payment=bois_p5_mark_order_paid($pdo,$config,$publicId);
-        $p4=bois_p4_apply_paid_order($pdo,$config,$publicId);
+        $payment=bois_p6_admin_simulate_paid($pdo,$config,$publicId);
         commerce_respond([
             'ok'=>true,
             'result'=>$payment,
-            'p4'=>$p4,
             'waiting'=>bois_p5_waiting_summary($pdo),
         ]);
     }
