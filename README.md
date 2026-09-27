@@ -8,8 +8,8 @@ Fristående BoIS-webshop med medlemskap, Nordic Wellness-förmån, matchställ o
 - P3 Commerce Core / MySQL: **COMPLETE**
 - P4 Membership & Nordic Wellness: **COMPLETE / LIVE STAGING VERIFIED**
 - P5 Match kit batching: **COMPLETE / LIVE STAGING VERIFIED**
-- P6 Payment: **NEXT**
-- Betalning: **AVSTÄNGD**
+- P6 Payment: **COMPLETE / LIVE STAGING VERIFIED**
+- Betalning: **ISOLERAD MOCK/TESTMODE I STAGING – RIKTIG PROVIDER AVSTÄNGD**
 - Extern mejlsändning: **AVSTÄNGD I STAGING**
 - Ny extern driftkostnad: **0 kr**
 
@@ -19,6 +19,7 @@ Fristående BoIS-webshop med medlemskap, Nordic Wellness-förmån, matchställ o
 - Matchställ: https://alberiq.se/bois-shop-p3/match-kit.html
 - Orderstatus: https://alberiq.se/bois-shop-p3/order.html
 - Shopadmin: https://alberiq.se/bois-shop-p3/admin.html
+- Testbetalning: https://alberiq.se/bois-shop-p3/payment.html
 
 Staging använder endast testuppgifter.
 
@@ -61,6 +62,20 @@ P4 samlar **inte in personnummer**. Nordic kan nu hanteras med manuell partnerha
 
 I staging är mottagare låsta till `example.invalid` och `mail_transport = disabled`.
 
+## P6 – Payment
+P6 är live-verifierad i staging med en kostnadsfri, isolerad payment mock.
+
+- serverstyrd checkout för Test-Swish och Test-kort
+- signerad HMAC-webhook med timestamp-kontroll
+- unik `(provider,event_id)` för event-idempotens
+- retry-säker `PAID`-applicering till P4/P5
+- `FAILED`, `CANCELLED`, `PARTIALLY_REFUNDED` och `REFUNDED`
+- refund går till `REVIEW_REQUIRED` i fulfillment i stället för att automatiskt återkalla redan startad leverans/förmån
+- kvitto/refund-outbox med retry/backoff
+- payment-mail är avstängt i staging och mottagare tvingas till `example.invalid`
+
+Ingen riktig betalprovider, merchant-onboarding eller providerkostnad är aktiverad.
+
 ## Commerce Core
 MySQL med separata `bois_`-tabeller för produkter, kunder, order, medlemskap, förmåner, betalning, leverantörer, fulfillment, batcher, outbox och eventlogg.
 
@@ -75,12 +90,11 @@ Dolda/ej beställningsbara fram till 1 januari 2027:
 - Presentkort
 
 ## Nästa utvecklingsordning
-1. **P6 – Payment**: Swish/kort + webhook, refunds och kvitto/orderbekräftelse.
-2. **P7 – 2027 assortment**.
-3. **P8 – production launch**.
-4. **P9 – sales engine**.
+1. **P7 – 2027 assortment**: bygg leverantörs-/pris-/SKU-underlag och butikspresentation, men håll allt dolt till 1 januari 2027.
+2. **P8 – production launch**: riktig payment provider, produktionsdatabas, domän, villkor och skarpa integrationsuppgifter.
+3. **P9 – sales engine**.
 
-P6 ska återanvända exakt samma `PAID`-händelse som P4/P5 redan använder i staging.
+P6:s payment gate är nu den gemensamma gränsen för medlemskap, Nordic och matchställ. Riktig provider kan senare kopplas bakom samma checkout/webhook-kontrakt utan att bygga om P4/P5.
 
 ## Kostnadsprincip
 Inga nya betaltjänster, abonnemang eller externa kostnader aktiveras utan uttryckligt godkännande.
