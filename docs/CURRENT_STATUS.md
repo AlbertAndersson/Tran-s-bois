@@ -12,8 +12,8 @@ Datum: 2026-09-27
 - Publika demon sparar inga personuppgifter och genomför ingen betalning.
 
 ## P1 staging
-- Kund: https://test.dmamotor.se/bois-p1/
-- Admin: https://test.dmamotor.se/bois-p1/admin.html
+- Kund: https://alberiq.se/bois-bestallning-p1/
+- Admin: https://alberiq.se/bois-bestallning-p1/admin.html
 - Staging använder endast testuppgifter.
 - Orderlagring: en privat JSON-fil per order.
 - Unika ordernummer och idempotent registrering.
@@ -47,7 +47,7 @@ Senaste automatiserade end-to-end-körningen på Simply:
 - Produktionsversion ska flytta runtime-konfiguration/orderdata utanför webbrot.
 
 ## Kostnadsspärr
-Inga nya abonnemang eller betaltjänster har aktiverats. P1 använder GitHub Pages + redan befintlig Simply-hosting.
+Inga nya abonnemang eller betaltjänster har aktiverats. P1 använder GitHub Pages + redan befintlig AlberIQ/Simply-hosting.
 
 ## Nästa steg – P2 / produktionsförberedelse
 1. Erik/BoIS bekräftar verkliga lag, produkter, storlekar och priser.
@@ -64,3 +64,13 @@ Inga nya abonnemang eller betaltjänster har aktiverats. P1 använder GitHub Pag
 - Korrigering av admin-JavaScript: `399fa7032b42de012769ff46fea99ebabc5ad9cd`.
 - Efter korrigeringen passerade GitHub Pages: checkout, JavaScript-validering, Pages-konfiguration, artifact-upload och deploy.
 - Simply-staging kontrollerades på nytt: kundsida och adminvy svarar, API health returnerar `ok:true`, `mode:staging` och `storage_writable:true`.
+
+
+## Hostingflytt 2026-09-27
+- P1-staging flyttad från DMA Motor till AlberIQ.
+- Ny adress: https://alberiq.se/bois-bestallning-p1/
+- Ny adminadress: https://alberiq.se/bois-bestallning-p1/admin.html
+- Runtime-konfiguration och orderdata ligger utanför webbroot på AlberIQ-hostingen.
+- Den tidigare DMA-adressen är borttagen: `https://test.dmamotor.se/bois-p1/` svarar inte längre med BoIS-sidan.
+- BoIS deployment-workflow är borttagen ur `AlbertAndersson/Dmamotor` så sidan inte kan återskapas där av misstag.
+- Ny extern kostnad: **0 kr**.
