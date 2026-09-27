@@ -5,21 +5,21 @@ Fristående BoIS-webshop med medlemskap, gymförmån, matchställ och förberett
 ## Status
 - P1 ordermotor: **COMPLETE**
 - P2 produktionsförberedelse: **COMPLETE**
-- P3 Commerce Core: **COMPLETE / MYSQL STAGING VERIFIED**
+- P3 Commerce Core: **COMPLETE**
+- P5 Match kit batching: **COMPLETE / LIVE STAGING VERIFIED**
 - Betalning: **AVSTÄNGD**
-- Leverantörsutskick: **AVSTÄNGT**
+- Extern mejlsändning: **AVSTÄNGD I STAGING**
 - Ny extern driftkostnad: **0 kr**
 
-## P3 staging
+## Aktiv staging
 - Shop: https://alberiq.se/bois-shop-p3/
 - Medlemskap + gym: https://alberiq.se/bois-shop-p3/membership.html
 - Matchställ: https://alberiq.se/bois-shop-p3/match-kit.html
-- Shopadmin: https://alberiq.se/bois-shop-p3/admin.html
+- Shopadmin / batchmotor: https://alberiq.se/bois-shop-p3/admin.html
 
 Staging använder endast testuppgifter.
 
 ## Säljbara kategorier före 1 januari 2027
-Bekräftat i arbetsmötet 2026-09-27:
 - medlemskap
 - Nordic Wellness gymkort för medlem
 - matchställ
@@ -33,30 +33,36 @@ Gymkort:
 - 2 650 kr för aktiv BoIS-medlem
 
 Matchställ:
-- Commerce Core och batchmodell är byggda
-- 998 kr är fortfarande **endast staging/testpris** och ska ersättas med verkligt pris före skarp handel
+- 998 kr är fortfarande **endast staging/testpris**
+- verkligt pris/leverantörsdata krävs före skarp handel
+
+## P5 batchregel
+Matchställ kan endast batchas när ordern är markerad betald.
+
+Startregel:
+- **8 betalda matchställ** → automatisk batch
+- **7 dagar** max väntetid → automatisk batch
+- admin kan välja **Skicka batch nu**
+
+P5 skapar:
+- unikt batch-ID
+- låsta batchrader/idempotens
+- leverantörs-CSV
+- SHA-256 av exakt CSV
+- e-post-outbox
+- retry med exponentiell väntetid
+- historik/status i admin
+
+I staging:
+- mottagare tvingas till `example.invalid`
+- `mail_transport = disabled`
+- inget verkligt mejl skickas
 
 ## Commerce Core
-P3 använder MySQL och separata `bois_`-tabeller för:
-- produkter och varianter
-- kunder
-- order och orderrader
-- medlemskap
-- betalningsposter
-- leverantörer och fulfillment-regler
-- batcher
-- e-post-outbox
-- eventlogg
-
-Fulfillment-typer:
-- `DIGITAL_MEMBERSHIP`
-- `MEMBER_BENEFIT`
-- `BATCH_SUPPLIER`
-- `DIRECT_SUPPLIER`
-- `DIGITAL_GIFT`
+MySQL med separata `bois_`-tabeller för produkter, order, medlemskap, betalning, leverantörer, fulfillment, batcher, outbox och eventlogg.
 
 ## 2027-sortiment
-Följande finns förberedda som dolda produkter och är inte publikt säljbara före 1 januari 2027:
+Dolda/ej beställningsbara fram till 1 januari 2027:
 - BoIS 1941 Hoodie
 - Supporter-T-shirt
 - Bandyförälder Hoodie
@@ -65,17 +71,12 @@ Följande finns förberedda som dolda produkter och är inte publikt säljbara f
 - Knatte Pack
 - Presentkort
 
-## Säkerhet och kostnad
-P3-staging använder befintlig Simply/MySQL-infrastruktur med egna `bois_`-tabeller. Deployen verifierar att icke-BoIS-tabeller inte ändras.
-
-Produktion ska få dedikerad BoIS-databas/credential innan riktiga kunduppgifter används.
-
-Inga betaltjänster, abonnemang eller leverantörsutskick aktiveras utan uttryckligt godkännande.
-
 ## Nästa utvecklingsordning
-1. **P5 – Match kit batching**: tröskel X, max väntetid, batch-ID, leverantörsunderlag, mail/outbox/retry.
-2. **P4 – Membership & Gym**: riktig medlemsstatus och Nordic Wellness-eligibility/aktivering.
-3. **P6 – Payment**: Swish/kort och webhook.
-4. **P7 – 2027 assortment**.
-5. **P8 – production launch**.
-6. **P9 – sales engine**.
+1. **P4 – Membership & Gym**: riktig medlemsstatus, eligibility och Nordic-aktivering.
+2. **P6 – Payment**: Swish/kort + webhook; P5 triggas då av riktiga PAID-events.
+3. **P7 – 2027 assortment**.
+4. **P8 – production launch**.
+5. **P9 – sales engine**.
+
+## Kostnadsprincip
+Inga nya betaltjänster, abonnemang eller externa kostnader aktiveras utan uttryckligt godkännande.
