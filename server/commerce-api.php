@@ -5,6 +5,7 @@ require __DIR__ . '/p3_db.php';
 require __DIR__ . '/p5_batch.php';
 require __DIR__ . '/p4_membership.php';
 require __DIR__ . '/p6_payment.php';
+require __DIR__ . '/p7_assortment.php';
 
 function commerce_respond(array $data, int $status=200): never
 {
@@ -71,6 +72,7 @@ try {
     bois_p5_apply_schema($pdo);
     bois_p4_apply_schema($pdo);
     bois_p6_apply_schema($pdo);
+    bois_p7_apply_schema($pdo);
     commerce_check_origin($config);
 
     if(($_SERVER['REQUEST_METHOD']??'')==='OPTIONS'){
@@ -173,6 +175,11 @@ try {
             'batch_waiting'=>bois_p5_waiting_summary($pdo),
             'p4_stats'=>bois_p4_stats($pdo),
         ]);
+    }
+
+    if($action==='admin_p7'&&$method==='GET'){
+        commerce_require_admin($config);
+        commerce_respond(['ok'=>true,'assortment'=>bois_p7_admin_assortment($pdo)]);
     }
 
 
