@@ -367,13 +367,14 @@ function bois_p5_batch_rows(PDO $pdo, string $publicBatchId): array
 {
     $stmt = $pdo->prepare(
         "SELECT b.public_id batch_public_id,b.status,b.trigger_reason,b.created_at,b.sent_at,
-                o.public_id order_public_id,i.sku,i.product_name,i.variant_name,i.quantity,i.metadata_json
+                o.public_id order_public_id,i.sku,i.product_name,i.variant_name,i.quantity,i.metadata_json,
+                i.created_at item_created_at
          FROM bois_supplier_batches b
          JOIN bois_batch_items bi ON bi.batch_id=b.id
          JOIN bois_order_items i ON i.id=bi.order_item_id
          JOIN bois_orders o ON o.id=i.order_id
          WHERE b.public_id=?
-         ORDER BY o.public_id,i.id"
+         ORDER BY i.created_at ASC,i.id ASC"
     );
     $stmt->execute([$publicBatchId]);
     $rows = $stmt->fetchAll();
