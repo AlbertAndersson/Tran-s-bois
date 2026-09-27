@@ -56,3 +56,11 @@ Inga nya abonnemang eller betaltjänster har aktiverats. P1 använder GitHub Pag
 4. Lägg skarp integritetsinformation, köpvillkor och orderbekräftelse.
 5. Bestäm slutlig domän/subdomän.
 6. Först efter uttryckligt godkännande: koppla Swish/kort och betalstatus.
+
+
+## Slutverifiering av source
+- P1-källkoden återställd och verifierad på `main`.
+- Source-restaurering: `5384421198abb7f781f7b6e0ecd4dc8a88ac8e15`.
+- Korrigering av admin-JavaScript: `399fa7032b42de012769ff46fea99ebabc5ad9cd`.
+- Efter korrigeringen passerade GitHub Pages: checkout, JavaScript-validering, Pages-konfiguration, artifact-upload och deploy.
+- Simply-staging kontrollerades på nytt: kundsida och adminvy svarar, API health returnerar `ok:true`, `mode:staging` och `storage_writable:true`.
