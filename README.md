@@ -91,10 +91,10 @@ Dolda/ej beställningsbara fram till 1 januari 2027:
 
 ## Nästa utvecklingsordning
 1. **P7 – 2027 assortment**: bygg leverantörs-/pris-/SKU-underlag och butikspresentation, men håll allt dolt till 1 januari 2027.
-2. **P8 – production launch**: riktig payment provider, produktionsdatabas, domän, villkor och skarpa integrationsuppgifter.
+2. **P8 – production launch**: Stripe som vald payment provider, produktionsdatabas, domän, villkor och skarpa integrationsuppgifter.
 3. **P9 – sales engine**.
 
-P6:s payment gate är nu den gemensamma gränsen för medlemskap, Nordic och matchställ. Riktig provider kan senare kopplas bakom samma checkout/webhook-kontrakt utan att bygga om P4/P5.
+P6:s payment gate är nu den gemensamma gränsen för medlemskap, Nordic och matchställ. **Stripe är vald som målprovider för P8**, men ska inte implementeras eller aktiveras i P7. Stripe ska senare kopplas bakom samma checkout/webhook-kontrakt utan att bygga om P4/P5.
 
 ## Kostnadsprincip
 Inga nya betaltjänster, abonnemang eller externa kostnader aktiveras utan uttryckligt godkännande.
