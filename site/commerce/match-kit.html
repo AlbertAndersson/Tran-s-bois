@@ -7,13 +7,13 @@
   <script src="config.js" defer></script><script src="assets/common.js" defer></script><script src="assets/matchkit.js" defer></script>
 </head>
 <body>
-<header class="header"><div class="nav"><a class="brand" href="index.html"><img src="https://cdn06.svenskalag.se/img/clubmarks/6245_w.png?3=" alt="Tranås BoIS"><div>TRANÅS BoIS<small>MATCHSTÄLL</small></div></a><span class="env" data-env>P3 DEMO</span></div></header>
+<header class="header"><div class="nav"><a class="brand" href="index.html"><img src="https://cdn06.svenskalag.se/img/clubmarks/6245_w.png?3=" alt="Tranås BoIS"><div>TRANÅS BoIS<small>MATCHSTÄLL</small></div></a><span class="env" data-env>STAGING</span></div></header>
 <main class="form-shell">
   <a href="index.html" class="small">← Till shoppen</a>
   <section class="form-card" style="margin-top:14px">
     <span class="tag red">BATCH_SUPPLIER</span>
     <h1>Beställ matchställ</h1>
-    <p class="sub">P3 registrerar matchstället som en riktig commerce-orderrad. När betalning byggts aktiveras batchregeln: order skickas samlat när tröskel eller max väntetid nås.</p>
+    <p class="sub">Matchstället registreras som en riktig commerce-orderrad. P5-batchmotorn är klar: efter betalning väntar ordern tills 8 betalda ställ uppnåtts, 7 dagar passerat eller admin skickar batchen manuellt.</p>
     <div class="notice"><b>Stagingpris 998 kr:</b> detta är fortfarande ett testpris. Riktigt leverantörspris ska in innan skarp försäljning.</div>
     <form id="kitForm">
       <h2>Spelare & lag</h2>
@@ -32,7 +32,7 @@
       <h2>Kontakt</h2>
       <div class="field"><label for="buyerName">Beställarens namn</label><input id="buyerName" required></div>
       <div class="row"><div class="field"><label for="email">E-post</label><input id="email" type="email" required></div><div class="field"><label for="phone">Telefon</label><input id="phone" type="tel"></div></div>
-      <label class="toggle"><input id="consent" type="checkbox" required><span><b>Jag godkänner testregistreringen</b><br><span class="small">Använd endast testuppgifter i P3 staging.</span></span></label>
+      <label class="toggle"><input id="consent" type="checkbox" required><span><b>Jag godkänner testregistreringen</b><br><span class="small">Använd endast testuppgifter i utvecklingsmiljön.</span></span></label>
 
       <div class="summary"><div class="line"><span>Matchställ – testvariant</span><b>998 kr</b></div><div class="line total"><span>Totalt</span><span>998 kr</span></div></div>
       <div id="error" class="error" hidden></div><div id="success" class="success" hidden></div>
