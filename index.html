@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#063d86">
+  <title>Tranås BoIS – Beställ matchställ (demo)</title>
+  <style>
+    :root{--blue:#063d86;--blue2:#0a56a8;--red:#d7193f;--ink:#10233e;--muted:#607087;--line:#dfe7f0;--bg:#f4f7fb;--white:#fff;--green:#0a7b55}
+    *{box-sizing:border-box} body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink)}
+    a{color:inherit}.top{background:linear-gradient(135deg,#052e68,#0b58a9);color:#fff}.topbar{max-width:1180px;margin:auto;padding:14px 22px;display:flex;align-items:center;gap:18px}
+    .brand{display:flex;align-items:center;gap:12px;font-weight:800}.brand img{width:48px;height:58px;object-fit:contain}.brand small{display:block;font-size:11px;letter-spacing:.13em;font-weight:700;opacity:.8;margin-top:2px}
+    nav{margin-left:auto;display:flex;gap:20px;align-items:center;font-size:14px;font-weight:700}nav a{text-decoration:none;opacity:.9}.active{border-bottom:3px solid #ff395a;padding-bottom:6px}
+    .demo-pill{background:#fff2b9;color:#5b4700;border:1px solid #efd66d;padding:7px 11px;border-radius:999px;font-size:12px;font-weight:800}
+    .hero{max-width:1180px;margin:auto;padding:52px 22px 45px;display:grid;grid-template-columns:1.4fr .8fr;gap:36px;align-items:end}
+    .hero h1{font-size:clamp(36px,5vw,66px);line-height:.98;margin:0 0 16px;letter-spacing:-.04em}.hero p{font-size:18px;line-height:1.55;max-width:700px;margin:0;opacity:.92}
+    .hero-note{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);padding:18px;border-radius:18px}.hero-note b{display:block;font-size:18px;margin-bottom:6px}.hero-note span{opacity:.86;font-size:14px}
+    .wrap{max-width:1180px;margin:26px auto 60px;padding:0 22px}.stepbar{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:0 0 18px}.step{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 16px;font-size:13px;font-weight:800}.step strong{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:#eaf2fc;color:var(--blue);margin-right:8px}
+    .grid{display:grid;grid-template-columns:.9fr 1.25fr .85fr;gap:18px;align-items:start}.card{background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:0 10px 30px rgba(17,55,94,.06);overflow:hidden}.pad{padding:22px}
+    .card h2{font-size:22px;margin:0 0 6px;color:var(--blue)}.sub{margin:0 0 18px;color:var(--muted);font-size:14px;line-height:1.5}
+    .kit{height:270px;border-radius:16px;background:linear-gradient(145deg,#eef5fd,#d8e7fa);display:grid;place-items:center;margin:12px 0 18px;position:relative;overflow:hidden}
+    .kit:after{content:"DEMO";position:absolute;right:-29px;top:20px;background:#fff2b9;color:#6b5200;font-weight:900;font-size:11px;padding:7px 34px;transform:rotate(35deg);border:1px solid #efd66d}
+    .jersey{width:175px;height:180px;position:relative}.body{position:absolute;left:42px;top:25px;width:92px;height:130px;background:linear-gradient(90deg,#063b83,#0d58ae,#063b83);clip-path:polygon(15% 0,35% 8%,65% 8%,85% 0,100% 20%,86% 34%,78% 25%,78% 100%,22% 100%,22% 25%,14% 34%,0 20%);border-bottom:7px solid #fff}
+    .body:before{content:"TRANÅS\A BoIS";white-space:pre;position:absolute;left:22px;top:54px;width:48px;text-align:center;background:#fff;color:var(--blue);border:3px solid var(--blue);font-weight:900;font-size:11px;line-height:1.05;padding:5px 2px;transform:rotate(-2deg)}.body:after{content:"";position:absolute;left:0;right:0;top:22px;height:5px;background:var(--red)}
+    .shorts{position:absolute;right:0;bottom:20px;width:72px;height:72px;background:#063d86;clip-path:polygon(5% 0,95% 0,88% 100%,55% 100%,50% 55%,45% 100%,12% 100%);border-top:5px solid #fff}
+    .checks{display:grid;gap:10px;font-size:14px}.checks span:before{content:"✓";display:inline-grid;place-items:center;width:21px;height:21px;border-radius:50%;background:#e8f4ff;color:var(--blue);font-weight:900;margin-right:8px}
+    label{display:block;font-size:13px;font-weight:800;margin:0 0 7px}.req{color:var(--red)}.field{margin-bottom:15px}.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    input,select{width:100%;border:1px solid #ccd8e6;border-radius:11px;padding:12px 13px;font:inherit;color:var(--ink);background:#fff;outline:none}input:focus,select:focus{border-color:#4a88cb;box-shadow:0 0 0 3px rgba(10,86,168,.12)}
+    .toggle{display:flex;gap:10px;align-items:flex-start;background:#f7f9fc;border:1px solid var(--line);padding:12px;border-radius:12px;margin-bottom:10px}.toggle input{width:auto;margin-top:3px}.toggle b{font-size:13px}.toggle small{display:block;color:var(--muted);margin-top:3px}
+    .summary{position:sticky;top:14px}.line{display:flex;justify-content:space-between;gap:12px;padding:9px 0;font-size:14px}.line.total{border-top:1px solid var(--line);margin-top:8px;padding-top:16px;font-size:20px;font-weight:900}.price-note{font-size:12px;color:#775f00;background:#fff7cf;border:1px solid #f1dc79;padding:10px;border-radius:10px;margin:10px 0 14px}
+    .btn{width:100%;border:0;border-radius:12px;padding:14px 16px;background:var(--red);color:#fff;font-size:16px;font-weight:900;cursor:pointer;box-shadow:0 7px 18px rgba(215,25,63,.2)}.btn:hover{filter:brightness(.96)}.secure{text-align:center;color:var(--muted);font-size:12px;margin-top:12px}.adminlink{display:block;text-align:center;margin-top:13px;color:var(--blue);font-weight:800;font-size:13px}
+    .benefits{margin-top:22px;display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.benefit{background:#fff;border:1px solid var(--line);border-radius:14px;padding:17px}.benefit b{display:block;color:var(--blue);margin-bottom:5px}.benefit span{color:var(--muted);font-size:13px;line-height:1.45}
+    footer{max-width:1180px;margin:0 auto;padding:24px 22px 40px;color:var(--muted);font-size:12px}
+    dialog{border:0;border-radius:18px;max-width:440px;padding:0;box-shadow:0 30px 80px rgba(0,0,0,.25)}dialog::backdrop{background:rgba(7,24,47,.55)}.modal{padding:26px}.modal h3{margin:0 0 8px;color:var(--blue);font-size:24px}.modal p{color:var(--muted);line-height:1.5}.modal button{margin-top:8px}
+    @media(max-width:900px){nav a:not(.active){display:none}.hero{grid-template-columns:1fr;padding-top:34px}.grid{grid-template-columns:1fr}.summary{position:static}.benefits{grid-template-columns:1fr}.stepbar{grid-template-columns:1fr}.row{grid-template-columns:1fr}.product-card{order:1}.form-card{order:2}.summary-card{order:3}}
+    @media(max-width:520px){.topbar{padding:10px 14px}.brand div{font-size:14px}.brand small{display:none}.brand img{width:40px;height:48px}.hero{padding:34px 16px 34px}.wrap{padding:0 14px}.pad{padding:18px}}
+  </style>
+</head>
+<body>
+  <header class="top">
+    <div class="topbar">
+      <div class="brand">
+        <img src="https://cdn06.svenskalag.se/img/clubmarks/6245_w.png?3=" alt="Tranås BoIS">
+        <div>TRANÅS BoIS<small>BANDY</small></div>
+      </div>
+      <nav>
+        <a href="https://www.tranasbois.se/" target="_blank" rel="noreferrer">Föreningen</a>
+        <a class="active" href="#">Beställ matchställ</a>
+        <a href="#fragor">Frågor & svar</a>
+      </nav>
+      <span class="demo-pill">LIVE DEMO</span>
+    </div>
+    <div class="hero">
+      <div>
+        <h1>Beställ matchställ</h1>
+        <p>En enkel beställningssida för föräldrar och ledare. Välj lag och storlek, fyll i spelarens uppgifter och slutför beställningen på några minuter.</p>
+      </div>
+      <div class="hero-note"><b>Enklare för laget.</b><span>Beställningarna samlas automatiskt per lag och kan exporteras som färdigt underlag till leverantören.</span></div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="stepbar">
+      <div class="step"><strong>1</strong> Välj matchställ</div>
+      <div class="step"><strong>2</strong> Fyll i spelare & storlek</div>
+      <div class="step"><strong>3</strong> Betala & få bekräftelse</div>
+    </div>
+
+    <div class="grid">
+      <section class="card product-card">
+        <div class="pad">
+          <h2>Matchställ Knatte</h2>
+          <p class="sub">Matchtröja och matchbyxa i Tranås BoIS färger.</p>
+          <div class="kit" aria-label="Illustration av matchställ">
+            <div class="jersey"><div class="body"></div><div class="shorts"></div></div>
+          </div>
+          <div class="checks">
+            <span>Klubbens färger och profil</span>
+            <span>Separata storlekar för tröja och byxa</span>
+            <span>Namn och nummer kan anges direkt</span>
+            <span>Ingen lagerhantering behövs</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="card form-card">
+        <div class="pad">
+          <h2>Spelarens uppgifter</h2>
+          <p class="sub">Exempelformulär. Lag och storlekar anpassas tillsammans med föreningen före lansering.</p>
+
+          <div class="field"><label for="team">Lag <span class="req">*</span></label>
+            <select id="team"><option>P9</option><option>F9</option><option>P13</option><option>F14</option><option>P16</option><option>Skridsko- & bandyskola</option></select>
+          </div>
+          <div class="row">
+            <div class="field"><label for="shirt">Storlek tröja <span class="req">*</span></label>
+              <select id="shirt"><option>128</option><option selected>140</option><option>152</option><option>164</option><option>XS</option><option>S</option></select>
+            </div>
+            <div class="field"><label for="shorts">Storlek byxa <span class="req">*</span></label>
+              <select id="shorts"><option>128</option><option selected>140</option><option>152</option><option>164</option><option>XS</option><option>S</option></select>
+            </div>
+          </div>
+          <div class="row">
+            <div class="field"><label for="player">Spelarnamn <span class="req">*</span></label><input id="player" placeholder="T.ex. Erik Andersson"></div>
+            <div class="field"><label for="number">Nummer <span class="req">*</span></label><input id="number" inputmode="numeric" maxlength="2" placeholder="T.ex. 10"></div>
+          </div>
+          <label class="toggle"><input id="nameprint" type="checkbox" checked><span><b>Namntryck på tröjan</b><small>Spelarens efternamn trycks på ryggen.</small></span></label>
+          <label class="toggle"><input id="numberprint" type="checkbox" checked><span><b>Nummertryck</b><small>Numret från fältet ovan används på tröjan.</small></span></label>
+
+          <h2 style="margin-top:24px">Kontaktuppgifter</h2>
+          <div class="field"><label for="parent">Förälders namn <span class="req">*</span></label><input id="parent" placeholder="T.ex. Anna Andersson"></div>
+          <div class="row">
+            <div class="field"><label for="mail">E-post <span class="req">*</span></label><input id="mail" type="email" placeholder="anna@exempel.se"></div>
+            <div class="field"><label for="phone">Telefon <span class="req">*</span></label><input id="phone" type="tel" placeholder="070-123 45 67"></div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="card summary-card summary">
+        <div class="pad">
+          <h2>Din beställning</h2>
+          <div class="line"><span>Matchtröja</span><b>449 kr</b></div>
+          <div class="line"><span>Matchbyxa</span><b>349 kr</b></div>
+          <div class="line" id="nameLine"><span>Namntryck</span><b>100 kr</b></div>
+          <div class="line" id="numberLine"><span>Nummertryck</span><b>100 kr</b></div>
+          <div class="line total"><span>Totalt</span><span id="total">998 kr</span></div>
+          <div class="price-note"><b>Demo:</b> priserna är endast exempel och fastställs tillsammans med BoIS.</div>
+          <button class="btn" id="orderBtn">Beställ & betala →</button>
+          <div class="secure">🔒 I skarp version: Swish eller kort via säker betalpartner.</div>
+          <a class="adminlink" href="admin.html">Visa hur ledarvyn kan se ut →</a>
+        </div>
+      </aside>
+    </div>
+
+    <section class="benefits" id="fragor">
+      <div class="benefit"><b>För föräldrar</b><span>En mobilvänlig väg från storlek till klar beställning utan mejltrådar eller lappar.</span></div>
+      <div class="benefit"><b>För ledare</b><span>Automatisk lista per lag, storlek, namn och nummer. Export till CSV/Excel för leverantören.</span></div>
+      <div class="benefit"><b>För föreningen</b><span>Ingen lagerfunktion och inga onödiga system. Lösningen hålls så liten och billig som möjligt.</span></div>
+    </section>
+  </main>
+
+  <footer>Konceptdemo för Tranås BoIS · Ingen betalning eller riktig beställning genomförs på denna sida.</footer>
+
+  <dialog id="demoDialog">
+    <div class="modal">
+      <h3>Så här enkelt blir det 👋</h3>
+      <p>I den färdiga versionen går kunden här vidare till Swish/kort och får sedan en orderbekräftelse. <b>I demon startas ingen betalning och inga uppgifter sparas.</b></p>
+      <button class="btn" onclick="document.getElementById('demoDialog').close()">Tillbaka till demon</button>
+    </div>
+  </dialog>
+
+  <script>
+    const nameprint=document.getElementById('nameprint'), numberprint=document.getElementById('numberprint');
+    const refresh=()=>{const n=nameprint.checked?100:0,u=numberprint.checked?100:0;document.getElementById('nameLine').style.display=nameprint.checked?'flex':'none';document.getElementById('numberLine').style.display=numberprint.checked?'flex':'none';document.getElementById('total').textContent=(798+n+u)+' kr'};
+    nameprint.addEventListener('change',refresh);numberprint.addEventListener('change',refresh);refresh();
+    document.getElementById('orderBtn').addEventListener('click',()=>document.getElementById('demoDialog').showModal());
+  </script>
+</body>
+</html>
