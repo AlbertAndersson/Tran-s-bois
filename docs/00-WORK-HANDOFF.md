@@ -23,8 +23,9 @@ Verifiera alltid aktuell HEAD innan du ändrar något.
 5. `docs/P4-MEMBERSHIP-NORDIC.md`
 6. `docs/P5-MATCHKIT-BATCHING.md`
 7. `docs/P6-PAYMENT.md`
-8. `docs/P8-PAYMENT-STRIPE.md`
-9. `docs/NEXT-THREAD-PROMPT.md`
+8. `docs/P7-2027-ASSORTMENT.md`
+9. `docs/P8-PAYMENT-STRIPE.md`
+10. `docs/NEXT-THREAD-PROMPT.md`
 
 ## Aktiv deployment
 
