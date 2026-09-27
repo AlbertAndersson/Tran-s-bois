@@ -130,9 +130,10 @@ function bois_p4_activate_paid_memberships(PDO $pdo, array $config, int $orderId
     $validTo=$today->modify('+'.$days.' days')->format('Y-m-d');
 
     $stmt=$pdo->prepare(
-        "SELECT m.id membership_id,m.customer_id,m.member_name,m.membership_type,m.status
+        "SELECT m.id membership_id,m.customer_id,m.member_name,m.membership_type,m.status,c.email
          FROM bois_memberships m
          JOIN bois_order_items i ON i.id=m.order_item_id
+         JOIN bois_customers c ON c.id=m.customer_id
          WHERE i.order_id=?"
     );
     $stmt->execute([$orderId]);
@@ -150,23 +151,36 @@ function bois_p4_activate_paid_memberships(PDO $pdo, array $config, int $orderId
              WHERE id=?"
         )->execute([$validFrom,$validTo,$membershipId]);
 
-        $existing=$pdo->prepare("SELECT id,member_uuid FROM bois_members WHERE source_membership_id=? LIMIT 1");
+        $existing=$pdo->prepare("SELECT id,member_uuid,valid_to FROM bois_members WHERE source_membership_id=? LIMIT 1");
         $existing->execute([$membershipId]);
         $member=$existing->fetch();
 
+        if(!$member){
+            $member=bois_p4_find_active_member_by_email($pdo,(string)$row['email']);
+        }
+
         if($member){
             $memberId=(int)$member['id'];
+            $renewBase=$today;
+            if(!empty($member['valid_to'])){
+                $existingEnd=new DateTimeImmutable((string)$member['valid_to'],new DateTimeZone('Europe/Stockholm'));
+                if($existingEnd>$renewBase) $renewBase=$existingEnd;
+            }
+            $renewTo=$renewBase->modify('+'.$days.' days')->format('Y-m-d');
+
             $pdo->prepare(
                 "UPDATE bois_members
-                 SET member_name=?,membership_type=?,status='ACTIVE',
-                     valid_from=?,valid_to=?,
-                     verified_at=CURRENT_TIMESTAMP,verified_by='ORDER_PAYMENT'
+                 SET customer_id=?,source_membership_id=?,member_name=?,membership_type=?,status='ACTIVE',
+                     valid_from=COALESCE(valid_from,?),valid_to=?,
+                     source='ORDER',verified_at=CURRENT_TIMESTAMP,verified_by='ORDER_PAYMENT'
                  WHERE id=?"
             )->execute([
+                (int)$row['customer_id'],
+                $membershipId,
                 (string)$row['member_name'],
                 (string)$row['membership_type'],
                 $validFrom,
-                $validTo,
+                $renewTo,
                 $memberId
             ]);
         } else {
