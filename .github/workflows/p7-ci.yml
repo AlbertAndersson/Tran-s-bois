@@ -10,6 +10,7 @@ on:
       - "tests/p7-*.php"
       - "data/p7-assortment.json"
       - "site/commerce/assortment-preview.html"
+      - "site/commerce/index.html"
       - "site/commerce/assets/assortment-preview.js"
       - "site/commerce/assets/admin.js"
       - ".github/workflows/p7-ci.yml"
@@ -68,3 +69,7 @@ jobs:
           node --check site/commerce/assets/assortment-preview.js
           grep -q "payment_provider.*mock" server/p3-config.example.php
           grep -q "mail_transport.*disabled" server/p3-config.example.php
+      - name: Public landing page does not expose proposed merch
+        run: |
+          ! grep -Eiq 'BoIS 1941 Hoodie|Supporter-T-shirt|Bandyförälder Hoodie|Mössa \+ halsduk|Gym Pack|Knatte Pack|Presentkort|BoIS Läktarmössa' site/commerce/index.html
+          grep -q 'mock/testprovider' site/commerce/index.html
