@@ -9,7 +9,7 @@ Fristående BoIS-webshop med medlemskap, Nordic Wellness-förmån, matchställ o
 - P4 Membership & Nordic Wellness: **COMPLETE / LIVE STAGING VERIFIED**
 - P5 Match kit batching: **COMPLETE / LIVE STAGING VERIFIED**
 - P6 Payment: **COMPLETE / LIVE STAGING VERIFIED**
-- P7 2027 assortment: **IMPLEMENTERAD / CI GRÖN – STAGINGDEPLOY VÄNTAR**
+- P7 2027 assortment: **COMPLETE / LIVE STAGING VERIFIED**
 - Betalning: **ISOLERAD MOCK/TESTMODE I STAGING – RIKTIG PROVIDER AVSTÄNGD**
 - Extern mejlsändning: **AVSTÄNGD I STAGING**
 - Ny extern driftkostnad: **0 kr**
@@ -22,7 +22,7 @@ Fristående BoIS-webshop med medlemskap, Nordic Wellness-förmån, matchställ o
 - Shopadmin: https://alberiq.se/bois-shop-p3/admin.html
 - Testbetalning: https://alberiq.se/bois-shop-p3/payment.html
 
-P7:s interna förhandsvisning (`assortment-preview.html`) publiceras först vid nästa skyddade stagingdeploy. Den är adminskyddad och gör inga produkter orderbara.
+P7:s interna förhandsvisning (`assortment-preview.html`) är publicerad i staging. Produktdata kräver adminnyckel; sidan gör inga produkter orderbara.
 
 Staging använder endast testuppgifter.
 
@@ -85,10 +85,10 @@ MySQL med separata `bois_`-tabeller för produkter, kunder, order, medlemskap, f
 ## 2027-sortiment
 P7 föreslår ett litet första sortiment: BoIS 1941 Hoodie, Supporter-T-shirt och BoIS Läktarmössa. Rekommenderade kundpriser är **uppskattningar**, inte godkända skarpa priser. Leverantörskandidat och all ej verifierad inköps-, tryck-, frakt- och SKU-data är tydligt märkt `TBD` i `data/p7-assortment.json` och `docs/P7A-COMMERCIAL-MODEL.md`. Övriga tidigare kandidater är uppskjutna.
 
-P7:s separata `bois_`-tabeller, adminvy och interna preview är implementerade. Servern blockerar offentlig katalog och direkta orderanrop före **1 januari 2027**, även om produktflaggor ändras. Efter datumet krävs dessutom uttryckligt godkännande och verifierad kommersiell data. Ingen P7-produkt är godkänd eller orderbar nu. P2–P7 CI är grön; stagingmigration och live-verifiering återstår.
+P7:s separata `bois_`-tabeller, adminvy och interna preview är live-verifierade i staging. Servern blockerar offentlig katalog och direkta orderanrop före **1 januari 2027**, även om produktflaggor ändras. Efter datumet krävs dessutom uttryckligt godkännande och verifierad kommersiell data. Ingen P7-produkt är godkänd eller orderbar nu. Den publika startsidan visar inga produktnamn från det interna förslaget. P2–P7 CI är grön; Simply-run `36355678030` verifierade slutlig stagingkod.
 
 ## Nästa utvecklingsordning
-1. **P7 closeout**: kör manuellt skyddad stagingdeploy och verifiera snapshot, admin/preview, launch gate och P4–P6 live. Inhämta riktiga offerter och godkänn data inför eventuell lansering; nuvarande förslag är inte säljklart.
+1. **Kommersiell P7-beredning**: inhämta riktiga offerter och godkänn data inför eventuell lansering; nuvarande förslag är inte säljklart.
 2. **P8 – production launch**: Stripe som vald payment provider, produktionsdatabas, domän, villkor och skarpa integrationsuppgifter.
 3. **P9 – sales engine**.
 

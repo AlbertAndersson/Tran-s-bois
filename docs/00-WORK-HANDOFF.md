@@ -9,7 +9,7 @@ Detta är den primära överlämningen för en ny utvecklingstråd. GitHub är s
 - Repo: `AlbertAndersson/Tran-s-bois`
 - Branch: `main`
 - P6 slutlig hardening merge: `b5b9a157a7462277cdab27bb304c5c1b31706fa0` (PR #3)
-- P7 implementation merge: `49883befb360fddb6e63e5c6b6a622fd2c0eed8b` (PR #6); kontrollera ny `main` HEAD efter dokumentationscommit
+- P7 implementation merge: `49883befb360fddb6e63e5c6b6a622fd2c0eed8b` (PR #6); slutlig publik startsiderättning: `cfe18cce5a19ba4ec05a83323cbcbe07bf1aed29`; kontrollera ny `main` HEAD efter dokumentationscommit
 - Verifiera alltid aktuell `main` HEAD innan ändring
 - Deployment/secrets: `AlbertAndersson/work-capture`
 
@@ -42,7 +42,7 @@ Senast verifierad P6-deploy:
 
 Äldre P3/P5 deployworkflows är pensionerade så de inte kan skriva över aktuell P6-staging.
 
-P7-workflowen är förberedd i samma fil på `work-capture` commit `21249c0354f3b487539fc3500cc1f37f872300be`. Den är manuellt skyddad (`workflow_dispatch`, `confirm=DEPLOY_BOIS_P7_READY`) och pinnad till P7-merge. **Ingen P7-deploy är ännu körd.** P6-run ovan är fortfarande senaste live-verifierade miljö.
+P7-workflowen i samma fil är manuellt skyddad (`workflow_dispatch`, `confirm=DEPLOY_BOIS_P7_READY`). Slutlig deployment commit i `work-capture`: `43d32430853b39c4c70a09aba4a98426078d3f24`, pinnad till `cfe18cc`. Slutlig Simply-run `36355678030`: **success**, P7 live-verifierad. Snapshot av icke-BoIS-tabeller var identisk före/efter; körningen mätte **0** sådana tabeller i BoIS-databasen. Den äldre P6-run ovan är historisk baseline.
 
 ## Aktiv staging
 
@@ -66,7 +66,7 @@ Staging får endast innehålla testuppgifter.
 - P4 – Membership & Nordic Wellness: **COMPLETE / LIVE STAGING VERIFIED**
 - P5 – Match kit batching: **COMPLETE / LIVE STAGING VERIFIED**
 - P6 – Payment: **COMPLETE / LIVE STAGING VERIFIED**
-- P7 – 2027 assortment: **IMPLEMENTERAD / CI GRÖN; STAGING VÄNTAR**
+- P7 – 2027 assortment: **COMPLETE / LIVE STAGING VERIFIED**
 - P8 – production launch: **NOT STARTED**
 - P9 – sales engine: **NOT STARTED**
 
@@ -304,15 +304,15 @@ Aktivera ingen kostnad eller betaltjänst utan uttryckligt godkännande.
 - slutliga villkor/integritet/säljaruppgifter
 - riktiga mejlmottagare
 
-## P7 – genomförd implementation, väntande staging
+## P7 – genomförd och live-verifierad staging
 
 PR #6 (`49883bef`) implementerade fyra verifierade delsteg. P7A föreslår BoIS 1941 Hoodie, Supporter-T-shirt och BoIS Läktarmössa. Rekommenderade priser är `ESTIMATE`; verkliga leverantörspriser, MOQ, SKU och marginaler är `TBD`. Printful är endast kandidat. Se `data/p7-assortment.json` och `docs/P7A-COMMERCIAL-MODEL.md`. Övriga ursprungliga kandidater är uppskjutna.
 
 P7B lägger till endast `bois_p7_assortment` och `bois_p7_variants`, med idempotent seed och strukturerad verifieringsstatus/källa. P7C lägger till adminskyddad översikt och intern `assortment-preview.html`. P7D blockerar katalog och direkta orderanrop före **2027-01-01 Europe/Stockholm** oavsett frontendflaggor. Efter datumet krävs godkänd och verifierad data samt länkade P3-varianter. Ingen produkt är idag godkänd.
 
-P2–P7 CI inklusive MySQL 8.4 är grön. P4/P5/P6-regressioner och mock/mail-invariants är gröna i CI. Den skyddade stagingworkflowen innehåller migration, snapshot av icke-BoIS-tabeller före/efter och syntetiska livekontroller; den har inte körts för P7.
+P2–P7 CI inklusive MySQL 8.4 är grön. En statisk lista över framtida produktnamn upptäcktes på den publika startsidan vid livegranskning och togs bort i `cfe18cc`; P7 CI run `36355561318` är grön. Den skyddade stagingworkflowen kördes sedan som `36355678030` med **success**. P7 migration, admin/preview, dold publik katalog, syntetisk mockcheckout → PAID → P4 medlemskap ACTIVE/Nordic ELIGIBLE, dubblettskydd och P5:s 8/168-inställning passerade. Extern e-post är disabled, riktig provider saknas och ny extern kostnad är 0 kr. Snapshot före/efter av icke-BoIS-tabeller är identisk (antal 0 i den använda BoIS-databasen). Publik startsida kontrollerades separat efter deploy och visar inga föreslagna merchprodukter.
 
-**Nästa konkreta steg:** kör `.github/workflows/simply-deploy-bois-p4.yml` i `work-capture` med `confirm=DEPLOY_BOIS_P7_READY`; granska körningens snapshot, migration, P7 admin/preview/gate och P4–P6. Dokumentera run ID och faktisk live-status, och stäng först då P7. Om den misslyckas: rätta orsaken och kör om. Ändra inte P6:s betalningslogik utan en påvisad regression.
+**Driftnotering:** första försöket `36355192391` stannade före migration på en gammal P6-paketsökväg; `c9da2a69` rättade den. `36355380067` lyckades med P7 men föregick den statiska startsiderättningen. `36355678030` är slutlig verifierad run. Ändra inte P6:s betalningslogik utan en påvisad regression.
 
 **Kommersiella blockerare:** Albert/Erik behöver leverantörsofferter, verifierade kostnader/MOQ/ledtider/SKU, bildrättigheter, slutpriser och godkännande innan någon P7-produkt kan öppnas. Servergaten hindrar försäljning även efter datumet tills varje produkt är verifierad och godkänd.
 

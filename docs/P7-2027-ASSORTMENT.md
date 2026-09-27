@@ -4,9 +4,9 @@ Datum: 2026-09-27
 
 ## Status
 
-**IMPLEMENTERAD / CI GRÖN – STAGINGMIGRATION OCH LIVE-VERIFIERING VÄNTAR.** P7 stängs först efter dessa kontroller.
+**COMPLETE / LIVE STAGING VERIFIED.** Teknisk P7 är stängd; kommersiell produktlansering är inte godkänd.
 
-PR #6 merge `49883befb360fddb6e63e5c6b6a622fd2c0eed8b` innehåller P7A–D. P2–P7 CI är grön. Skyddad deploymentworkflow i `AlbertAndersson/work-capture` är uppdaterad på `21249c0354f3b487539fc3500cc1f37f872300be` men har inte körts för P7.
+PR #6 merge `49883befb360fddb6e63e5c6b6a622fd2c0eed8b` innehåller P7A–D. Publik statisk produktlista rättades i `cfe18cce5a19ba4ec05a83323cbcbe07bf1aed29`; P7 CI run `36355561318` är grön. Skyddad deploymentworkflow i `AlbertAndersson/work-capture` på `43d32430853b39c4c70a09aba4a98426078d3f24` kördes som `36355678030` och lyckades.
 
 ### Implementerat och verifierat i CI
 
@@ -21,9 +21,13 @@ Föreslaget lanseringsurval är BoIS 1941 Hoodie, Supporter-T-shirt och BoIS Lä
 
 Gaten använder serverns Europe/Stockholm-tid. Före 2027-01-01 nekas supporter-/merchsortiment även om adminflaggor är satta; direkta orderanrop nekas. Efter datumet krävs godkännande, komplett verifierad data och länkade varianter. Tester injicerar tid utan att ändra riktig systemtid. Ingen nuvarande P7-produkt kvalificerar.
 
-### Kvar till P7-closeout
+### Staging-closeout
 
-Kör den manuellt skyddade Simply-workflowen med `confirm=DEPLOY_BOIS_P7_READY`, inspektera migrationslogg och identiska snapshots av icke-BoIS-tabeller, verifiera admin/preview och dold publik katalog live, samt P4–P6 med syntetiska uppgifter. Kontrollera att mailtransport och riktig payment provider förblir avstängda. Dokumentera run ID och utfall innan status ändras till COMPLETE. Verklig kommersiell lansering kräver sedan Albert/Eriks leverantörs- och prisgodkännande.
+Simply-run `36355678030` passerade P7-migration (`P7_PRODUCTS: 3`), intern admin/preview, dold publik katalog, syntetisk P6-mockcheckout med idempotent PAID, P4 medlemskap ACTIVE/Nordic ELIGIBLE, P5 8 stycken/168 timmar och avstängd e-posttransport. Snapshot av icke-BoIS-tabeller var identisk före/efter; den använda BoIS-databasen hade 0 sådana tabeller. Startsidan granskades även direkt efter deploy: inga föreslagna merchproduktnamn visas. Endast mockbetalning är aktiv, ingen extern mejlsändning eller ny kostnad. Den interna previewen kräver adminnyckel för produktdata.
+
+Första försöket `36355192391` stannade före migration på en gammal paketkatalog. Den rättades i `work-capture` commit `c9da2a69`; run `36355380067` lyckades men föregick startsiderättningen. Den slutliga run ovan verifierar den fullständiga P7-versionen.
+
+**Återstår inför faktiskt försäljningsbeslut:** Albert/Erik behöver verkliga leverantörsofferter, kostnader/MOQ/ledtider, SKU, bilder/rättigheter, slutpriser/marginaler och uttryckligt produktgodkännande. Att datumgränsen passeras räcker inte för att öppna en produkt.
 
 P7 ska göra Tranås BoIS supporter-/merchsortiment kommersiellt och tekniskt lanseringsklart för 2027, utan att exponera eller sälja sortimentet före avtalsgränsen.
 
