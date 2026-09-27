@@ -90,13 +90,25 @@ function bois_validate_order(array $input, array $config): array
     $parent = bois_clean_string($input['parent_name'] ?? '', 80);
     $email = strtolower(bois_clean_string($input['email'] ?? '', 120));
     $phone = bois_clean_string($input['phone'] ?? '', 25);
-    $productId = bois_clean_string($input['product_id'] ?? $config['product_id'], 80);
-    $periodId = bois_clean_string($input['order_period_id'] ?? $config['order_period_id'], 80);
+    $configProductId = (string)($config['product_id'] ?? 'match-kit-knatte');
+    $configProductLabel = (string)($config['product_label'] ?? 'Matchställ Knatte');
+    $configSupplierCode = (string)($config['supplier_code'] ?? '');
+    $configPeriodId = (string)($config['order_period_id'] ?? '2026-27-matchstall');
+    $configPeriodLabel = (string)($config['order_period_label'] ?? 'Matchställ 2026/27');
+    $allowedTeams = array_values(array_filter($config['allowed_teams'] ?? [
+        'P9','F9','P13','F14','P16','Skridsko- & bandyskola 26/27'
+    ], 'is_string'));
+    $allowedSizes = array_values(array_filter($config['allowed_sizes'] ?? [
+        '128','140','152','164','XS','S'
+    ], 'is_string'));
 
-    if (!in_array($team, $config['allowed_teams'], true)) throw new InvalidArgumentException('Välj ett giltigt lag.');
-    if (!in_array($shirt, $config['allowed_sizes'], true) || !in_array($shorts, $config['allowed_sizes'], true)) throw new InvalidArgumentException('Välj giltiga storlekar.');
-    if ($productId !== $config['product_id']) throw new InvalidArgumentException('Välj en giltig produkt.');
-    if ($periodId !== $config['order_period_id']) throw new InvalidArgumentException('Beställningsperioden är inte giltig.');
+    $productId = bois_clean_string($input['product_id'] ?? $configProductId, 80);
+    $periodId = bois_clean_string($input['order_period_id'] ?? $configPeriodId, 80);
+
+    if (!in_array($team, $allowedTeams, true)) throw new InvalidArgumentException('Välj ett giltigt lag.');
+    if (!in_array($shirt, $allowedSizes, true) || !in_array($shorts, $allowedSizes, true)) throw new InvalidArgumentException('Välj giltiga storlekar.');
+    if ($productId !== $configProductId) throw new InvalidArgumentException('Välj en giltig produkt.');
+    if ($periodId !== $configPeriodId) throw new InvalidArgumentException('Beställningsperioden är inte giltig.');
     if (bois_text_length($player) < 2) throw new InvalidArgumentException('Ange spelarens namn.');
     if (!preg_match('/^\d{1,2}$/', $numberRaw)) throw new InvalidArgumentException('Tröjnumret ska vara 1–2 siffror.');
 
@@ -116,11 +128,11 @@ function bois_validate_order(array $input, array $config): array
         + ($numberPrint ? (int)$prices['number_print'] : 0);
 
     return [
-        'product_id' => $config['product_id'],
-        'product_label' => $config['product_label'],
-        'supplier_code' => $config['supplier_code'],
-        'order_period_id' => $config['order_period_id'],
-        'order_period_label' => $config['order_period_label'],
+        'product_id' => $configProductId,
+        'product_label' => $configProductLabel,
+        'supplier_code' => $configSupplierCode,
+        'order_period_id' => $configPeriodId,
+        'order_period_label' => $configPeriodLabel,
         'team' => $team,
         'shirt_size' => $shirt,
         'shorts_size' => $shorts,
