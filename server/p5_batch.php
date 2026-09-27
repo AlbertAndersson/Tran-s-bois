@@ -63,12 +63,8 @@ function bois_p5_matchkit_rule(PDO $pdo): array
     return $row;
 }
 
-function bois_p5_mark_order_paid(PDO $pdo, array $config, string $publicId): array
+function bois_p5_apply_verified_paid(PDO $pdo, array $config, string $publicId, string $source='VERIFIED_PAYMENT', ?string $providerRef=null): array
 {
-    if (($config['mode'] ?? '') === 'production') {
-        throw new DomainException('Simulerad betalning är inte tillåten i produktion.');
-    }
-
     $pdo->beginTransaction();
     try {
         $stmt = $pdo->prepare(
@@ -79,6 +75,7 @@ function bois_p5_mark_order_paid(PDO $pdo, array $config, string $publicId): arr
         if (!$order) throw new OutOfBoundsException('Ordern finns inte.');
 
         $orderId = (int)$order['id'];
+        $alreadyPaid = (string)$order['payment_status'] === 'PAID';
 
         $pdo->prepare(
             "UPDATE bois_orders
@@ -94,7 +91,9 @@ function bois_p5_mark_order_paid(PDO $pdo, array $config, string $publicId): arr
         )->execute([$orderId]);
 
         $pdo->prepare(
-            "UPDATE bois_payments SET status='PAID', updated_at=CURRENT_TIMESTAMP WHERE order_id=?"
+            "UPDATE bois_payments
+             SET status='PAID', updated_at=CURRENT_TIMESTAMP
+             WHERE order_id=? AND status IN ('NOT_ENABLED','PENDING','PAID')"
         )->execute([$orderId]);
 
         $pdo->prepare(
@@ -103,12 +102,17 @@ function bois_p5_mark_order_paid(PDO $pdo, array $config, string $publicId): arr
              WHERE order_id=? AND fulfillment_type='BATCH_SUPPLIER' AND fulfillment_status='ON_HOLD'"
         )->execute([$orderId]);
 
-        $pdo->prepare(
-            "INSERT INTO bois_events(order_id,event_type,payload_json) VALUES(?, 'PAYMENT_SIMULATED_PAID', ?)"
-        )->execute([
-            $orderId,
-            json_encode(['source'=>'P5_STAGING_ADMIN'], JSON_THROW_ON_ERROR)
-        ]);
+        if (!$alreadyPaid) {
+            $pdo->prepare(
+                "INSERT INTO bois_events(order_id,event_type,payload_json) VALUES(?, 'PAYMENT_PAID', ?)"
+            )->execute([
+                $orderId,
+                json_encode([
+                    'source'=>$source,
+                    'provider_ref'=>$providerRef
+                ], JSON_THROW_ON_ERROR)
+            ]);
+        }
 
         $pdo->commit();
     } catch (Throwable $e) {
@@ -121,8 +125,34 @@ function bois_p5_mark_order_paid(PDO $pdo, array $config, string $publicId): arr
     return [
         'public_id'=>$publicId,
         'payment_status'=>'PAID',
+        'already_paid'=>$alreadyPaid,
         'auto_batches'=>$created,
     ];
+}
+
+function bois_p5_mark_order_paid(PDO $pdo, array $config, string $publicId): array
+{
+    if (($config['mode'] ?? '') === 'production') {
+        throw new DomainException('Simulerad betalning är inte tillåten i produktion.');
+    }
+
+    $result = bois_p5_apply_verified_paid($pdo, $config, $publicId, 'P5_STAGING_ADMIN', null);
+
+    $stmt=$pdo->prepare(
+        "SELECT id FROM bois_orders WHERE public_id=? LIMIT 1"
+    );
+    $stmt->execute([$publicId]);
+    $orderId=(int)$stmt->fetchColumn();
+    if($orderId>0 && !$result['already_paid']){
+        $pdo->prepare(
+            "INSERT INTO bois_events(order_id,event_type,payload_json) VALUES(?, 'PAYMENT_SIMULATED_PAID', ?)"
+        )->execute([
+            $orderId,
+            json_encode(['source'=>'P5_STAGING_ADMIN'], JSON_THROW_ON_ERROR)
+        ]);
+    }
+
+    return $result;
 }
 
 function bois_p5_candidate_rows(PDO $pdo, array $rule, bool $forUpdate=false): array

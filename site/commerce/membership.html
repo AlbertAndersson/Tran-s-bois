@@ -13,7 +13,7 @@
   <section class="form-card" style="margin-top:14px">
     <span class="tag">MEDLEM + GYMFÖRMÅN</span>
     <h1>Bli medlem i BoIS</h1>
-    <p class="sub">Välj medlemskap och lägg till Nordic Wellness-gymkortet om du vill. I utvecklingsmiljön sparas en testorder i Commerce-databasen, men ingen betalning sker.</p>
+    <p class="sub">Välj medlemskap och lägg till Nordic Wellness-gymkortet om du vill. I utvecklingsmiljön sparas en testorder och P6 låter dig därefter köra en isolerad Test‑Swish- eller Test‑kortbetalning utan riktig transaktion.</p>
     <div class="notice"><b>Gymkort 2 650 kr</b> kräver aktivt BoIS-medlemskap. Ny medlem + gym kan godkännas automatiskt efter betalning. Befintlig medlem verifieras av BoIS i admin. P4 samlar inte in personnummer.</div>
 
     <form id="membershipForm">
@@ -31,7 +31,7 @@
       </div>
 
       <h2 id="gym">2. Gymförmån</h2>
-      <label class="toggle"><input type="checkbox" id="addGym" checked><span><b>Lägg till Nordic Wellness gymkort – 2 650 kr</b><br><span class="small">Aktivering sker först efter betalning och P4-medlemskontroll i skarp version.</span></span></label>
+      <label class="toggle"><input type="checkbox" id="addGym" checked><span><b>Lägg till Nordic Wellness gymkort – 2 650 kr</b><br><span class="small">Aktivering sker först efter verifierad betalning och P4-medlemskontroll.</span></span></label>
 
       <h2>3. Kontaktuppgifter</h2>
       <div class="field"><label for="buyerName">Beställarens namn</label><input id="buyerName" autocomplete="name" required></div>
@@ -47,7 +47,7 @@
       </div>
       <div id="error" class="error" hidden></div>
       <div id="success" class="success" hidden></div>
-      <button class="btn block" type="submit" id="submitBtn">Skapa testorder →</button>
+      <button class="btn block" type="submit" id="submitBtn">Skapa testorder → betalning</button>
     </form>
   </section>
 </main>

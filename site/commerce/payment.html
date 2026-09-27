@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow">
+  <title>BoIS – Betalning</title>
+  <link rel="stylesheet" href="assets/commerce.css">
+  <script src="config.js" defer></script><script src="assets/common.js" defer></script><script src="assets/payment.js" defer></script>
+</head>
+<body>
+<header class="header"><div class="nav"><a class="brand" href="index.html"><img src="https://cdn06.svenskalag.se/img/clubmarks/6245_w.png?3=" alt="Tranås BoIS"><div>TRANÅS BoIS<small>BETALNING</small></div></a><span class="env" data-env>STAGING</span></div></header>
+<main class="form-shell">
+  <section class="form-card">
+    <span class="tag">P6 PAYMENT</span>
+    <h1>Betala din order</h1>
+    <p class="sub">I staging används en isolerad betalningsmock. Ingen riktig Swish- eller kortbetalning genomförs och inga avgifter uppstår.</p>
+    <div class="notice"><b>Testläge:</b> välj betalmetod och simulera sedan betalproviderens signerade webhook. Samma verifierade <code>PAID</code>-händelse driver medlemskap, Nordic-förmån och matchställsbatchning.</div>
+
+    <div id="orderSummary" class="summary"><div class="small">Laddar order…</div></div>
+    <div id="methodStep">
+      <h2>Välj betalmetod</h2>
+      <div class="choice-grid">
+        <button class="btn block" type="button" id="swishBtn">Test-Swish</button>
+        <button class="btn secondary block" type="button" id="cardBtn">Test-kort</button>
+      </div>
+    </div>
+
+    <div id="providerStep" hidden>
+      <h2>Betalprovider – testmode</h2>
+      <div class="summary">
+        <div class="line"><span>Metod</span><b id="methodLabel">–</b></div>
+        <div class="line"><span>Session</span><b id="sessionLabel">–</b></div>
+        <div class="line total"><span>Status</span><span id="paymentStatus">PENDING</span></div>
+      </div>
+      <button class="btn block" type="button" id="payBtn">Simulera godkänd betalning</button>
+      <button class="btn ghost block" type="button" id="failBtn">Simulera nekad betalning</button>
+      <button class="btn ghost block" type="button" id="cancelBtn">Avbryt testbetalning</button>
+    </div>
+
+    <div id="error" class="error" hidden></div>
+    <div id="success" class="success" hidden></div>
+    <a id="orderLink" class="btn ghost block" hidden>Visa orderstatus</a>
+  </section>
+</main>
+</body>
+</html>

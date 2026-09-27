@@ -4,6 +4,7 @@ declare(strict_types=1);
 require __DIR__ . '/p3_db.php';
 require __DIR__ . '/p5_batch.php';
 require __DIR__ . '/p4_membership.php';
+require __DIR__ . '/p6_payment.php';
 
 function commerce_respond(array $data, int $status=200): never
 {
@@ -69,6 +70,7 @@ try {
     $pdo=bois_p3_pdo($config);
     bois_p5_apply_schema($pdo);
     bois_p4_apply_schema($pdo);
+    bois_p6_apply_schema($pdo);
     commerce_check_origin($config);
 
     if(($_SERVER['REQUEST_METHOD']??'')==='OPTIONS'){
@@ -86,10 +88,12 @@ try {
         commerce_respond([
             'ok'=>true,
             'service'=>'tranas-bois-commerce-api',
-            'phase'=>'P4+P5',
+            'phase'=>'P6',
             'mode'=>$config['mode'],
             'storage_driver'=>'mysql',
-            'payment_enabled'=>false,
+            'payment_enabled'=>bois_p6_payment_enabled($config),
+            'payment_provider'=>bois_p6_provider($config),
+            'payment_mode'=>bois_p6_provider($config)==='mock'?'testmode':'disabled',
             'mail_transport'=>$config['mail_transport'] ?? 'disabled',
             'batch_threshold_qty'=>$waiting['threshold_qty'],
             'batch_max_wait_hours'=>$waiting['max_wait_hours'],
@@ -101,6 +105,43 @@ try {
 
     if($action==='catalog'&&$method==='GET'){
         commerce_respond(['ok'=>true,'products'=>bois_p3_catalog($pdo,false)]);
+    }
+
+    if($action==='checkout'&&$method==='POST'){
+        $data=commerce_body();
+        $publicId=bois_p3_clean_string($data['public_id']??'',40);
+        $token=bois_p3_clean_string($data['public_token']??'',80);
+        $paymentMethod=bois_p3_clean_string($data['method']??'',20);
+        commerce_respond([
+            'ok'=>true,
+            'checkout'=>bois_p6_checkout($pdo,$config,$publicId,$token,$paymentMethod)
+        ],201);
+    }
+
+    if($action==='checkout_status'&&$method==='GET'){
+        $session=bois_p3_clean_string($_GET['session']??'',190);
+        $token=bois_p3_clean_string($_GET['token']??'',120);
+        commerce_respond(['ok'=>true,'checkout'=>bois_p6_session($pdo,$session,$token)]);
+    }
+
+    if($action==='mock_payment_event'&&$method==='POST'){
+        $data=commerce_body();
+        $session=bois_p3_clean_string($data['session_ref']??'',190);
+        $token=bois_p3_clean_string($data['session_token']??'',120);
+        $outcome=bois_p3_clean_string($data['outcome']??'',30);
+        $refundOre=max(0,(int)($data['refund_ore']??0));
+        commerce_respond([
+            'ok'=>true,
+            'payment'=>bois_p6_mock_event($pdo,$config,$session,$token,$outcome,$refundOre)
+        ]);
+    }
+
+    if($action==='payment_webhook'&&$method==='POST'){
+        $raw=file_get_contents('php://input');
+        if(!is_string($raw)||$raw==='') throw new InvalidArgumentException('Webhook-underlag saknas.');
+        $timestamp=(string)($_SERVER['HTTP_X_BOIS_PAYMENT_TIMESTAMP']??'');
+        $signature=(string)($_SERVER['HTTP_X_BOIS_PAYMENT_SIGNATURE']??'');
+        commerce_respond(bois_p6_process_webhook_raw($pdo,$config,$raw,$timestamp,$signature));
     }
 
     if($action==='orders'&&$method==='POST'){
@@ -184,6 +225,24 @@ try {
         header('Cache-Control: no-store');
         echo bois_p4_export_eligible_csv($pdo);
         exit;
+    }
+
+    if($action==='admin_payments'&&$method==='GET'){
+        commerce_require_admin($config);
+        commerce_respond(['ok'=>true]+bois_p6_admin_payments($pdo));
+    }
+
+    if($action==='admin_retry_payment_outbox'&&$method==='POST'){
+        commerce_require_admin($config);
+        $data=commerce_body();
+        $id=(int)($data['outbox_id']??0);
+        if($id<1) throw new InvalidArgumentException('Ogiltigt payment-outbox-id.');
+        commerce_respond(['ok'=>true,'outbox'=>bois_p6_retry_outbox($pdo,$id)]);
+    }
+
+    if($action==='admin_run_payment_outbox'&&$method==='POST'){
+        commerce_require_admin($config);
+        commerce_respond(['ok'=>true,'mail'=>bois_p6_deliver_outbox($pdo,$config)]);
     }
 
     if($action==='admin_batches'&&$method==='GET'){

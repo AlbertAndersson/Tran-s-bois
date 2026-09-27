@@ -33,7 +33,7 @@
         website:'',
         idempotency_key:c.uuid()
       });
-      $('success').innerHTML='<b>Matchställsorder skapad.</b><div class="order-id" style="margin-top:10px">'+order.public_id+'</div><div class="small" style="margin-top:8px">Betalning är inte aktiverad och ordern skickas därför inte till leverantör.</div>'+(c.cfg.apiBase?'<a class="btn ghost block" style="margin-top:12px" href="order.html?id='+encodeURIComponent(order.public_id)+'&token='+encodeURIComponent(order.public_token)+'">Visa orderstatus</a>':'');
+      $('success').innerHTML='<b>Matchställsorder skapad.</b><div class="order-id" style="margin-top:10px">'+order.public_id+'</div><div class="small" style="margin-top:8px">Ordern går inte till batch förrän en signerad testbetalning har verifierats.</div>'+(c.cfg.apiBase?'<a class="btn secondary block" style="margin-top:12px" href="payment.html?id='+encodeURIComponent(order.public_id)+'&token='+encodeURIComponent(order.public_token)+'">Gå till testbetalning →</a><a class="btn ghost block" style="margin-top:8px" href="order.html?id='+encodeURIComponent(order.public_id)+'&token='+encodeURIComponent(order.public_token)+'">Visa orderstatus</a>':'');
       $('success').hidden=false;
     }catch(error){$('error').textContent=error.message;$('error').hidden=false;}
     finally{button.disabled=false;button.textContent=original;}
