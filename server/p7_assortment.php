@@ -131,6 +131,7 @@ function bois_p7_admin_assortment(PDO $pdo): array
     )->fetchAll();
     $products=[];
     foreach($rows as $row){
+        $variantRow=$row;
         $key=(string)$row['product_key'];
         if(!isset($products[$key])){
             $costs=[$row['purchase_price_ore'],$row['decoration_cost_ore'],$row['shipping_handling_ore'],$row['sale_price_ex_vat_ore']];
@@ -143,12 +144,12 @@ function bois_p7_admin_assortment(PDO $pdo): array
             $row['variants']=[];
             $products[$key]=$row;
         }
-        if($row['variant_key']!==null){
+        if($variantRow['variant_key']!==null){
             $products[$key]['variants'][]=[
-                'variant_key'=>$row['variant_key'],'supplier_sku'=>$row['variant_supplier_sku'],
-                'size'=>$row['size_label'],'color'=>$row['color_label'],
-                'sale_price_ore'=>$row['variant_sale_price_ore'],
-                'verification_status'=>$row['variant_verification_status'],
+                'variant_key'=>$variantRow['variant_key'],'supplier_sku'=>$variantRow['variant_supplier_sku'],
+                'size'=>$variantRow['size_label'],'color'=>$variantRow['color_label'],
+                'sale_price_ore'=>$variantRow['variant_sale_price_ore'],
+                'verification_status'=>$variantRow['variant_verification_status'],
             ];
         }
     }
