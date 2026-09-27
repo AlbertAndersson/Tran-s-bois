@@ -1,45 +1,81 @@
-# Tranås BoIS – beställningsportal
+# Tranås BoIS – webshop
 
-Fristående, kostnadssnål beställningsportal för Tranås BoIS matchställ.
+Fristående BoIS-webshop med medlemskap, gymförmån, matchställ och förberett supporter-/merchsortiment.
 
 ## Status
 - P1 ordermotor: **COMPLETE**
-- P2 produktionsförberedelse: **TECH COMPLETE / BOIS DATA PENDING**
-- AlberIQ staging: **VERIFIED**
+- P2 produktionsförberedelse: **COMPLETE**
+- P3 Commerce Core: **COMPLETE / MYSQL STAGING VERIFIED**
 - Betalning: **AVSTÄNGD**
+- Leverantörsutskick: **AVSTÄNGT**
 - Ny extern driftkostnad: **0 kr**
 
-## Nu finns
-- Mobilvänlig beställning för föräldrar.
-- Konfigurerbar laglista, beställningsperiod, produkt, storlekar och priser.
-- Spelarnamn, nummer och personligt tryck i samma flöde.
-- Unika ordernummer och säker orderstatuslänk.
-- Digital avbeställning innan ordern gått vidare i processen.
-- Ledarvy med sök, filter och statusflöde.
-- Automatisk storlekssammanställning.
-- Detaljerad CSV + aggregerad leverantörs-CSV.
-- Produktionsutkast för personuppgifter och beställningsvillkor.
-- Ingen lagerhantering.
-- Ingen koppling till Intersport.
-- Swish/kort först efter separat godkännande.
+## P3 staging
+- Shop: https://alberiq.se/bois-shop-p3/
+- Medlemskap + gym: https://alberiq.se/bois-shop-p3/membership.html
+- Matchställ: https://alberiq.se/bois-shop-p3/match-kit.html
+- Shopadmin: https://alberiq.se/bois-shop-p3/admin.html
 
-## Struktur
-- `site/` – kundflöde, orderstatus, ledarvy och villkorsutkast.
-- `site/catalog.js` – publik presentationskonfiguration för lag/sortiment.
-- `server/` – PHP-API och filbaserad ordermotor.
-- `tests/` – P1/P2 smoke-test.
-- `docs/` – status och teknisk dokumentation.
+Staging använder endast testuppgifter.
 
-## Demo
-GitHub Pages publicerar endast `site/`. Pages-läget sparar inga orderuppgifter.
+## Säljbara kategorier före 1 januari 2027
+Bekräftat i arbetsmötet 2026-09-27:
+- medlemskap
+- Nordic Wellness gymkort för medlem
+- matchställ
 
-## Staging
-P2-staging: https://alberiq.se/bois-bestallning-p1/
+Medlemspriser:
+- ungdom 200 kr
+- vuxen 350 kr
+- pensionär 300 kr
 
-Runtime-konfiguration och orderdata ligger utanför webbroot. Staging ska endast användas med testuppgifter.
+Gymkort:
+- 2 650 kr för aktiv BoIS-medlem
 
-## Kvar före produktion
-BoIS behöver bekräfta verkligt sortiment, priser, storlekar, leverantörskod/orderformat, beställningsperiod samt förenings-/kontaktuppgifter och slutliga villkor. Därefter kan produktionsdata läggas in utan ombyggnad.
+Matchställ:
+- Commerce Core och batchmodell är byggda
+- 998 kr är fortfarande **endast staging/testpris** och ska ersättas med verkligt pris före skarp handel
 
-## Kostnadsprincip
-Inga betaltjänster, abonnemang eller externa kostnader får aktiveras utan uttryckligt godkännande.
+## Commerce Core
+P3 använder MySQL och separata `bois_`-tabeller för:
+- produkter och varianter
+- kunder
+- order och orderrader
+- medlemskap
+- betalningsposter
+- leverantörer och fulfillment-regler
+- batcher
+- e-post-outbox
+- eventlogg
+
+Fulfillment-typer:
+- `DIGITAL_MEMBERSHIP`
+- `MEMBER_BENEFIT`
+- `BATCH_SUPPLIER`
+- `DIRECT_SUPPLIER`
+- `DIGITAL_GIFT`
+
+## 2027-sortiment
+Följande finns förberedda som dolda produkter och är inte publikt säljbara före 1 januari 2027:
+- BoIS 1941 Hoodie
+- Supporter-T-shirt
+- Bandyförälder Hoodie
+- Mössa + halsduk
+- BoIS Gym Pack
+- Knatte Pack
+- Presentkort
+
+## Säkerhet och kostnad
+P3-staging använder befintlig Simply/MySQL-infrastruktur med egna `bois_`-tabeller. Deployen verifierar att icke-BoIS-tabeller inte ändras.
+
+Produktion ska få dedikerad BoIS-databas/credential innan riktiga kunduppgifter används.
+
+Inga betaltjänster, abonnemang eller leverantörsutskick aktiveras utan uttryckligt godkännande.
+
+## Nästa utvecklingsordning
+1. **P5 – Match kit batching**: tröskel X, max väntetid, batch-ID, leverantörsunderlag, mail/outbox/retry.
+2. **P4 – Membership & Gym**: riktig medlemsstatus och Nordic Wellness-eligibility/aktivering.
+3. **P6 – Payment**: Swish/kort och webhook.
+4. **P7 – 2027 assortment**.
+5. **P8 – production launch**.
+6. **P9 – sales engine**.
