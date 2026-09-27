@@ -2,78 +2,68 @@
 
 Datum: 2026-09-27
 
-## Status
-**P1: COMPLETE**  
-**P2: COMPLETE**  
-**P3 – Commerce Core: COMPLETE / MYSQL STAGING VERIFIED**
+## Övergripande status
+- **P1 – ordermotor: COMPLETE**
+- **P2 – produktionsförberedelse: COMPLETE**
+- **P3 – Commerce Core / MySQL: COMPLETE**
+- **P5 – Match kit batching: COMPLETE / LIVE STAGING VERIFIED**
+- **P4 – Membership & Gym: NEXT**
+- **P6 – Payment: NOT STARTED**
 
 Betalning: **AVSTÄNGD**  
-Leverantörsutskick: **AVSTÄNGT**  
+Extern mejlsändning: **AVSTÄNGD I STAGING**  
 Ny extern kostnad: **0 kr**
 
-## Aktiva stagingadresser
-- P3 shop: https://alberiq.se/bois-shop-p3/
+## Aktiv staging
+- Shop: https://alberiq.se/bois-shop-p3/
 - Medlemskap + gym: https://alberiq.se/bois-shop-p3/membership.html
 - Matchställ: https://alberiq.se/bois-shop-p3/match-kit.html
 - Orderstatus: https://alberiq.se/bois-shop-p3/order.html
-- Shopadmin: https://alberiq.se/bois-shop-p3/admin.html
-- P3 health: https://alberiq.se/bois-shop-p3/commerce-api.php?action=health
+- Shopadmin / batchmotor: https://alberiq.se/bois-shop-p3/admin.html
+- API health: https://alberiq.se/bois-shop-p3/commerce-api.php?action=health
 
-P2-staging finns kvar på:
-- https://alberiq.se/bois-bestallning-p1/
+Staging använder endast testuppgifter.
 
 ## Affärsbeslut 2026-09-27
-Erik och Albert har bekräftat att följande får säljas redan nu:
+Följande får säljas före 31 december 2026:
 - medlemskap
 - Nordic Wellness gymkort för medlem
 - matchställ
 
 Övrigt supporter-/merchsortiment hålls dolt till 1 januari 2027.
 
-Bekräftade medlemspriser:
-- ungdom 200 kr
-- vuxen 350 kr
-- pensionär 300 kr
-
-Nordic Wellness gymkort:
-- 2 650 kr för aktiv BoIS-medlem
+Bekräftade priser:
+- ungdomsmedlemskap: 200 kr
+- vuxenmedlemskap: 350 kr
+- pensionärsmedlemskap: 300 kr
+- Nordic Wellness gymkort: 2 650 kr för aktiv BoIS-medlem
 
 Matchställ:
-- batch-/ordermodell är byggd
+- Commerce Core och batchflöde är byggda
 - 998 kr är fortsatt endast staging/testpris
 - verkligt pris och leverantörsdata krävs före skarp försäljning
 
-## P3 levererat
+## P3 – Commerce Core
+MySQL-datamodell med separata `bois_`-tabeller för:
+- schema/migrations
+- produkter och varianter
+- kunder
+- order och orderrader
+- medlemskap
+- betalningar
+- leverantörer
+- fulfillment-regler
+- leverantörsbatcher
+- batchrader
+- e-post-outbox
+- eventlogg
 
-### MySQL Commerce Core
-P3 har en riktig MySQL-datamodell med separata `bois_`-tabeller:
-- `bois_schema_migrations`
-- `bois_products`
-- `bois_variants`
-- `bois_customers`
-- `bois_orders`
-- `bois_order_items`
-- `bois_memberships`
-- `bois_payments`
-- `bois_suppliers`
-- `bois_fulfillment_rules`
-- `bois_supplier_batches`
-- `bois_batch_items`
-- `bois_email_outbox`
-- `bois_events`
+Publika/orderbara produktgrupper:
+1. medlemskap
+2. Nordic Wellness gymkort
+3. matchställ
 
-### Publik katalog i P3
-Endast tre produktgrupper är publika/orderbara:
-1. Medlemskap
-   - MEM-YOUTH – 200 kr
-   - MEM-ADULT – 350 kr
-   - MEM-SENIOR – 300 kr
-2. Nordic Wellness
-   - NW-GYM-ANNUAL – 2 650 kr
-3. Matchställ
-   - MATCHKIT-STAGING – 998 kr testpris
-
-### Dolda 2027-produkter
+Dolda 2027-produkter:
 - BoIS 1941 Hoodie
 - Supporter-T-shirt
 - Bandyförälder Hoodie
@@ -82,175 +72,161 @@ Endast tre produktgrupper är publika/orderbara:
 - Knatte Pack
 - Presentkort
 
-Dessa är `is_public = false` och `is_orderable = false`.
+## P5 – Match kit batching
 
-### Fulfillment-modell
-- `DIGITAL_MEMBERSHIP`
-- `MEMBER_BENEFIT`
-- `BATCH_SUPPLIER`
-- `DIRECT_SUPPLIER`
-- `DIGITAL_GIFT`
+### Regel
+- tröskel: **8 betalda matchställ**
+- max väntetid: **168 timmar / 7 dagar**
+- admin kan alltid välja **Skicka batch nu**
 
-Fulfillment-reglerna är ännu inte aktiverade för utskick.
+Regeln är konfigurerbar i databasen.
 
-### Medlemskap + gym
-- medlemskap och gym kan testbeställas i samma order
-- vuxen + gym ger 3 000 kr i Commerce Core
-- gym utan medlemskap nekas om inte testflaggan "befintlig medlem" anges
-- medlemskap skapas i databasen som `PENDING_PAYMENT`
-- riktig medlemsverifiering byggs i P4
+### Kandidatkrav
+En matchställsrad får endast batchas om:
+- orderns `payment_status = PAID`
+- `fulfillment_type = BATCH_SUPPLIER`
+- `fulfillment_status = WAITING_BATCH`
+- raden inte redan finns i `bois_batch_items`
 
-### Matchställ
-Orderraden sparar:
+Det gör att:
+- obetalda order aldrig batchas
+- medlemskap/gym aldrig hamnar i matchställsbatch
+- samma orderrad aldrig kan ingå i två batcher
+
+### Batchresultat
+När batch skapas:
+1. unikt batch-ID skapas
+2. orderrader låses i MySQL-transaktion
+3. trigger sparas: `THRESHOLD`, `MAX_WAIT` eller `MANUAL`
+4. leverantörs-CSV skapas
+5. SHA-256 av exakt CSV sparas
+6. e-postmeddelande skapas i `bois_email_outbox`
+7. orderrader blir `BATCHED`
+
+Efter lyckad framtida mailtransport:
+- outbox → `SENT`
+- batch → `SENT`
+- orderrader → `SENT_TO_SUPPLIER`
+
+### Leverantörs-CSV
+Innehåller:
+- ordernummer
 - lag
-- spelarnamn
-- tröjnummer
+- spelare
 - tröjstorlek
 - byxstorlek
+- nummer
 - namntryck
 - nummertryck
+- antal
+- SKU
 
-Fulfillment är `BATCH_SUPPLIER`, men ordern ligger i `ON_HOLD` eftersom betalning inte är aktiverad.
+Kolumnordningen justeras när verklig leverantör lämnat sitt slutliga format.
 
-## Betalningsspärr
-Varje P3-order skapas som:
-- orderstatus: `PENDING_PAYMENT`
-- payment_status: `NOT_ENABLED`
-- fulfillment_status: `ON_HOLD`
+### Outbox och retry
+P5 stödjer:
+- message_key/idempotens
+- till-adress + cc
+- exakt batchpayload
+- CSV snapshot som base64
+- CSV SHA-256
+- attempts
+- not_before
+- last_error
+- sent_at
+- exponentiell retry
+- `FAILED` efter fem misslyckade försök
+- manuell retry från admin
 
-P3 skapar därför inga riktiga leverantörsorder och aktiverar inga medlemskap.
+## Staging-säkerhet
+I staging:
+- mottagare tvingas till `supplier@example.invalid`
+- kopia tvingas till `erik@example.invalid`
+- `mail_transport = disabled`
+- inget externt mejl kan skickas
+
+Admin kan simulera `PAID` för testorder. Funktionen är blockerad i production mode.
+
+## P5 shopadmin
+Admin visar:
+- väntande betalda matchställ
+- antal order/ställ
+- kvar till tröskel
+- äldsta väntetid
+- batchhistorik
+- triggerorsak
+- outboxstatus och attempts
+- CSV-download
+- Skicka batch nu
+- Kontrollera automatik
+- staging: Simulera betald
 
 ## Verifiering
 
-### GitHub CI
-- MySQL 8.4 container: pass
+### GitHub CI / MySQL 8.4
 - PHP syntax: pass
-- PDO MySQL: pass
-- P3 MySQL smoke: pass
-- membership + gym order: pass
-- gym membership guard: pass
-- match kit metadata: pass
-- JavaScript syntax: pass
-- secret/payment safety checks: pass
+- 8 betalda testställ → exakt 1 THRESHOLD-batch: pass
+- dubblettskydd: pass
+- deterministisk CSV + SHA-256: pass
+- failed transport → RETRY: pass
+- retry → SENT: pass
+- manuell batch under tröskel: pass
+- 7-dagarsregel → MAX_WAIT: pass
+- JavaScript: pass
+- safety checks: pass
+- verkligt mejl skickat: **no**
 
-### AlberIQ / Simply end-to-end
-- Commerce API health: pass
-- storage_driver=mysql: pass
-- betalning avstängd: pass
-- tre publika produkter: pass
-- membership + gym testorder: pass
-- total vuxen + gym = 3 000 kr: pass
-- offentlig orderstatus: pass
-- matchställ med BATCH_SUPPLIER: pass
-- lagmetadata P13: pass
-- admin läser MySQL-order: pass
-- 10 katalogprodukter totalt inkl. dolda 2027-produkter: pass
-- supplier_batches = 0: pass
-- email_outbox = 0: pass
-- p3_db.php direktåtkomst blockerad: pass
-- p3-migrate.php direktåtkomst blockerad: pass
+### AlberIQ / Simply live-staging
+- API phase=P5: pass
+- MySQL: pass
+- threshold=8: pass
+- max_wait_hours=168: pass
+- 8 nya live-testorder skapade: pass
+- samtliga simulerade PAID: pass
+- THRESHOLD-batch skapad: pass
+- CSV download/verifiering: pass
+- stagingmottagare `supplier@example.invalid`: pass
+- mail transport disabled: pass
+- worker processed external mail: 0
 - icke-BoIS-tabeller före/efter migration: oförändrade
 
-## Databassäkerhet
-P3 staging använder befintlig Simply/MySQL-infrastruktur med strikt `bois_`-prefix.
+## Drift
+Aktiv deployment:
+- `work-capture/.github/workflows/simply-deploy-bois-p5.yml`
 
-Detta är endast en kostnadsfri staginglösning:
-- inga riktiga kund-/medlemsuppgifter ska användas
-- inga befintliga icke-BoIS-tabeller får ändras
-- produktion ska ha dedikerad BoIS-databas/credential
+P3-deployworkflowen är pensionerad så den inte kan skriva över P5.
+
+För 7-dagarskontroll finns `server/p5-worker.php`.
+Schemalagd körning aktiveras först när riktiga betalningar är live, så utvecklingsfasen inte skapar onödiga återkommande körningar.
 
 ## Kostnad
 **Ny extern kostnad: 0 kr.**
 
-Ingen ny hosting, betaltjänst, mailtjänst eller betalprovider har aktiverats.
+Ingen ny:
+- hosting
+- mailtjänst
+- betalprovider
+- schemalagd molntjänst
 
-## Nästa fas
-Rekommenderad nästa operativa fas:
+har aktiverats.
 
-### P5 – Match kit batching
-Bygg:
-- konfigurerbar tröskel X, startförslag 8–10 order
-- max väntetid, startförslag 7 dagar
-- batch-ID
-- låsning/idempotens så samma order aldrig skickas två gånger
-- leverantörs-CSV
-- mail till leverantör + kopia Erik
-- email outbox + retry
-- "Skicka batch nu" i admin
-- full batchhistorik
+## Nästa utvecklingssteg
 
 ### P4 – Membership & Gym
-Bygg parallellt när Nordic Wellness-flödet är bekräftat:
+När Nordic Wellness-flödet är bekräftat:
 - riktig medlemsstatus
 - medlemsperiod
+- befintlig medlemskontroll
 - eligibility
 - gymaktivering
-- befintlig medlemskontroll
 - förnyelsemodell
 
-P6 betalning ska fortfarande komma efter att merchant/betalningsmottagare är beslutad.
+### P6 – Payment
+Därefter:
+- Swish/kort
+- webhook
+- refunds
+- kvitto/orderbekräftelse
+- riktig `PAID`-händelse
 
-
-## P5 – Match kit batching
-**Status: COMPLETE / LIVE STAGING VERIFIED**
-
-### Regel
-- tröskel: 8 betalda matchställ
-- max väntetid: 168 timmar / 7 dagar
-- manuell åtgärd: Skicka batch nu
-
-### Säkerhetsvillkor
-En matchställsrad får endast batchas när:
-- ordern är PAID
-- raden är BATCH_SUPPLIER
-- raden är WAITING_BATCH
-- raden inte redan finns i bois_batch_items
-
-UNIQUE-regler och transaktion/radlåsning hindrar samma orderrad från att skickas i två batcher.
-
-### P5 levererar
-- unikt batch-ID
-- trigger reason: THRESHOLD / MAX_WAIT / MANUAL
-- leverantörs-CSV
-- SHA-256-snapshot av CSV
-- e-post-outbox
-- attempts / not_before / retry / last_error / sent_at
-- exponentiell retry, FAILED efter fem försök
-- status BATCHED och senare SENT_TO_SUPPLIER efter lyckad transport
-- batchhistorik i shopadmin
-- CSV-download från admin
-- stagingfunktion för att simulera PAID
-
-### CI-verifiering
-MySQL 8.4:
-- 8 betalda testställ → exakt 1 THRESHOLD-batch: pass
-- dubblettskydd: pass
-- CSV hash/deterministisk export: pass
-- failed mail → RETRY: pass
-- retry → SENT: pass
-- manuell batch under tröskel: pass
-- 7-dagarsregel → MAX_WAIT: pass
-- real email sent: no
-
-### AlberIQ live-staging
-- API phase=P5: pass
-- storage_driver=mysql: pass
-- threshold=8: pass
-- max_wait_hours=168: pass
-- åtta live-testorder + simulerad betalning → THRESHOLD-batch: pass
-- leverantörs-CSV: pass
-- mottagare tvingad till supplier@example.invalid: pass
-- mail_transport=disabled: pass
-- worker skickar 0 externa mail: pass
-- icke-BoIS-tabeller oförändrade: pass
-
-### Drift
-P3-deployworkflowen har pensionerats så den inte kan skriva över P5.
-P5-deployworkflowen är nu den aktiva stagingdeployen.
-
-### Kostnad
-Ny extern kostnad: **0 kr**.
-
-### Nästa
-P4 – Membership & Gym när Nordic Wellness-processen för medlemsverifiering/aktivering är bekräftad.
-P6 kopplar sedan riktig betalning och anropar P5:s befintliga PAID-händelse.
+P6 ska anropa samma P5-logik som stagingens simulerade betalning. Matchställsbatchningen behöver därför inte byggas om när betalning kopplas på.
