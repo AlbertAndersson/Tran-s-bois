@@ -134,6 +134,7 @@ Payment states:
 - `FAILED`
 - `CANCELLED`
 - `PARTIALLY_REFUNDED`
+- `REFUND_PENDING`
 - `REFUNDED`
 
 ## Verifiering
@@ -171,21 +172,17 @@ P6 – GitHub Actions run `36324968897`:
 - real email sent: no
 
 ### AlberIQ / Simply
-Senast verifierad P6-deploy: workflow run `36325200482`, conclusion **success**.
+Senast verifierad P6-hardening-deploy: workflow run `36327128975`, conclusion **success**.
 
 - P6 migration: pass
 - filrättigheter/privat runtime: pass
-- icke-BoIS-tabeller oförändrade: pass
-- API `phase=P6`: pass
-- `payment_enabled=true` i isolerat staging-testmode: pass
-- `payment_provider=mock`: pass
-- serverstyrd checkout live: pass
-- Test-Swish live: pass
-- verifierad PAID → medlemskap ACTIVE: pass
-- verifierad PAID → Nordic ELIGIBLE: pass
-- andra PAID-eventet applicerar inte P4/P5 igen: pass
+- syntetisk checkout → signerad P6-mock → PAID: pass
+- medlemskap ACTIVE: pass
+- Nordic ELIGIBLE: pass
+- upprepad betalhändelse ger inga nya downstream-effekter: pass
 - P5-regel 8 / 168h bevarad: pass
 - payment mail transport disabled: pass
+- snapshot: 38 icke-BoIS-tabeller, identisk hash före/efter: pass
 - real payment provider: no
 - new external cost: 0
 
@@ -212,17 +209,14 @@ Prioriterat:
 
 P6 förblir testmode under P7. **Stripe är vald som målprovider för P8**, men merchant, aktuell prisbild, produktionsupplägg och aktivering ska godkännas uttryckligen innan skarp drift. Stripe-Swish ska verifieras för BoIS-kontot eftersom Stripe 2026-09-27 märker Swish som Beta.
 
-## P6 verifieringsskärpning efter första stagingleverans
-En granskning efter P6:s första deploy fann att `admin_simulate_paid` fortfarande gick direkt via P5. Separat branch `chatgpt/p6-payment-hardening-20260927` tar bort den alternativa vägen, binder signerade event till order/session/valuta/belopp, serialiserar behandling per betalning och visar betalreferens/event. Tidigare live-verifiering avser första P6-implementationen; denna skärpning kräver egen CI och stagingdeploy innan den räknas som live.
-
-### Slutverifiering av P6-skärpning
-- Merge på main: `b5b9a157a7462277cdab27bb304c5c1b31706fa0` (PR #3, sex små uppföljningscommits).
-- P2, P3, P4, P5 och P6 CI på merge-commit: **success**.
-- Simply deploy `AlbertAndersson/work-capture` run `36327128975`: **success**.
-- P6 migration, syntetisk checkout/Test-Swish/PAID, medlem ACTIVE, Nordic ELIGIBLE, upprepad PAID utan nya effekter och avstängd mailtransport: **pass**.
-- Snapshot före/efter migration: 38 icke-BoIS-tabeller, samma hash: **pass**.
-- Ingen verklig provider eller leverantörsmejl aktiverad.
-
+## P6 final hardening verification
+- PR #3 merge: `b5b9a157a7462277cdab27bb304c5c1b31706fa0`.
+- P2–P6 CI på merge-commit: **success**.
+- Simply deploy run `36327128975`: **success**.
+- Direkt adminväg till PAID är borttagen; staging-simulering går via signerad P6-mock.
+- Webhook binder order, session, valuta och belopp och skyddar mot dubbelbehandling.
+- REFUND_PENDING, partiell återbetalning och manuell fulfillment-granskning ingår.
+- Snapshot av 38 icke-BoIS-tabeller var identisk före/efter.
 
 ## Payment provider-beslut inför P8
 - Provider: **Stripe**.

@@ -4,8 +4,8 @@ Ta över projektet **Tranås BoIS – Webbshop** och fortsätt från verifierad 
 
 GitHub-repot `AlbertAndersson/Tran-s-bois` är source of truth. Börja på `main` och verifiera aktuell HEAD.
 
-P6 implementation merge:
-- `64ac0ed2b1624fb425195c5042f964f0ceb8a2a3`
+P6 slutlig hardening merge:
+- `b5b9a157a7462277cdab27bb304c5c1b31706fa0` (PR #3)
 
 Läs först:
 1. `README.md`
@@ -22,9 +22,10 @@ Deployment ligger i `AlbertAndersson/work-capture`. Aktiv workflow är:
 `.github/workflows/simply-deploy-bois-p4.yml`
 
 Senast verifierad P6-deploy:
-- workflow run `36325200482`
+- workflow run `36327128975`
 - conclusion: **success**
-- deployment commit: `903621e4be684b15848ff94d688d789ee4871b19`
+- deployment commit: `68412823f65e120484febc091c052df8b4bd4564`
+- 38 icke-BoIS-tabeller: identisk snapshot-hash före/efter
 
 Aktiv staging:
 - shop: https://alberiq.se/bois-shop-p3/
@@ -41,7 +42,7 @@ P6 staging använder:
 - signerad webhook
 - event-idempotens
 - payment state machine
-- refund → `REVIEW_REQUIRED`
+- `REFUND_PENDING` / partiell refund → manuell `REVIEW_REQUIRED`
 - receipt/refund outbox
 - `payment_mail_transport = disabled`
 
@@ -78,8 +79,15 @@ Behåll affärsreglerna:
 
 Hitta inte på leverantör, inköpspris eller SKU; märk osäkra uppgifter `TBD`/`ESTIMATE`. Dokumentera löpande i GitHub och synka handoff/status till Google Drive.
 
-## Kontroll före P7
-Kontrollera P6-skärpningen på `chatgpt/p6-payment-hardening-20260927` och dess CI/deploystatus. Adminens staging-simulering ska nu gå via signerad P6-mock. Kundvy och adminvy ska visa betalreferens respektive event. Fortsätt inte anta att den första P6-deployen inkluderar dessa ändringar förrän ny stagingdeploy har verifierats.
+## Verifierad P7-startpunkt
+P6-hardening är redan verifierad och ska inte återöppnas i P7:
+- PR #3 → `b5b9a157`
+- P2–P6 CI: **success**
+- Simply deploy `36327128975`: **success**
+- adminens staging-simulering går via signerad P6-mock
+- order/session/valuta/belopp verifieras
+- kundvy visar betalreferens och admin visar betalningar/event
+- REFUND_PENDING och partiell refund finns
+- extern e-post och riktig provider är avstängda
 
-## Verifierad uppföljning
-P6-skärpningen på PR #3 är mergead till main som `b5b9a157`. P2–P6 CI och Simply-deploy `36327128975` är gröna, inklusive syntetisk betalning och kontroll av icke-BoIS-tabeller. Gå vidare med P7 utan att aktivera riktiga betalningar eller 2027-sortiment i förtid.
+Gå direkt vidare med P7A–P7D enligt `docs/P7-2027-ASSORTMENT.md`.

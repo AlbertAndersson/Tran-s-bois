@@ -8,8 +8,8 @@ Detta är den primära överlämningen för en ny utvecklingstråd. GitHub är s
 
 - Repo: `AlbertAndersson/Tran-s-bois`
 - Branch: `main`
-- P6 implementation merge: `64ac0ed2b1624fb425195c5042f964f0ceb8a2a3`
-- Verifiera alltid aktuell `main` HEAD; closeout-dokumentation kan ligga senare än implementation-committen
+- P6 slutlig hardening merge: `b5b9a157a7462277cdab27bb304c5c1b31706fa0` (PR #3)
+- Verifiera alltid aktuell `main` HEAD innan ändring
 - Deployment/secrets: `AlbertAndersson/work-capture`
 
 Verifiera alltid aktuell HEAD innan du ändrar något.
@@ -33,10 +33,11 @@ Aktiv workflow i deployment-repot:
 `AlbertAndersson/work-capture/.github/workflows/simply-deploy-bois-p4.yml`
 
 Senast verifierad P6-deploy:
-- run: `36325200482`
+- run: `36327128975`
 - conclusion: **success**
-- deployment commit i `work-capture`: `903621e4be684b15848ff94d688d789ee4871b19`
-- source implementation merge i shop-repot: `64ac0ed2b1624fb425195c5042f964f0ceb8a2a3`
+- deployment commit i `work-capture`: `68412823f65e120484febc091c052df8b4bd4564`
+- source hardening merge i shop-repot: `b5b9a157a7462277cdab27bb304c5c1b31706fa0`
+- snapshot: **38 icke-BoIS-tabeller, identisk hash före/efter**
 
 Äldre P3/P5 deployworkflows är pensionerade så de inte kan skriva över aktuell P6-staging.
 
@@ -230,6 +231,7 @@ State machine:
 - `FAILED`
 - `CANCELLED`
 - `PARTIALLY_REFUNDED`
+- `REFUND_PENDING`
 - `REFUNDED`
 
 Refund:
@@ -237,13 +239,15 @@ Refund:
 - order/fulfillment går till `REVIEW_REQUIRED`
 - redan startat medlems-/partner-/leverantörsflöde backas inte automatiskt
 
-Verifiering:
-- P6 GitHub CI run `36324968897`: **success**
-- Simply live deploy run `36325200482`: **success**
-- icke-BoIS-tabeller oförändrade: pass
-- live Test-Swish → PAID → medlem ACTIVE/Nordic ELIGIBLE: pass
-- extra PAID-event applicerar inte P4/P5 igen: pass
+Slutverifiering efter P6-hardening:
+- PR #3 merge `b5b9a157`: P2–P6 CI **success**
+- Simply live deploy run `36327128975`: **success**
+- syntetisk checkout → signerad P6-mock → PAID: pass
+- medlem ACTIVE / Nordic ELIGIBLE: pass
+- upprepad betalhändelse utan nya downstream-effekter: pass
+- P5-konfiguration bevarad: pass
 - payment mail transport disabled: pass
+- 38 icke-BoIS-tabeller med identisk snapshot-hash: pass
 
 ## Säkerhetsinvariants
 
@@ -328,8 +332,3 @@ P7 stagingklar när:
 - produkter kan granskas i staging/admin
 - launch gate förhindrar publik/orderbar exponering före 1 januari 2027
 - inga nya externa kostnader är aktiverade utan godkännande
-
-## P6 uppföljning
-Efter första P6-verifieringen upptäcktes en kvarvarande direktväg från adminens `Simulera betald` till P5. Se `docs/P6-PAYMENT.md` för skärpningen. Verifiera CI och ny stagingdeploy på aktuell main innan P7 fortsätter.
-
-P6-skärpningen mergeades i PR #3 (`b5b9a157`). P2–P6 CI och Simply staging run `36327128975` är gröna. 38 icke-BoIS-tabeller behöll samma snapshot-hash. Nästa utvecklingsfas är fortsatt P7, med 2027-sortimentet dolt tills avtalsgränsen passerats.
