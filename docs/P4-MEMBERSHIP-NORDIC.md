@@ -1,1 +1,133 @@
-# P4 – Membership & Nordic Wellness\n\nDatum: 2026-09-27\n\n## Mål\nGöra medlemskap och Nordic Wellness-förmånen operativt hanterbara i BoIS egen shop utan att vara beroende av ett Nordic Wellness-API.\n\n## Offentlig bakgrund\nTranås BoIS beskrev 2023 ett manuellt flöde där medlem registrerade intresse, BoIS fakturerade och efter registrerad betalning kunde kort hämtas hos Nordic Wellness. P4 bygger en moderniserad variant av samma grundprincip: BoIS verifierar medlemskap och styr partneröverlämningen.\n\nDet nya avtalet/priset 2 650 kr kommer från BoIS/Eriks aktuella underlag och ska inte blandas ihop med det historiska 2023-erbjudandet.\n\n## P4-datamodell\nNya tabeller:\n- bois_members – aktuellt medlemsregister\n- bois_benefit_entitlements – Nordic-förmånsärenden\n\nTransaktionsraden bois_memberships behålls som köp-/orderhistorik.\n\n## Medlemskap\nEfter PAID:\n- medlemsköp → ACTIVE\n- medlemsregisterpost skapas\n- giltighet beräknas från konfigurerad regel\n- staging använder membership_validity_days = 365\n- slutlig BoIS-regel kan ändras utan ombyggnad\n\n## Nordic eligibility\nNy medlem + gym i samma order:\n1. order betald\n2. medlemskap aktiveras\n3. medlemsregister skapas\n4. Nordic entitlement länkas till medlem\n5. status → ELIGIBLE\n\nRedan medlem + bara gym:\n1. order betald\n2. Nordic entitlement → PENDING_MEMBER_VERIFICATION\n3. Erik/admin verifierar medlemskapet\n4. medlemsregister länkas/skapas\n5. status → ELIGIBLE\n\n## Nordic-statusflöde\n- PENDING_PAYMENT\n- PENDING_MEMBER_VERIFICATION\n- ELIGIBLE\n- SENT_TO_PARTNER\n- READY_FOR_PICKUP\n- ACTIVATED\n- REJECTED\n\n## Admin\n- aktiva medlemmar\n- medlemskap som väntar kontroll\n- eligible gymkort\n- aktiverade gymkort\n- medlemsregister\n- Nordic-ärendelista\n- verifiera befintlig medlem\n- markera skickad till Nordic\n- partnerreferens\n- markera klar att hämta\n- markera aktiverad\n- Nordic CSV-export\n\n## Personuppgifter\nP4 samlar inte in personnummer.\n\nHistoriskt bad BoIS befintliga medlemmar ange personnummer för Nordic-erbjudandet 2023, men P4 inför inte detta fält innan det nya avtalet uttryckligen kräver det. Dataminimering gäller tills dess.\n\nNordic-exporten innehåller:\n- order\n- namn\n- e-post\n- telefon\n- medlemsnamn\n- medlemstyp\n- medlemsperiod\n- status\n\n## Betalning\nP4 aktiverar aldrig medlemskap eller gymförmån på obetald order.\n\nI staging används P5:s Simulera betald. I P6 ersätts simuleringen av riktig betalwebhook, men samma P4-funktioner återanvänds.\n\n## Nordic-integration\nP4 är komplett med manuell partnerhandoff.\n\nNär Nordic bekräftar exakt tekniskt/administrativt format kan SENT_TO_PARTNER kopplas till e-post/export, SFTP, API eller portaluppladdning utan att medlems- eller eligibilitylogiken behöver byggas om.\n\n## Kostnad\nNy extern kostnad: 0 kr.
+# P4 – Membership & Nordic Wellness
+
+Datum: 2026-09-27
+
+## Status
+**COMPLETE / LIVE STAGING VERIFIED**
+
+## Mål
+Göra medlemskap och Nordic Wellness-förmånen operativt hanterbara i BoIS egen shop utan att vara beroende av ett Nordic Wellness-API.
+
+## Grundmodell
+P4 använder två separata nivåer:
+- `bois_members` – aktuell medlemsstatus
+- `bois_benefit_entitlements` – Nordic Wellness-förmånsärenden
+
+Transaktionsraden `bois_memberships` behålls som köp-/orderhistorik.
+
+## Medlemskap
+Efter `PAID`:
+- medlemsköp → `ACTIVE`
+- medlemsregisterpost skapas eller uppdateras
+- giltighet beräknas från konfigurerad regel
+- staging använder `membership_validity_days = 365`
+- obetalda medlemskap aktiveras aldrig
+
+## Förnyelse
+- aktiv medlem med samma e-post återanvänds
+- samma `member_uuid` behålls
+- medlemsperioden förlängs
+- ingen dubblettmedlem skapas
+- den nya ordern finns kvar som separat historik
+
+## Nordic eligibility
+
+### Ny medlem + gym i samma order
+1. order blir betald
+2. medlemskap aktiveras
+3. medlemsregister skapas
+4. Nordic entitlement länkas till medlem
+5. status → `ELIGIBLE`
+
+### Redan medlem + bara gym
+1. order blir betald
+2. Nordic entitlement → `PENDING_MEMBER_VERIFICATION`
+3. Erik/admin verifierar medlemskapet
+4. medlemsregister länkas eller skapas
+5. status → `ELIGIBLE`
+
+## Nordic-statusflöde
+- `PENDING_PAYMENT`
+- `PENDING_MEMBER_VERIFICATION`
+- `ELIGIBLE`
+- `SENT_TO_PARTNER`
+- `READY_FOR_PICKUP`
+- `ACTIVATED`
+- `REJECTED`
+
+## Shopadmin
+Admin stödjer:
+- aktiva medlemmar
+- väntande medlemskontroller
+- eligible gymkort
+- aktiverade gymkort
+- medlemsregister
+- Nordic-ärenden
+- verifiera befintlig medlem
+- partnerreferens
+- markera skickad till Nordic
+- markera klar att hämta
+- markera aktiverad
+- Nordic CSV-export
+
+## Kundens orderstatus
+Orderstatus visar även:
+- medlemsstatus
+- Nordic-förmånsstatus
+
+## Personuppgifter
+P4 samlar **inte in personnummer**.
+
+Nordic-exporten innehåller:
+- order
+- namn
+- e-post
+- telefon
+- medlemsnamn
+- medlemstyp
+- medlemsperiod
+- status
+
+Om Nordic i det nya avtalet uttryckligen kräver ytterligare identifierare läggs de inte till förrän kravet och integritetsbehovet är bekräftat.
+
+## Partnerintegration
+P4 är operativt komplett med manuell partnerhandoff.
+
+När Nordic bekräftar sitt slutliga arbetssätt kan `SENT_TO_PARTNER` kopplas till exempelvis:
+- CSV/e-post
+- portalimport
+- SFTP
+- API
+
+Det kräver inte ombyggnad av medlems- eller eligibilitylogiken.
+
+## Koppling till P6
+P4 aktiverar inget på obetald order.
+
+I staging används `Simulera betald`. P6 ersätter detta med en riktig betalwebhook och återanvänder samma P4-funktioner.
+
+## Verifiering
+MySQL 8.4 CI:
+- ny medlem + gym → ELIGIBLE: pass
+- befintlig medlem kräver verifiering: pass
+- manuell medlemsverifiering: pass
+- medlemsförnyelse utan dubblett: pass
+- Nordic-status till ACTIVATED: pass
+- Nordic-export utan personnummerfält: pass
+- payment gate: pass
+- admin JavaScript: pass
+
+AlberIQ/Simply:
+- P4 migration: pass
+- P5 migration bevarad: pass
+- filrättigheter verifierade: pass
+- icke-BoIS-tabeller oförändrade: pass
+- live ny medlem + gym: pass
+- live befintlig medlem + gym: pass
+- live adminverifiering: pass
+- live Nordic-statusflöde: pass
+- live Nordic CSV: pass
+- publika sidor/API: pass
+
+## Kostnad
+Ny extern kostnad: **0 kr**.
