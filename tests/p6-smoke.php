@@ -84,7 +84,7 @@ foreach([
     ['currency'=>''],
     ['amount_ore'=>(int)$session['total_ore']+1],
 ] as $index=>$change){
-    $invalid=bois_p6_event_payload($config,$session,'payment.succeeded','evt-invalid-'.$index);
+    $invalid=bois_p6_event_payload($config,$session,'payment.succeeded',0,'evt-invalid-'.$index);
     $invalid=array_replace($invalid,$change);
     $invalidRaw=json_encode($invalid,JSON_THROW_ON_ERROR);
     $invalidTs=(string)time();
