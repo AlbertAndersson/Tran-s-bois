@@ -23,3 +23,11 @@ Datum: 2026-09-27
 
 ## Kostnadsspärr
 Projektet ska tills vidare kunna utvecklas och demonstreras utan nya löpande kostnader.
+
+
+## Publicering
+- GitHub Pages-workflow skapad.
+- Första körningen stoppades i "Configure Pages" eftersom GitHub App-token inte får skapa/aktivera Pages-siten administrativt.
+- Ingen kostnad eller uppgradering har accepterats.
+- Nästa steg: aktivera Pages-källa "GitHub Actions" manuellt i repo-inställningen om det redan ingår i kontots plan. Om GitHub visar en betald uppgradering ska den inte accepteras; välj då annan kostnadsfri publiceringsväg.
+- SharePoint-projektmapp skapad: "Tranås BoIS – Webbshop" med statusdokument och konceptbild.
