@@ -1,0 +1,63 @@
+{
+  "version": "P7A-2026-09-27",
+  "currency": "SEK",
+  "verification_date": "2026-09-27",
+  "launch_date": "2027-01-01",
+  "source_notes": "Supplier options are research candidates, not contracted BoIS suppliers. No cost, MOQ, lead time, supplier SKU or margin is claimed for a specific BoIS design without a quote.",
+  "sources": [
+    {"id":"printful-hoodies","url":"https://www.printful.com/custom-hoodies","verified_at":"2026-09-27","claim":"Printful offers on-demand hoodies without a minimum order quantity."},
+    {"id":"printful-tees","url":"https://www.printful.com/t-shirt-printing","verified_at":"2026-09-27","claim":"Printful offers on-demand printed T-shirts without minimum quantity; average fulfillment is stated as 2–5 business days, not a Sweden delivery promise."},
+    {"id":"printful-beanies","url":"https://www.printful.com/custom-beanies","verified_at":"2026-09-27","claim":"Printful offers embroidered beanies without minimum quantity."},
+    {"id":"teamshirts","url":"https://www.teamshirts.se/","verified_at":"2026-09-27","claim":"TeamShirts states that pricing depends on garment, printing and quantity; it lists 72 SEK per printed side and standard shipping in Sweden as free. This is a benchmark, not a BoIS quote."}
+  ],
+  "products": [
+    {
+      "product_key":"bois-1941-hoodie","name":"BoIS 1941 Hoodie","group":"Klassiker","priority":1,
+      "copy":"En vardagshoodie med en diskret BoIS 1941-profil. Motiv, kvalitet och passform fastställs efter provplagg.",
+      "supplier":{"value":null,"candidate":"Printful","status":"TBD","source_ids":["printful-hoodies"]},
+      "purchase_price_ore":{"value":null,"status":"TBD"},"moq":{"value":null,"status":"TBD","note":"Kandidatens generella on-demand-erbjudande saknar minimum; BoIS-design och avtal återstår."},
+      "lead_time_days":{"value":null,"status":"TBD"},"decoration_cost_ore":{"value":null,"status":"TBD"},
+      "recommended_sale_price_ore":{"value":54900,"status":"ESTIMATE","note":"Internt riktpris; får inte aktiveras utan offert och marginalbeslut."},
+      "gross_margin_ore":{"value":null,"status":"TBD"},"gross_margin_pct":{"value":null,"status":"TBD"},
+      "shipping_handling_ore":{"value":null,"status":"TBD"},"stock_strategy":{"value":"ON_DEMAND_MANUAL","status":"ESTIMATE"},
+      "return_class":{"value":"APPAREL_STANDARD_REVIEW","status":"ESTIMATE","note":"Storlek/returpolicy måste beslutas före försäljning."},
+      "supplier_sku":{"value":null,"status":"TBD"},"variants":[{"size":"S","color":"mörkblå"},{"size":"M","color":"mörkblå"},{"size":"L","color":"mörkblå"},{"size":"XL","color":"mörkblå"}],
+      "variants_status":"ESTIMATE","fulfillment_type":{"value":"DIRECT_SUPPLIER","status":"ESTIMATE"},
+      "blockers":["Vald leverantör och provplagg","BoIS-godkänt motiv/bild","Offert inklusive tryck och svensk leverans","Leverantörs-SKU och storlekar","Returpolicy och marginalgodkännande"]
+    },
+    {
+      "product_key":"supporter-tee","name":"BoIS Supporter-T-shirt","group":"Matchdag","priority":2,
+      "copy":"En enkel supportertröja för läktaren och vardagen. Färg och tryck fastställs med klubben.",
+      "supplier":{"value":null,"candidate":"Printful","status":"TBD","source_ids":["printful-tees","teamshirts"]},
+      "purchase_price_ore":{"value":null,"status":"TBD"},"moq":{"value":null,"status":"TBD"},
+      "lead_time_days":{"value":null,"status":"TBD","note":"2–5 arbetsdagar är Printfuls generella produktionstid, inte verifierad total ledtid till Tranås."},
+      "decoration_cost_ore":{"value":null,"status":"TBD"},"recommended_sale_price_ore":{"value":24900,"status":"ESTIMATE"},
+      "gross_margin_ore":{"value":null,"status":"TBD"},"gross_margin_pct":{"value":null,"status":"TBD"},
+      "shipping_handling_ore":{"value":null,"status":"TBD"},"stock_strategy":{"value":"ON_DEMAND_MANUAL","status":"ESTIMATE"},
+      "return_class":{"value":"APPAREL_STANDARD_REVIEW","status":"ESTIMATE"},"supplier_sku":{"value":null,"status":"TBD"},
+      "variants":[{"size":"S","color":"mörkblå"},{"size":"M","color":"mörkblå"},{"size":"L","color":"mörkblå"},{"size":"XL","color":"mörkblå"}],
+      "variants_status":"ESTIMATE","fulfillment_type":{"value":"DIRECT_SUPPLIER","status":"ESTIMATE"},
+      "blockers":["Vald leverantör och provplagg","BoIS-godkänt motiv/bild","Offert inklusive tryck och svensk leverans","Leverantörs-SKU och storlekar","Returpolicy och marginalgodkännande"]
+    },
+    {
+      "product_key":"bois-beanie","name":"BoIS Läktarmössa","group":"Läktare","priority":3,
+      "copy":"En varm, enkel mössa med diskret BoIS-märke för kalla bandykvällar. Brodyr och färg kräver prov.",
+      "supplier":{"value":null,"candidate":"Printful","status":"TBD","source_ids":["printful-beanies"]},
+      "purchase_price_ore":{"value":null,"status":"TBD"},"moq":{"value":null,"status":"TBD"},
+      "lead_time_days":{"value":null,"status":"TBD"},"decoration_cost_ore":{"value":null,"status":"TBD"},
+      "recommended_sale_price_ore":{"value":19900,"status":"ESTIMATE"},"gross_margin_ore":{"value":null,"status":"TBD"},"gross_margin_pct":{"value":null,"status":"TBD"},
+      "shipping_handling_ore":{"value":null,"status":"TBD"},"stock_strategy":{"value":"ON_DEMAND_MANUAL","status":"ESTIMATE"},
+      "return_class":{"value":"ACCESSORY_REVIEW","status":"ESTIMATE"},"supplier_sku":{"value":null,"status":"TBD"},
+      "variants":[{"size":"one-size","color":"mörkblå"}],"variants_status":"ESTIMATE",
+      "fulfillment_type":{"value":"DIRECT_SUPPLIER","status":"ESTIMATE"},
+      "blockers":["Vald leverantör och provbrodyr","BoIS-godkänt motiv/bild","Offert inklusive brodyr och svensk leverans","Leverantörs-SKU","Returpolicy och marginalgodkännande"]
+    }
+  ],
+  "deferred": [
+    {"product_key":"bandy-parent-hoodie","reason":"Second hoodie design splits demand and variants; consider later based on sales."},
+    {"product_key":"winter-set","reason":"Split into a single beanie to avoid bundle procurement and returns."},
+    {"product_key":"gym-pack","reason":"Three-component pack creates sourcing, freight and inventory complexity."},
+    {"product_key":"knatte-pack","reason":"Multiple child sizes and components add stock and return risk."},
+    {"product_key":"gift-card","reason":"Liability, validity and redemption require a separate accounting flow."}
+  ]
+}
