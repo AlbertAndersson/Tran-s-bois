@@ -211,6 +211,3 @@ Prioriterat:
 - launch gate som gör att sortimentet **inte blir publikt/orderbart före 1 januari 2027**
 
 P6 förblir testmode tills merchant, provider, kostnad och produktionsupplägg har godkänts uttryckligen.
-
-## P6 verifieringsskärpning efter första stagingleverans
-En granskning efter P6:s första deploy fann att `admin_simulate_paid` fortfarande gick direkt via P5. Separat branch `chatgpt/p6-payment-hardening-20260927` tar bort den alternativa vägen, binder signerade event till order/session/valuta/belopp, serialiserar behandling per betalning och visar betalreferens/event. Tidigare live-verifiering avser första P6-implementationen; denna skärpning kräver egen CI och stagingdeploy innan den räknas som live.

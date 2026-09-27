@@ -98,6 +98,3 @@ P6:s payment gate är nu den gemensamma gränsen för medlemskap, Nordic och mat
 
 ## Kostnadsprincip
 Inga nya betaltjänster, abonnemang eller externa kostnader aktiveras utan uttryckligt godkännande.
-
-### P6 verifieringsskärpning 2026-09-27
-Adminens stagingknapp använder nu samma signerade mock-event som checkout. Webhooken binder event till order, session, valuta och belopp; betalhändelser serialiseras per betalreferens. Kundens ordervy visar testbetalningsreferens och admin visar betalningar/händelser. Ändringen ska CI- och stagingverifieras före uppdaterad live-status.

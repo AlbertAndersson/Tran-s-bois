@@ -323,6 +323,3 @@ P7 stagingklar när:
 - produkter kan granskas i staging/admin
 - launch gate förhindrar publik/orderbar exponering före 1 januari 2027
 - inga nya externa kostnader är aktiverade utan godkännande
-
-## P6 uppföljning
-Efter första P6-verifieringen upptäcktes en kvarvarande direktväg från adminens `Simulera betald` till P5. Se `docs/P6-PAYMENT.md` för skärpningen. Verifiera CI och ny stagingdeploy på aktuell main innan P7 fortsätter.

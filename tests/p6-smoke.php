@@ -186,6 +186,9 @@ $cancel=bois_p6_process_webhook_raw($pdo,$config,$cancelRaw,$cancelTs,$cancelSig
 if(($cancel['result']['status']??'')!=='CANCELLED') throw new RuntimeException('Cancellation failed.');
 
 $refundSession=bois_p6_session($pdo,$checkout['session_ref'],$checkout['session_token']);
+[$pendingRaw,$pendingTs,$pendingSig]=p6_signed($pdo,$config,$refundSession,'payment.refund_pending','evt-refund-pending');
+$pending=bois_p6_process_webhook_raw($pdo,$config,$pendingRaw,$pendingTs,$pendingSig);
+if(($pending['result']['status']??'')!=='REFUND_PENDING') throw new RuntimeException('Refund pending transition failed.');
 [$refundRaw,$refundTs,$refundSig]=p6_signed(
     $pdo,$config,$refundSession,'payment.refunded','evt-refund-full',(int)$refundSession['paid_ore']
 );
