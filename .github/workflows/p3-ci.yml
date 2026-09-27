@@ -1,0 +1,81 @@
+name: P3 Commerce Core CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "server/p3_*.php"
+      - "server/commerce-api.php"
+      - "site/commerce/**"
+      - "tests/p3-smoke.php"
+      - "docs/P3-COMMERCE-CORE.md"
+      - ".github/workflows/p3-ci.yml"
+  pull_request:
+    paths:
+      - "server/p3_*.php"
+      - "server/commerce-api.php"
+      - "site/commerce/**"
+      - "tests/p3-smoke.php"
+      - "docs/P3-COMMERCE-CORE.md"
+      - ".github/workflows/p3-ci.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: bois_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+
+    env:
+      BOIS_P3_TEST_DB_HOST: 127.0.0.1
+      BOIS_P3_TEST_DB_PORT: 3306
+      BOIS_P3_TEST_DB_NAME: bois_test
+      BOIS_P3_TEST_DB_USER: root
+      BOIS_P3_TEST_DB_PASSWORD: root
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: PHP syntax
+        run: |
+          php -l server/p3_db.php
+          php -l server/commerce-api.php
+          php -l server/p3-migrate.php
+          php -l server/p3-config.example.php
+
+      - name: Verify PDO MySQL
+        run: php -r 'if (!extension_loaded("pdo_mysql")) { fwrite(STDERR, "pdo_mysql missing\n"); exit(1); }'
+
+      - name: P3 MySQL smoke
+        run: php tests/p3-smoke.php
+
+      - name: Commerce JavaScript syntax
+        run: |
+          node --check site/commerce/config.js
+          node --check site/commerce/assets/common.js
+          node --check site/commerce/assets/membership.js
+          node --check site/commerce/assets/matchkit.js
+          node --check site/commerce/assets/order.js
+          node --check site/commerce/assets/admin.js
+
+      - name: Safety checks
+        run: |
+          grep -q "DIGITAL_MEMBERSHIP" server/p3_db.php
+          grep -q "MEMBER_BENEFIT" server/p3_db.php
+          grep -q "BATCH_SUPPLIER" server/p3_db.php
+          grep -q "2027-01-01" server/p3_db.php
+          grep -q "NOT_ENABLED" server/p3_db.php
+          ! grep -R -E "sk_live_|pk_live_|SWISH_CERT|BEGIN PRIVATE KEY" server site/commerce

@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="sv">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>BoIS Shopadmin – P3</title><link rel="stylesheet" href="assets/commerce.css"><script src="config.js" defer></script><script src="assets/common.js" defer></script><script src="assets/admin.js" defer></script></head>
+<body>
+<header class="header"><div class="nav"><a class="brand" href="index.html"><img src="https://cdn06.svenskalag.se/img/clubmarks/6245_w.png?3=" alt="Tranås BoIS"><div>TRANÅS BoIS<small>SHOPADMIN</small></div></a><span class="env" data-env>P3 DEMO</span></div></header>
+<main class="wrap">
+  <section id="login" class="form-card" style="max-width:520px;margin:25px auto"><span class="tag">ADMIN</span><h1>P3 Shopadmin</h1><p class="sub">I staging krävs den tillfälliga adminnyckeln från deployen.</p><form id="loginForm"><div class="field"><label for="token">Adminnyckel</label><input id="token" type="password" autocomplete="off" required></div><div id="loginError" class="error" hidden></div><button class="btn block" type="submit">Öppna admin</button></form></section>
+  <section id="dashboard" hidden>
+    <div class="section-head"><div><h2>Commerce Core</h2><p>MySQL-baserade testordrar och katalogstatus.</p></div><button class="btn ghost" id="logout">Logga ut</button></div>
+    <div class="kpis"><div class="kpi"><strong id="ordersKpi">0</strong><span>Order</span></div><div class="kpi"><strong id="productsKpi">0</strong><span>Produkter</span></div><div class="kpi"><strong id="membershipsKpi">0</strong><span>Medlemskapsposter</span></div><div class="kpi"><strong id="outboxKpi">0</strong><span>Outbox</span></div></div>
+    <h3 style="color:var(--blue)">Senaste order</h3><div class="table-wrap"><table><thead><tr><th>Order</th><th>Kund</th><th>Rader</th><th>Summa</th><th>Betalning</th><th>Fulfillment</th></tr></thead><tbody id="orders"></tbody></table></div>
+    <h3 style="color:var(--blue);margin-top:26px">Katalog</h3><div class="table-wrap"><table><thead><tr><th>Produkt</th><th>Kategori</th><th>Fulfillment</th><th>Publik</th><th>Beställningsbar</th></tr></thead><tbody id="catalog"></tbody></table></div>
+  </section>
+</main>
+</body></html>

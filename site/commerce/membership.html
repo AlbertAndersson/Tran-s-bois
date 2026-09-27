@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow">
+  <title>BoIS – Medlemskap & gym</title>
+  <link rel="stylesheet" href="assets/commerce.css">
+  <script src="config.js" defer></script><script src="assets/common.js" defer></script><script src="assets/membership.js" defer></script>
+</head>
+<body>
+<header class="header"><div class="nav"><a class="brand" href="index.html"><img src="https://cdn06.svenskalag.se/img/clubmarks/6245_w.png?3=" alt="Tranås BoIS"><div>TRANÅS BoIS<small>MEDLEMSKAP & GYM</small></div></a><span class="env" data-env>P3 DEMO</span></div></header>
+<main class="form-shell">
+  <a href="index.html" class="small">← Till shoppen</a>
+  <section class="form-card" style="margin-top:14px">
+    <span class="tag">MEDLEM + GYMFÖRMÅN</span>
+    <h1>Bli medlem i BoIS</h1>
+    <p class="sub">Välj medlemskap och lägg till Nordic Wellness-gymkortet om du vill. I P3 sparas en testorder i Commerce-databasen, men ingen betalning sker.</p>
+    <div class="notice"><b>Gymkort 2 650 kr</b> kräver aktivt BoIS-medlemskap. P3 kan testa både nytt medlemskap i samma order och gymkort för befintlig medlem; riktig medlemsverifiering byggs i P4.</div>
+
+    <form id="membershipForm">
+      <h2>1. Medlemsstatus</h2>
+      <label class="toggle"><input type="checkbox" id="existingMember"><span><b>Jag är redan medlem</b><br><span class="small">Välj detta om testordern bara ska innehålla gymkort.</span></span></label>
+
+      <div id="membershipOptions">
+        <label class="main">Medlemskap</label>
+        <div class="choice-grid">
+          <div class="choice"><input type="radio" name="membership" id="mYouth" value="MEM-YOUTH"><label for="mYouth"><b>Ungdom</b><span>200 kr</span></label></div>
+          <div class="choice"><input type="radio" name="membership" id="mAdult" value="MEM-ADULT" checked><label for="mAdult"><b>Vuxen</b><span>350 kr</span></label></div>
+          <div class="choice"><input type="radio" name="membership" id="mSenior" value="MEM-SENIOR"><label for="mSenior"><b>Pensionär</b><span>300 kr</span></label></div>
+        </div>
+        <div class="field"><label for="memberName">Medlemmens namn</label><input id="memberName" maxlength="160" placeholder="För- och efternamn" required></div>
+      </div>
+
+      <h2 id="gym">2. Gymförmån</h2>
+      <label class="toggle"><input type="checkbox" id="addGym" checked><span><b>Lägg till Nordic Wellness gymkort – 2 650 kr</b><br><span class="small">Aktivering sker först efter betalning och P4-medlemskontroll i skarp version.</span></span></label>
+
+      <h2>3. Kontaktuppgifter</h2>
+      <div class="field"><label for="buyerName">Beställarens namn</label><input id="buyerName" autocomplete="name" required></div>
+      <div class="row">
+        <div class="field"><label for="email">E-post</label><input id="email" type="email" autocomplete="email" required></div>
+        <div class="field"><label for="phone">Telefon</label><input id="phone" type="tel" autocomplete="tel"></div>
+      </div>
+      <label class="toggle"><input type="checkbox" id="consent" required><span><b>Jag godkänner testregistreringen</b><br><span class="small">Använd endast testuppgifter i P3 staging.</span></span></label>
+
+      <div class="summary">
+        <div id="membershipSummary"></div>
+        <div class="line total"><span>Totalt</span><span id="total">0 kr</span></div>
+      </div>
+      <div id="error" class="error" hidden></div>
+      <div id="success" class="success" hidden></div>
+      <button class="btn block" type="submit" id="submitBtn">Skapa P3-testorder →</button>
+    </form>
+  </section>
+</main>
+</body>
+</html>

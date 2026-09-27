@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow">
+  <title>BoIS – Matchställ</title>
+  <link rel="stylesheet" href="assets/commerce.css">
+  <script src="config.js" defer></script><script src="assets/common.js" defer></script><script src="assets/matchkit.js" defer></script>
+</head>
+<body>
+<header class="header"><div class="nav"><a class="brand" href="index.html"><img src="https://cdn06.svenskalag.se/img/clubmarks/6245_w.png?3=" alt="Tranås BoIS"><div>TRANÅS BoIS<small>MATCHSTÄLL</small></div></a><span class="env" data-env>P3 DEMO</span></div></header>
+<main class="form-shell">
+  <a href="index.html" class="small">← Till shoppen</a>
+  <section class="form-card" style="margin-top:14px">
+    <span class="tag red">BATCH_SUPPLIER</span>
+    <h1>Beställ matchställ</h1>
+    <p class="sub">P3 registrerar matchstället som en riktig commerce-orderrad. När betalning byggts aktiveras batchregeln: order skickas samlat när tröskel eller max väntetid nås.</p>
+    <div class="notice"><b>Stagingpris 998 kr:</b> detta är fortfarande ett testpris. Riktigt leverantörspris ska in innan skarp försäljning.</div>
+    <form id="kitForm">
+      <h2>Spelare & lag</h2>
+      <div class="field"><label for="team">Lag</label><select id="team" required><option>P9</option><option>F9</option><option>P13</option><option>F14</option><option>P16</option><option>Skridsko- & bandyskola 26/27</option></select></div>
+      <div class="row">
+        <div class="field"><label for="player">Spelarens namn</label><input id="player" required></div>
+        <div class="field"><label for="number">Tröjnummer 1–99</label><input id="number" inputmode="numeric" pattern="[0-9]{1,2}" maxlength="2" required></div>
+      </div>
+      <div class="row">
+        <div class="field"><label for="shirt">Storlek tröja</label><select id="shirt" required><option>128</option><option>140</option><option>152</option><option>164</option><option>XS</option><option>S</option></select></div>
+        <div class="field"><label for="shorts">Storlek byxa</label><select id="shorts" required><option>128</option><option>140</option><option>152</option><option>164</option><option>XS</option><option>S</option></select></div>
+      </div>
+      <label class="toggle"><input id="namePrint" type="checkbox" checked><span><b>Namntryck</b><br><span class="small">Registreras strukturerat på orderraden.</span></span></label>
+      <label class="toggle"><input id="numberPrint" type="checkbox" checked><span><b>Nummertryck</b><br><span class="small">Tröjnumret följer med till leverantörsflödet.</span></span></label>
+
+      <h2>Kontakt</h2>
+      <div class="field"><label for="buyerName">Beställarens namn</label><input id="buyerName" required></div>
+      <div class="row"><div class="field"><label for="email">E-post</label><input id="email" type="email" required></div><div class="field"><label for="phone">Telefon</label><input id="phone" type="tel"></div></div>
+      <label class="toggle"><input id="consent" type="checkbox" required><span><b>Jag godkänner testregistreringen</b><br><span class="small">Använd endast testuppgifter i P3 staging.</span></span></label>
+
+      <div class="summary"><div class="line"><span>Matchställ – testvariant</span><b>998 kr</b></div><div class="line total"><span>Totalt</span><span>998 kr</span></div></div>
+      <div id="error" class="error" hidden></div><div id="success" class="success" hidden></div>
+      <button class="btn secondary block" id="submitBtn" type="submit">Skapa matchställsorder →</button>
+    </form>
+  </section>
+</main>
+</body>
+</html>
