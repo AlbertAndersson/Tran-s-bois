@@ -40,6 +40,7 @@
       {public_id:'BOIS-DEMO-MEM1',customer_name:'Test Medlem',customer_email:'member@example.invalid',total_ore:300000,payment_status:'NOT_ENABLED',fulfillment_status:'ON_HOLD',created_at:'2026-09-27 14:05:00',items:[{sku:'MEM-ADULT',fulfillment_type:'DIGITAL_MEMBERSHIP'},{sku:'NW-GYM-ANNUAL',fulfillment_type:'MEMBER_BENEFIT'}]}
     ]});
     if(action==='admin_payments') return Promise.resolve({payments:[],events:[],outbox:[]});
+    if(action==='admin_p7') return Promise.resolve({assortment:[]});
     if(action==='admin_batch_now') return Promise.resolve({batches:[],waiting:{waiting_order_count:2,waiting_item_count:2,threshold_qty:8,max_wait_hours:168,oldest_wait_hours:12,threshold_remaining:6}});
     if(action==='admin_run_worker') return Promise.resolve({batches:[],mail:{transport:'disabled',processed:0,sent:0,failed:0},waiting:{waiting_order_count:2,waiting_item_count:2,threshold_qty:8,max_wait_hours:168,oldest_wait_hours:12,threshold_remaining:6}});
     return Promise.resolve({ok:true});
@@ -114,6 +115,21 @@
     $('paymentEvents').innerHTML=events.length?events.map(e=>
       '<tr><td>'+esc(e.event_id)+'</td><td>'+esc(e.event_type)+'</td><td>'+esc(e.status)+'</td><td>'+esc(e.attempts)+'</td><td>'+esc(e.last_error||'–')+'</td></tr>'
     ).join(''):'<tr><td colspan="5">Inga betalhändelser.</td></tr>';
+  }
+
+  function renderP7(items){
+    $('p7Assortment').innerHTML=items.length?items.map(p=>{
+      const variants=(p.variants||[]).map(v=>esc(v.size)+' / '+esc(v.color)+' <small>(SKU '+esc(v.supplier_sku||'TBD')+')</small>').join('<br>');
+      const money=v=>v==null?'TBD':c.money(v);
+      const launch=p.approved?'Godkänd från '+esc(p.launch_date):'Blockerad';
+      return '<tr><td><b>'+esc(p.name)+'</b><br>'+variants+'</td>'+
+        '<td>'+esc(p.supplier_candidate||'TBD')+' (kandidat)<br>SKU '+esc(p.supplier_sku||'TBD')+'</td>'+
+        '<td>'+esc(p.verification_status)+'<br>Pris: '+esc(p.price_status)+'</td>'+
+        '<td>'+money(p.purchase_price_ore)+'</td><td>'+money(p.sale_price_ore)+'</td>'+
+        '<td>'+(p.margin_ore==null?'TBD':c.money(p.margin_ore)+' / '+esc(p.margin_pct)+' %')+'</td>'+
+        '<td>'+esc(p.fulfillment_type)+'<br>'+esc(p.stock_strategy)+'</td><td>'+launch+'</td>'+
+        '<td>'+esc((p.blockers||[]).join('; '))+'</td></tr>';
+    }).join(''):'<tr><td colspan="9">P7-underlag saknas.</td></tr>';
   }
 
 
@@ -197,8 +213,8 @@
   function showP4Error(message){$('p4Error').textContent=message;$('p4Error').hidden=false;}
 
   async function load() {
-    const [ordersBody,catalogBody,batchesBody,p4Body,paymentBody]=await Promise.all([
-      api('admin_orders'),api('admin_catalog'),api('admin_batches'),api('admin_p4'),api('admin_payments')
+    const [ordersBody,catalogBody,batchesBody,p4Body,paymentBody,p7Body]=await Promise.all([
+      api('admin_orders'),api('admin_catalog'),api('admin_batches'),api('admin_p4'),api('admin_payments'),api('admin_p7')
     ]);
     orders=ordersBody.orders||[];
     const products=catalogBody.products||[],stats=catalogBody.stats||{};
@@ -210,6 +226,7 @@
     renderCatalog(products);
     renderP4(p4Body);
     renderPayments(paymentBody);
+    renderP7(p7Body.assortment||[]);
     $('login').hidden=true;$('dashboard').hidden=false;
   }
 
