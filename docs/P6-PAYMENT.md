@@ -261,3 +261,6 @@ Första leveransen slogs samman i en implementation-commit trots den önskade up
 `REFUND_PENDING` markerar manuell granskning utan automatisk återgång av fulfillment och kan följas av partiell eller full återbetalning.
 
 När P6-tabellen finns nekar P5:s äldre testfunktion direkt `PAID`. P5:s gemensamma fulfillmentfunktion kräver då P6-källan och en redan verifierad betalpost med samma providerreferens. Äldre P5-test utan P6-schema kan fortsatt verifiera batchregler isolerat.
+
+## Slutverifiering av uppföljningen
+PR #3 mergeades till main som `b5b9a157a7462277cdab27bb304c5c1b31706fa0`. Samtliga P2–P6 CI-körningar på denna commit lyckades. Simply staging run `36327128975` migrerade säkert och verifierade syntetisk mock-checkout, PAID, medlemskap, Nordic, idempotens, P5-konfiguration och avstängd e-posttransport. Snapshot av 38 icke-BoIS-tabeller var identisk före och efter. Verklig provider och verkliga kund-/leverantörsmejl förblir avstängda.

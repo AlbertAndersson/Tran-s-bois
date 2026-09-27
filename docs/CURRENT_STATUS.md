@@ -211,3 +211,14 @@ Prioriterat:
 - launch gate som gör att sortimentet **inte blir publikt/orderbart före 1 januari 2027**
 
 P6 förblir testmode tills merchant, provider, kostnad och produktionsupplägg har godkänts uttryckligen.
+
+## P6 verifieringsskärpning efter första stagingleverans
+En granskning efter P6:s första deploy fann att `admin_simulate_paid` fortfarande gick direkt via P5. Separat branch `chatgpt/p6-payment-hardening-20260927` tar bort den alternativa vägen, binder signerade event till order/session/valuta/belopp, serialiserar behandling per betalning och visar betalreferens/event. Tidigare live-verifiering avser första P6-implementationen; denna skärpning kräver egen CI och stagingdeploy innan den räknas som live.
+
+### Slutverifiering av P6-skärpning
+- Merge på main: `b5b9a157a7462277cdab27bb304c5c1b31706fa0` (PR #3, sex små uppföljningscommits).
+- P2, P3, P4, P5 och P6 CI på merge-commit: **success**.
+- Simply deploy `AlbertAndersson/work-capture` run `36327128975`: **success**.
+- P6 migration, syntetisk checkout/Test-Swish/PAID, medlem ACTIVE, Nordic ELIGIBLE, upprepad PAID utan nya effekter och avstängd mailtransport: **pass**.
+- Snapshot före/efter migration: 38 icke-BoIS-tabeller, samma hash: **pass**.
+- Ingen verklig provider eller leverantörsmejl aktiverad.
