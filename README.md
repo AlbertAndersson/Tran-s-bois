@@ -9,6 +9,7 @@ Fristående BoIS-webshop med medlemskap, Nordic Wellness-förmån, matchställ o
 - P4 Membership & Nordic Wellness: **COMPLETE / LIVE STAGING VERIFIED**
 - P5 Match kit batching: **COMPLETE / LIVE STAGING VERIFIED**
 - P6 Payment: **COMPLETE / LIVE STAGING VERIFIED**
+- P7 2027 assortment: **IMPLEMENTERAD / CI GRÖN – STAGINGDEPLOY VÄNTAR**
 - Betalning: **ISOLERAD MOCK/TESTMODE I STAGING – RIKTIG PROVIDER AVSTÄNGD**
 - Extern mejlsändning: **AVSTÄNGD I STAGING**
 - Ny extern driftkostnad: **0 kr**
@@ -20,6 +21,8 @@ Fristående BoIS-webshop med medlemskap, Nordic Wellness-förmån, matchställ o
 - Orderstatus: https://alberiq.se/bois-shop-p3/order.html
 - Shopadmin: https://alberiq.se/bois-shop-p3/admin.html
 - Testbetalning: https://alberiq.se/bois-shop-p3/payment.html
+
+P7:s interna förhandsvisning (`assortment-preview.html`) publiceras först vid nästa skyddade stagingdeploy. Den är adminskyddad och gör inga produkter orderbara.
 
 Staging använder endast testuppgifter.
 
@@ -80,17 +83,12 @@ Ingen riktig betalprovider, merchant-onboarding eller providerkostnad är aktive
 MySQL med separata `bois_`-tabeller för produkter, kunder, order, medlemskap, förmåner, betalning, leverantörer, fulfillment, batcher, outbox och eventlogg.
 
 ## 2027-sortiment
-Dolda/ej beställningsbara fram till 1 januari 2027:
-- BoIS 1941 Hoodie
-- Supporter-T-shirt
-- Bandyförälder Hoodie
-- Mössa + halsduk
-- BoIS Gym Pack
-- Knatte Pack
-- Presentkort
+P7 föreslår ett litet första sortiment: BoIS 1941 Hoodie, Supporter-T-shirt och BoIS Läktarmössa. Rekommenderade kundpriser är **uppskattningar**, inte godkända skarpa priser. Leverantörskandidat och all ej verifierad inköps-, tryck-, frakt- och SKU-data är tydligt märkt `TBD` i `data/p7-assortment.json` och `docs/P7A-COMMERCIAL-MODEL.md`. Övriga tidigare kandidater är uppskjutna.
+
+P7:s separata `bois_`-tabeller, adminvy och interna preview är implementerade. Servern blockerar offentlig katalog och direkta orderanrop före **1 januari 2027**, även om produktflaggor ändras. Efter datumet krävs dessutom uttryckligt godkännande och verifierad kommersiell data. Ingen P7-produkt är godkänd eller orderbar nu. P2–P7 CI är grön; stagingmigration och live-verifiering återstår.
 
 ## Nästa utvecklingsordning
-1. **P7 – 2027 assortment**: genomför P7A–P7D enligt `docs/P7-2027-ASSORTMENT.md`; bygg verifierat leverantörs-/pris-/SKU-underlag, Commerce-modell, admin/preview och serverstyrd launch gate, men håll allt dolt till 1 januari 2027.
+1. **P7 closeout**: kör manuellt skyddad stagingdeploy och verifiera snapshot, admin/preview, launch gate och P4–P6 live. Inhämta riktiga offerter och godkänn data inför eventuell lansering; nuvarande förslag är inte säljklart.
 2. **P8 – production launch**: Stripe som vald payment provider, produktionsdatabas, domän, villkor och skarpa integrationsuppgifter.
 3. **P9 – sales engine**.
 
@@ -100,6 +98,4 @@ P6:s payment gate är nu den gemensamma gränsen för medlemskap, Nordic och mat
 Inga nya betaltjänster, abonnemang eller externa kostnader aktiveras utan uttryckligt godkännande.
 
 ### P6 verifieringsskärpning 2026-09-27
-Adminens stagingknapp använder nu samma signerade mock-event som checkout. Webhooken binder event till order, session, valuta och belopp; betalhändelser serialiseras per betalreferens. Kundens ordervy visar testbetalningsreferens och admin visar betalningar/händelser. Ändringen ska CI- och stagingverifieras före uppdaterad live-status.
-
-P6-skärpningen är nu mergead och verifierad: P2–P6 CI på `b5b9a157`, Simply staging run `36327128975` lyckades. Endast mock och avstängd e-posttransport används.
+Adminens stagingknapp använder samma signerade mock-event som checkout. Webhooken binder order, session, valuta och belopp. P2–P6 CI på `b5b9a157` och Simply staging run `36327128975` lyckades. Endast mock och avstängd e-posttransport används.

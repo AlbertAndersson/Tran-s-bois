@@ -9,6 +9,7 @@ Detta är den primära överlämningen för en ny utvecklingstråd. GitHub är s
 - Repo: `AlbertAndersson/Tran-s-bois`
 - Branch: `main`
 - P6 slutlig hardening merge: `b5b9a157a7462277cdab27bb304c5c1b31706fa0` (PR #3)
+- P7 implementation merge: `49883befb360fddb6e63e5c6b6a622fd2c0eed8b` (PR #6); kontrollera ny `main` HEAD efter dokumentationscommit
 - Verifiera alltid aktuell `main` HEAD innan ändring
 - Deployment/secrets: `AlbertAndersson/work-capture`
 
@@ -41,6 +42,8 @@ Senast verifierad P6-deploy:
 
 Äldre P3/P5 deployworkflows är pensionerade så de inte kan skriva över aktuell P6-staging.
 
+P7-workflowen är förberedd i samma fil på `work-capture` commit `21249c0354f3b487539fc3500cc1f37f872300be`. Den är manuellt skyddad (`workflow_dispatch`, `confirm=DEPLOY_BOIS_P7_READY`) och pinnad till P7-merge. **Ingen P7-deploy är ännu körd.** P6-run ovan är fortfarande senaste live-verifierade miljö.
+
 ## Aktiv staging
 
 - Shop: https://alberiq.se/bois-shop-p3/
@@ -63,7 +66,7 @@ Staging får endast innehålla testuppgifter.
 - P4 – Membership & Nordic Wellness: **COMPLETE / LIVE STAGING VERIFIED**
 - P5 – Match kit batching: **COMPLETE / LIVE STAGING VERIFIED**
 - P6 – Payment: **COMPLETE / LIVE STAGING VERIFIED**
-- P7 – 2027 assortment: **NEXT**
+- P7 – 2027 assortment: **IMPLEMENTERAD / CI GRÖN; STAGING VÄNTAR**
 - P8 – production launch: **NOT STARTED**
 - P9 – sales engine: **NOT STARTED**
 
@@ -301,34 +304,16 @@ Aktivera ingen kostnad eller betaltjänst utan uttryckligt godkännande.
 - slutliga villkor/integritet/säljaruppgifter
 - riktiga mejlmottagare
 
-## Nästa fas – P7 2027 assortment
+## P7 – genomförd implementation, väntande staging
 
-Målet är att göra supporter-/merchsortimentet kommersiellt och tekniskt lanseringsklart utan att bryta avtalsgränsen.
+PR #6 (`49883bef`) implementerade fyra verifierade delsteg. P7A föreslår BoIS 1941 Hoodie, Supporter-T-shirt och BoIS Läktarmössa. Rekommenderade priser är `ESTIMATE`; verkliga leverantörspriser, MOQ, SKU och marginaler är `TBD`. Printful är endast kandidat. Se `data/p7-assortment.json` och `docs/P7A-COMMERCIAL-MODEL.md`. Övriga ursprungliga kandidater är uppskjutna.
 
-Arbeta med:
-1. leverantörer
-2. verkliga inköpspriser
-3. rekommenderade försäljningspriser och marginal
-4. SKU/artikelnummer
-5. storlekar/varianter
-6. produktbilder och copy
-7. fulfillmentmodell per produkt
-8. lager/direct-supplier-regler
-9. returer/reklamationsflöde
-10. produktdata i Commerce Core
-11. launch gate
+P7B lägger till endast `bois_p7_assortment` och `bois_p7_variants`, med idempotent seed och strukturerad verifieringsstatus/källa. P7C lägger till adminskyddad översikt och intern `assortment-preview.html`. P7D blockerar katalog och direkta orderanrop före **2027-01-01 Europe/Stockholm** oavsett frontendflaggor. Efter datumet krävs godkänd och verifierad data samt länkade P3-varianter. Ingen produkt är idag godkänd.
 
-**Hård invariant:** supporter-/merchprodukter får inte bli publika/orderbara före **1 januari 2027**.
+P2–P7 CI inklusive MySQL 8.4 är grön. P4/P5/P6-regressioner och mock/mail-invariants är gröna i CI. Den skyddade stagingworkflowen innehåller migration, snapshot av icke-BoIS-tabeller före/efter och syntetiska livekontroller; den har inte körts för P7.
 
-**P7-avgränsning:** Stripe-valet är dokumenterat för P8. P7 får inte implementera Stripe, skapa Stripe-konto eller aktivera någon betaltjänst.
+**Nästa konkreta steg:** kör `.github/workflows/simply-deploy-bois-p4.yml` i `work-capture` med `confirm=DEPLOY_BOIS_P7_READY`; granska körningens snapshot, migration, P7 admin/preview/gate och P4–P6. Dokumentera run ID och faktisk live-status, och stäng först då P7. Om den misslyckas: rätta orsaken och kör om. Ändra inte P6:s betalningslogik utan en påvisad regression.
 
-## Definition av nästa bra stopp
+**Kommersiella blockerare:** Albert/Erik behöver leverantörsofferter, verifierade kostnader/MOQ/ledtider/SKU, bildrättigheter, slutpriser och godkännande innan någon P7-produkt kan öppnas. Servergaten hindrar försäljning även efter datumet tills varje produkt är verifierad och godkänd.
 
-P7 stagingklar när:
-- prioriterat 2027-sortiment har verifierad leverantör
-- inköpspris, försäljningspris och marginal är dokumenterade
-- SKU/varianter är strukturerade
-- fulfillment är definierat per produkt
-- produkter kan granskas i staging/admin
-- launch gate förhindrar publik/orderbar exponering före 1 januari 2027
-- inga nya externa kostnader är aktiverade utan godkännande
+**P8-avgränsning:** Stripe-valet är dokumenterat för P8. Ingen Stripe-kod, konto, credential, riktig betalning eller ny kostnad ingår i P7.

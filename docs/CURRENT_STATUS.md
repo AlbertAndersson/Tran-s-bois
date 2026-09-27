@@ -9,6 +9,7 @@ Datum: 2026-09-27
 - **P4 – Membership & Nordic Wellness: COMPLETE / LIVE STAGING VERIFIED**
 - **P5 – Match kit batching: COMPLETE / LIVE STAGING VERIFIED**
 - **P6 – Payment: COMPLETE / LIVE STAGING VERIFIED**
+- **P7 – 2027 assortment: IMPLEMENTERAD / CI GRÖN; STAGING VÄNTAR**
 
 Betalning: **ISOLERAD MOCK/TESTMODE I STAGING – RIKTIG PROVIDER AVSTÄNGD**  
 Extern mejlsändning: **AVSTÄNGD I STAGING**  
@@ -195,17 +196,16 @@ Workflowen är nu uppgraderad till P6. Äldre P3- och P5-deployworkflow är pens
 ## Kostnad
 **Ny extern kostnad: 0 kr.**
 
-## Nästa fas – P7 2027 assortment
-P7 ska förbereda supporter-/merchsortimentet för lansering efter Intersport-avtalets slut.
+## P7 – 2027 assortment
+P7A–D är implementerade på `main` via PR #6, merge `49883befb360fddb6e63e5c6b6a622fd2c0eed8b`. P2–P7 CI är grön, inklusive MySQL 8.4, serverklocka före/efter launchdatum samt P4–P6-regression. Staging är **ännu inte migrerad eller live-verifierad**; P7 stängs först efter skyddad deployment.
 
-Prioriterat:
-- verkliga leverantörer och inköpspriser
-- försäljningspriser/marginal
-- SKU/artikelnummer och varianter
-- produktbilder och produktcopy
-- fulfillment per produkt
-- lager/direct supplier-regler
-- launch gate som gör att sortimentet **inte blir publikt/orderbart före 1 januari 2027**
+Föreslaget första sortiment är BoIS 1941 Hoodie, Supporter-T-shirt och BoIS Läktarmössa. Kundpriserna 549/249/199 kr är `ESTIMATE`; produktunika leverantörsofferter, inköpspris, MOQ, tryck/brodyr, frakt, SKU och marginal är `TBD`. Printful är endast en dokumenterad kandidat, inte avtalad leverantör. Se `data/p7-assortment.json` och `docs/P7A-COMMERCIAL-MODEL.md` för källor och blockerare. Alla tre ligger som ej godkända, opublicerade och ej orderbara.
+
+P7 har separata `bois_p7_assortment`/`bois_p7_variants`-tabeller, adminskyddad granskning och intern preview. P3:s serverstyrda katalog och orderupplägg blockerar samtliga supporter-/merchprodukter före 2027-01-01 i Stockholmstid. Efter datumet krävs godkännande, verifierad kommersiell data och länkade varianter. Klientklocka/klientflaggor kan inte öppna gaten. Ingen P7-produkt uppfyller dessa villkor nu.
+
+Deployment-repot `AlbertAndersson/work-capture` har en uppdaterad, **manuellt skyddad** workflow på commit `21249c0354f3b487539fc3500cc1f37f872300be`, med source pin till P7-merge, migrering, snapshot före/efter och syntetiska livekontroller. Workflowen måste köras med `confirm=DEPLOY_BOIS_P7_READY`. Ingen P7-run har körts ännu; senaste live-verifierade tillstånd är P6-run `36327128975`.
+
+Före kommersiell lansering återstår verkliga offerter, SKU och kostnader, marginalberäkning, produktbilder och BoIS godkännande. Detta är inte ett skarpt lanseringsbeslut.
 
 P6 förblir testmode under P7. **Stripe är vald som målprovider för P8**, men merchant, aktuell prisbild, produktionsupplägg och aktivering ska godkännas uttryckligen innan skarp drift. Stripe-Swish ska verifieras för BoIS-kontot eftersom Stripe 2026-09-27 märker Swish som Beta.
 

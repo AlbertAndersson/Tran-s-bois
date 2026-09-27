@@ -4,7 +4,26 @@ Datum: 2026-09-27
 
 ## Status
 
-**NEXT / NOT STARTED**
+**IMPLEMENTERAD / CI GRÖN – STAGINGMIGRATION OCH LIVE-VERIFIERING VÄNTAR.** P7 stängs först efter dessa kontroller.
+
+PR #6 merge `49883befb360fddb6e63e5c6b6a622fd2c0eed8b` innehåller P7A–D. P2–P7 CI är grön. Skyddad deploymentworkflow i `AlbertAndersson/work-capture` är uppdaterad på `21249c0354f3b487539fc3500cc1f37f872300be` men har inte körts för P7.
+
+### Implementerat och verifierat i CI
+
+| Del | Resultat | Evidens |
+| --- | --- | --- |
+| P7A | Tre rekommenderade produkter; alla kommersiella fält märkta `VERIFIED`, `ESTIMATE` eller `TBD` | `data/p7-assortment.json`, `docs/P7A-COMMERCIAL-MODEL.md`; commit `45a69bcf` |
+| P7B | Isolerade `bois_p7_assortment` och `bois_p7_variants`, idempotent seed och marginalberäkning endast vid fullständiga kostnader | MySQL 8.4-smoke; `2b735fc4`, fix `b47dd473` |
+| P7C | Adminskyddad översikt och intern shoppreview med tydlig placeholder, prisstatus, varianter och blockerare | P7 CI; `96b01ef2` |
+| P7D | Serverstyrd katalog- och ordergate med injicerbar testtid och regression P3–P6 | P7 CI run `36344234907`; `56cdedab` |
+
+Föreslaget lanseringsurval är BoIS 1941 Hoodie, Supporter-T-shirt och BoIS Läktarmössa. Kundpriserna 549/249/199 kr är `ESTIMATE`. Leverantörsspecifika priser, MOQ, ledtid, dekorationskostnad, frakt, riktiga SKU och marginal är `TBD`. Printful är en undersökt möjlig leverantör, inte avtalad. Inget produktspecifikt offererades eller hittades på. Alla tre är opublicerade, ej orderbara och har blockerare; övriga kandidater är uppskjutna. Källor och verifieringsdatum finns i JSON-underlaget.
+
+Gaten använder serverns Europe/Stockholm-tid. Före 2027-01-01 nekas supporter-/merchsortiment även om adminflaggor är satta; direkta orderanrop nekas. Efter datumet krävs godkännande, komplett verifierad data och länkade varianter. Tester injicerar tid utan att ändra riktig systemtid. Ingen nuvarande P7-produkt kvalificerar.
+
+### Kvar till P7-closeout
+
+Kör den manuellt skyddade Simply-workflowen med `confirm=DEPLOY_BOIS_P7_READY`, inspektera migrationslogg och identiska snapshots av icke-BoIS-tabeller, verifiera admin/preview och dold publik katalog live, samt P4–P6 med syntetiska uppgifter. Kontrollera att mailtransport och riktig payment provider förblir avstängda. Dokumentera run ID och utfall innan status ändras till COMPLETE. Verklig kommersiell lansering kräver sedan Albert/Eriks leverantörs- och prisgodkännande.
 
 P7 ska göra Tranås BoIS supporter-/merchsortiment kommersiellt och tekniskt lanseringsklart för 2027, utan att exponera eller sälja sortimentet före avtalsgränsen.
 
