@@ -4,7 +4,7 @@ Datum: 2026-09-27
 
 ## Status
 
-**IMPLEMENTED – CI / LIVE STAGING VERIFICATION PENDING**
+**COMPLETE / LIVE STAGING VERIFIED**
 
 P6 bygger en riktig betalningsgräns mellan order och P4/P5 utan att aktivera en extern betaltjänst eller ny kostnad.
 
@@ -191,3 +191,61 @@ P6 är stagingklar när:
 - kvitto/refund-outbox har retry
 - externa mail är disabled
 - ingen extern betaltjänst eller kostnad är aktiverad
+
+
+## Verifieringsbevis 2026-09-27
+
+### GitHub CI
+
+P6 Payment CI:
+- workflow run: `36324968897`
+- conclusion: **success**
+
+Verifierat:
+- PHP syntax
+- MySQL 8.4 smoke
+- signerad webhook
+- ogiltig signatur nekas
+- samma event-id processas inte två gånger
+- flera PAID-event applicerar inte medlemskap igen
+- medlemskap/Nordic först efter verifierad PAID
+- matchställ först till batchkö efter verifierad PAID
+- refund state machine
+- receipt-outbox retry
+- inga riktiga betalningar/mejl
+
+Samma P6-commit passerade även P2, P3, P4 och P5 CI.
+
+### Simply / AlberIQ live staging
+
+Deployment:
+- repo: `AlbertAndersson/work-capture`
+- workflow: `.github/workflows/simply-deploy-bois-p4.yml`
+- workflow run: `36325200482`
+- deployment commit: `903621e4be684b15848ff94d688d789ee4871b19`
+- conclusion: **success**
+
+Live verifierat:
+- P6 source validation
+- privat runtime + strict SSH
+- P6 migration
+- icke-BoIS-tabeller oförändrade
+- `phase=P6`
+- `payment_enabled=true` endast i staging-testmode
+- `payment_provider=mock`
+- serverstyrd checkout
+- Test-Swish
+- mockens signerade webhook-väg
+- verifierad PAID → medlemskap ACTIVE
+- verifierad PAID → Nordic ELIGIBLE
+- andra PAID-eventet ger `already_applied=true`
+- P5 batchregel 8 / 168h bevarad
+- payment mail transport disabled
+- verklig payment provider: **nej**
+- ny extern kostnad: **0 kr**
+
+## Nästa fas
+
+P7 – 2027 assortment.
+
+P6:s riktiga produktionsprovider är en separat P8/produktionsfråga och får inte aktiveras utan uttryckligt godkännande av provider, merchant-upplägg och kostnad.
