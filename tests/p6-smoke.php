@@ -63,6 +63,12 @@ $new=p6_order($pdo,[
     ['sku'=>'NW-GYM-ANNUAL','quantity'=>1,'metadata'=>[]],
 ],'p6-member');
 
+$legacyBlocked=false;
+try{
+    bois_p5_mark_order_paid($pdo,$config,$new['public_id']);
+}catch(DomainException){$legacyBlocked=true;}
+if(!$legacyBlocked) throw new RuntimeException('Legacy P5 direct PAID path bypassed P6.');
+
 $checkout=bois_p6_checkout($pdo,$config,$new['public_id'],$new['public_token'],'swish');
 if($checkout['status']!=='PENDING' || $checkout['method']!=='swish') throw new RuntimeException('Checkout was not created.');
 if(bois_p4_stats($pdo)['active_members']!==0) throw new RuntimeException('Membership activated before paid webhook.');
