@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Tranås BoIS – Ledarvy demo</title>
+<style>
+:root{--b:#063d86;--r:#d7193f;--line:#dce6f1;--bg:#f5f8fc;--text:#12243c;--muted:#637188}*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:Inter,system-ui,sans-serif;color:var(--text)}header{background:linear-gradient(135deg,#052e68,#0b58a9);color:#fff;padding:18px 22px}.bar{max-width:1120px;margin:auto;display:flex;align-items:center;gap:12px}.bar img{width:42px}.bar strong{font-size:18px}.badge{margin-left:auto;background:#fff2b9;color:#604a00;padding:7px 11px;border-radius:999px;font-size:12px;font-weight:900}main{max-width:1120px;margin:28px auto;padding:0 22px}.top{display:flex;justify-content:space-between;gap:20px;align-items:end;margin-bottom:18px}h1{margin:0;color:var(--b);font-size:34px}.muted{color:var(--muted);font-size:14px}.btn{background:var(--r);color:#fff;border:0;border-radius:10px;padding:12px 14px;font-weight:900;cursor:pointer;text-decoration:none}.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:20px 0}.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:17px}.kpi{font-size:28px;font-weight:900;color:var(--b)}.lbl{font-size:12px;color:var(--muted);margin-top:4px}.panel{background:#fff;border:1px solid var(--line);border-radius:16px;overflow:hidden}table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;padding:13px 14px;border-bottom:1px solid #edf1f5}th{background:#f8fafc;color:#526174;font-size:12px}.paid{color:#087451;font-weight:900}.waiting{color:#9b6100;font-weight:900}.foot{padding:14px;color:var(--muted);font-size:12px}.actions{display:flex;gap:10px;flex-wrap:wrap}.ghost{background:#fff;color:var(--b);border:1px solid #b8cbe1;border-radius:10px;padding:11px 13px;font-weight:800;text-decoration:none}@media(max-width:760px){.cards{grid-template-columns:1fr 1fr}.top{align-items:start;flex-direction:column}.panel{overflow:auto}table{min-width:760px}}</style>
+</head>
+<body>
+<header><div class="bar"><img src="https://cdn06.svenskalag.se/img/clubmarks/6245_w.png?3=" alt=""><strong>Tranås BoIS · Ledarvy</strong><span class="badge">DEMO</span></div></header>
+<main>
+<div class="top"><div><h1>Beställningar – P9</h1><div class="muted">Exempel på hur lagets beställningar kan sammanställas automatiskt.</div></div><div class="actions"><a class="ghost" href="index.html">← Till beställningssidan</a><button class="btn" id="csv">Exportera CSV</button></div></div>
+<div class="cards"><div class="card"><div class="kpi">17</div><div class="lbl">Beställningar</div></div><div class="card"><div class="kpi">15</div><div class="lbl">Betalda</div></div><div class="card"><div class="kpi">2</div><div class="lbl">Väntar på betalning</div></div><div class="card"><div class="kpi">14 946 kr</div><div class="lbl">Exempelvärde</div></div></div>
+<div class="panel"><table><thead><tr><th>Spelare</th><th>Lag</th><th>Tröja</th><th>Byxa</th><th>Nummer</th><th>Namntryck</th><th>Status</th></tr></thead><tbody>
+<tr><td>Albin Karlsson</td><td>P9</td><td>140</td><td>140</td><td>10</td><td>KARLSSON</td><td class="paid">Betald</td></tr>
+<tr><td>Hugo Andersson</td><td>P9</td><td>152</td><td>152</td><td>17</td><td>ANDERSSON</td><td class="paid">Betald</td></tr>
+<tr><td>Leo Svensson</td><td>P9</td><td>140</td><td>140</td><td>8</td><td>SVENSSON</td><td class="waiting">Väntar</td></tr>
+<tr><td>Viggo Johansson</td><td>P9</td><td>128</td><td>140</td><td>22</td><td>JOHANSSON</td><td class="paid">Betald</td></tr>
+<tr><td>Noah Larsson</td><td>P9</td><td>152</td><td>152</td><td>5</td><td>LARSSON</td><td class="paid">Betald</td></tr>
+</tbody></table><div class="foot">Demodata. I skarp version kan hela lagets order exporteras som underlag till profil-/klädleverantören.</div></div>
+</main>
+<script>
+document.getElementById('csv').onclick=()=>{const rows=[['Spelare','Lag','Tröja','Byxa','Nummer','Namntryck','Status'],['Albin Karlsson','P9','140','140','10','KARLSSON','Betald'],['Hugo Andersson','P9','152','152','17','ANDERSSON','Betald'],['Leo Svensson','P9','140','140','8','SVENSSON','Väntar']];const csv=rows.map(r=>r.join(';')).join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download='bois-demo-p9.csv';a.click();};
+</script>
+</body></html>
