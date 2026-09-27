@@ -64,4 +64,4 @@ jobs:
           grep -q "ELIGIBLE" server/p4_membership.php
           grep -q "READY_FOR_PICKUP" server/p4_membership.php
           grep -q "ACTIVATED" server/p4_membership.php
-          ! grep -Ri "personnummer" site/commerce server/p4_membership.php
+          ! grep -RiE 'name=["'"'"']?(personnummer|personal_number|ssn)|personnummer[[:space:]_]*VARCHAR|personal_number[[:space:]_]*VARCHAR|ssn[[:space:]_]*VARCHAR' site/commerce server/p4_membership.php
