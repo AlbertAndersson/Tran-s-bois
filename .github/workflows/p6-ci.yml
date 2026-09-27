@@ -2,7 +2,7 @@ name: P6 Payment CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, "chatgpt/**"]
     paths:
       - "server/p6_*.php"
       - "server/p5_batch.php"
