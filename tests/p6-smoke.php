@@ -63,6 +63,12 @@ $new=p6_order($pdo,[
     ['sku'=>'NW-GYM-ANNUAL','quantity'=>1,'metadata'=>[]],
 ],'p6-member');
 
+$legacyBlocked=false;
+try{
+    bois_p5_mark_order_paid($pdo,$config,$new['public_id']);
+}catch(DomainException){$legacyBlocked=true;}
+if(!$legacyBlocked) throw new RuntimeException('Legacy P5 direct PAID path bypassed P6.');
+
 $checkout=bois_p6_checkout($pdo,$config,$new['public_id'],$new['public_token'],'swish');
 if($checkout['status']!=='PENDING' || $checkout['method']!=='swish') throw new RuntimeException('Checkout was not created.');
 if(bois_p4_stats($pdo)['active_members']!==0) throw new RuntimeException('Membership activated before paid webhook.');
@@ -77,6 +83,23 @@ try{
     $bad=true;
 }
 if(!$bad) throw new RuntimeException('Invalid signature was accepted.');
+
+foreach([
+    ['order_public_id'=>'BOIS-WRONG'],
+    ['currency'=>'EUR'],
+    ['currency'=>''],
+    ['amount_ore'=>(int)$session['total_ore']+1],
+] as $index=>$change){
+    $invalid=bois_p6_event_payload($config,$session,'payment.succeeded',0,'evt-invalid-'.$index);
+    $invalid=array_replace($invalid,$change);
+    $invalidRaw=json_encode($invalid,JSON_THROW_ON_ERROR);
+    $invalidTs=(string)time();
+    $rejected=false;
+    try{
+        bois_p6_process_webhook_raw($pdo,$config,$invalidRaw,$invalidTs,'sha256='.bois_p6_signature($config,$invalidRaw,$invalidTs));
+    }catch(InvalidArgumentException){$rejected=true;}
+    if(!$rejected) throw new RuntimeException('Signed mismatched webhook was accepted.');
+}
 
 $paid=bois_p6_process_webhook_raw($pdo,$config,$raw,$ts,$sig);
 if(($paid['result']['status']??'')!=='PAID') throw new RuntimeException('Paid webhook failed.');
@@ -95,6 +118,27 @@ if((string)bois_p4_admin_members($pdo)[0]['valid_to']!==$validTo) throw new Runt
 $second=bois_p6_process_webhook_raw($pdo,$config,$raw2,$ts2,$sig2);
 if(($second['result']['effects']['already_applied']??false)!==true) throw new RuntimeException('Second PAID event reapplied downstream effects.');
 if((string)bois_p4_admin_members($pdo)[0]['valid_to']!==$validTo) throw new RuntimeException('Second PAID event extended membership.');
+
+$reused=json_decode($raw,true,64,JSON_THROW_ON_ERROR);
+$reused['amount_ore']=(int)$session['total_ore']+1;
+$reusedRaw=json_encode($reused,JSON_THROW_ON_ERROR);
+$reusedTs=(string)time();
+$rejected=false;
+try{
+    bois_p6_process_webhook_raw($pdo,$config,$reusedRaw,$reusedTs,'sha256='.bois_p6_signature($config,$reusedRaw,$reusedTs));
+}catch(DomainException){$rejected=true;}
+if(!$rejected) throw new RuntimeException('Reused event ID with different content was accepted.');
+
+$adminOrder=p6_order($pdo,[['sku'=>'MEM-YOUTH','quantity'=>1,'metadata'=>['member_name'=>'P6 Admin']]],'p6-admin');
+$adminPaid=bois_p6_admin_simulate_paid($pdo,$config,$adminOrder['public_id']);
+if(($adminPaid['result']['status']??'')!=='PAID') throw new RuntimeException('Admin mock did not use verified P6 path.');
+$adminEvents=$pdo->prepare("SELECT COUNT(*) FROM bois_payment_events WHERE order_id=(SELECT id FROM bois_orders WHERE public_id=?) AND signature_verified=1 AND status='PROCESSED'");
+$adminEvents->execute([$adminOrder['public_id']]);
+if((int)$adminEvents->fetchColumn()!==1) throw new RuntimeException('Admin mock skipped signed event.');
+$publicPayment=bois_p6_public_payment($pdo,$adminOrder['public_id']);
+if($publicPayment['status']!=='PAID' || !$publicPayment['reference']){
+    throw new RuntimeException('Public payment reference or status missing.');
+}
 
 $kit=p6_order($pdo,[[
     'sku'=>'MATCHKIT-STAGING','quantity'=>1,
@@ -119,6 +163,15 @@ if(($kitState['payment_status']??'')!=='PAID' || ($kitState['fulfillment_status'
     throw new RuntimeException('Paid match kit did not enter batch queue.');
 }
 
+[$partialRaw,$partialTs,$partialSig]=p6_signed($pdo,$config,$kitSession,'payment.refunded','evt-refund-partial',1000);
+$partial=bois_p6_process_webhook_raw($pdo,$config,$partialRaw,$partialTs,$partialSig);
+if(($partial['result']['status']??'')!=='PARTIALLY_REFUNDED') throw new RuntimeException('Partial refund failed.');
+$partialRepeat=bois_p6_process_webhook_raw($pdo,$config,$partialRaw,$partialTs,$partialSig);
+if(empty($partialRepeat['duplicate'])) throw new RuntimeException('Partial refund replay was processed twice.');
+$kitReview=$pdo->prepare("SELECT fulfillment_status FROM bois_orders WHERE public_id=?");
+$kitReview->execute([$kit['public_id']]);
+if($kitReview->fetchColumn()!=='REVIEW_REQUIRED') throw new RuntimeException('Partial refund did not require review.');
+
 $failedOrder=p6_order($pdo,[['sku'=>'MEM-YOUTH','quantity'=>1,'metadata'=>['member_name'=>'P6 Nekad']]],'p6-failed');
 $failedCheckout=bois_p6_checkout($pdo,$config,$failedOrder['public_id'],$failedOrder['public_token'],'card');
 $failedSession=bois_p6_session($pdo,$failedCheckout['session_ref'],$failedCheckout['session_token']);
@@ -131,7 +184,17 @@ $unpaidMemberships=(int)$pdo->query(
 )->fetchColumn();
 if($unpaidMemberships!==0) throw new RuntimeException('Failed payment activated membership.');
 
+$cancelOrder=p6_order($pdo,[['sku'=>'MEM-SENIOR','quantity'=>1,'metadata'=>['member_name'=>'P6 Avbruten']]],'p6-cancelled');
+$cancelCheckout=bois_p6_checkout($pdo,$config,$cancelOrder['public_id'],$cancelOrder['public_token'],'card');
+$cancelSession=bois_p6_session($pdo,$cancelCheckout['session_ref'],$cancelCheckout['session_token']);
+[$cancelRaw,$cancelTs,$cancelSig]=p6_signed($pdo,$config,$cancelSession,'payment.cancelled','evt-cancelled');
+$cancel=bois_p6_process_webhook_raw($pdo,$config,$cancelRaw,$cancelTs,$cancelSig);
+if(($cancel['result']['status']??'')!=='CANCELLED') throw new RuntimeException('Cancellation failed.');
+
 $refundSession=bois_p6_session($pdo,$checkout['session_ref'],$checkout['session_token']);
+[$pendingRaw,$pendingTs,$pendingSig]=p6_signed($pdo,$config,$refundSession,'payment.refund_pending','evt-refund-pending');
+$pending=bois_p6_process_webhook_raw($pdo,$config,$pendingRaw,$pendingTs,$pendingSig);
+if(($pending['result']['status']??'')!=='REFUND_PENDING') throw new RuntimeException('Refund pending transition failed.');
 [$refundRaw,$refundTs,$refundSig]=p6_signed(
     $pdo,$config,$refundSession,'payment.refunded','evt-refund-full',(int)$refundSession['paid_ore']
 );
@@ -144,7 +207,7 @@ $refundState=$refundOrder->fetch();
 if(($refundState['payment_status']??'')!=='REFUNDED' || ($refundState['fulfillment_status']??'')!=='REVIEW_REQUIRED'){
     throw new RuntimeException('Refund did not enter manual fulfillment review.');
 }
-if(bois_p4_stats($pdo)['active_members']!==1) throw new RuntimeException('Refund silently revoked membership; manual review invariant broken.');
+if(bois_p4_stats($pdo)['active_members']!==2) throw new RuntimeException('Refund silently revoked membership; manual review invariant broken.');
 
 $outbox=bois_p6_admin_payments($pdo)['outbox'];
 if(count($outbox)<3) throw new RuntimeException('Expected payment receipt outbox rows.');

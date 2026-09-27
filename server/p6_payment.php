@@ -5,6 +5,46 @@ require_once __DIR__ . '/p3_db.php';
 require_once __DIR__ . '/p5_batch.php';
 require_once __DIR__ . '/p4_membership.php';
 
+interface BoisPaymentProviderAdapter
+{
+    public function name(): string;
+    public function enabled(array $config): bool;
+    public function checkoutSession(): array;
+    public function verifyWebhook(array $config,string $raw,string $timestamp,string $signature): void;
+}
+
+final class BoisMockPaymentProvider implements BoisPaymentProviderAdapter
+{
+    public function name(): string { return 'mock'; }
+    public function enabled(array $config): bool { return ($config['mode']??'')!=='production'; }
+    public function checkoutSession(): array
+    {
+        return [bois_p6_public_session_id(),bois_p6_provider_ref(),bin2hex(random_bytes(24))];
+    }
+    public function verifyWebhook(array $config,string $raw,string $timestamp,string $signature): void
+    {
+        bois_p6_verify_signature($config,$raw,$timestamp,$signature);
+    }
+}
+
+final class BoisDisabledPaymentProvider implements BoisPaymentProviderAdapter
+{
+    public function name(): string { return 'disabled'; }
+    public function enabled(array $config): bool { return false; }
+    public function checkoutSession(): array { throw new DomainException('Betalprovider är avstängd.'); }
+    public function verifyWebhook(array $config,string $raw,string $timestamp,string $signature): void
+    {
+        throw new DomainException('Betalprovider är avstängd.');
+    }
+}
+
+function bois_p6_adapter(array $config): BoisPaymentProviderAdapter
+{
+    return bois_p6_provider($config)==='mock'
+        ? new BoisMockPaymentProvider()
+        : new BoisDisabledPaymentProvider();
+}
+
 function bois_p6_apply_schema(PDO $pdo): void
 {
     $db=(string)$pdo->query('SELECT DATABASE()')->fetchColumn();
@@ -94,9 +134,7 @@ function bois_p6_provider(array $config): string
 
 function bois_p6_payment_enabled(array $config): bool
 {
-    $provider=bois_p6_provider($config);
-    if($provider==='mock') return ($config['mode'] ?? '')!=='production';
-    return false;
+    return bois_p6_adapter($config)->enabled($config);
 }
 
 function bois_p6_require_mock(array $config): void
@@ -140,9 +178,7 @@ function bois_p6_checkout(PDO $pdo,array $config,string $publicId,string $public
         throw new InvalidArgumentException('Välj Swish eller kort.');
     }
 
-    $sessionRef=bois_p6_public_session_id();
-    $providerRef=bois_p6_provider_ref();
-    $token=bin2hex(random_bytes(24));
+    [$sessionRef,$providerRef,$token]=bois_p6_adapter($config)->checkoutSession();
     $tokenHash=hash('sha256',$token);
 
     $pdo->beginTransaction();
@@ -285,13 +321,16 @@ function bois_p6_claim_event(PDO $pdo,array $event,string $payloadHash): array
     $pdo->beginTransaction();
     try{
         $read=$pdo->prepare(
-            "SELECT id,status,attempts,order_id,payment_id FROM bois_payment_events
+            "SELECT id,status,attempts,order_id,payment_id,payload_hash FROM bois_payment_events
              WHERE provider=? AND event_id=? FOR UPDATE"
         );
         $read->execute([$provider,$eventId]);
         $existing=$read->fetch();
 
         if($existing){
+            if(!hash_equals((string)$existing['payload_hash'],$payloadHash)){
+                throw new DomainException('Event-ID har redan använts med annat innehåll.');
+            }
             if((string)$existing['status']==='PROCESSED'){
                 $pdo->commit();
                 return [
@@ -434,8 +473,12 @@ function bois_p6_process_succeeded(PDO $pdo,array $config,array $event): array
     $pdo->beginTransaction();
     try{
         $payment=bois_p6_payment_by_provider_ref($pdo,$provider,$providerRef,true);
-        if($currency!=='' && $currency!==(string)$payment['currency']){
+        if($currency==='' || $currency!==(string)$payment['currency']){
             throw new InvalidArgumentException('Webhookens valuta stämmer inte med ordern.');
+        }
+        if((string)($event['order_public_id'] ?? '')!==(string)$payment['public_id'] ||
+           (string)($event['session_ref'] ?? '')!==(string)$payment['checkout_session_ref']){
+            throw new InvalidArgumentException('Webhookens order eller session stämmer inte med betalningen.');
         }
         if($amount!==(int)$payment['amount_ore']){
             throw new InvalidArgumentException('Webhookens belopp stämmer inte med ordern.');
@@ -534,7 +577,7 @@ function bois_p6_process_refund(PDO $pdo,array $config,array $event): array
     try{
         $payment=bois_p6_payment_by_provider_ref($pdo,$provider,$providerRef,true);
         $current=(string)$payment['status'];
-        if(!in_array($current,['PAID','PARTIALLY_REFUNDED'],true)){
+        if(!in_array($current,['PAID','PARTIALLY_REFUNDED','REFUND_PENDING'],true)){
             throw new InvalidArgumentException('Betalningen kan inte återbetalas från status '.$current.'.');
         }
 
@@ -594,9 +637,37 @@ function bois_p6_process_refund(PDO $pdo,array $config,array $event): array
     ];
 }
 
+function bois_p6_process_refund_pending(PDO $pdo,array $event): array
+{
+    $pdo->beginTransaction();
+    try{
+        $payment=bois_p6_payment_by_provider_ref($pdo,(string)$event['provider'],(string)$event['provider_ref'],true);
+        if(!in_array((string)$payment['status'],['PAID','PARTIALLY_REFUNDED','REFUND_PENDING'],true)){
+            throw new InvalidArgumentException('Återbetalning kan inte begäras från aktuell status.');
+        }
+        $pdo->prepare("UPDATE bois_payments SET status='REFUND_PENDING',last_event_id=? WHERE id=?")
+            ->execute([(string)$event['event_id'],(int)$payment['id']]);
+        $pdo->prepare(
+            "UPDATE bois_orders SET status='PAYMENT_REVIEW',payment_status='REFUND_PENDING',
+             fulfillment_status='REVIEW_REQUIRED' WHERE id=?"
+        )->execute([(int)$payment['order_id']]);
+        $pdo->commit();
+        return [
+            'payment_id'=>(int)$payment['id'],
+            'order_id'=>(int)$payment['order_id'],
+            'public_id'=>(string)$payment['public_id'],
+            'status'=>'REFUND_PENDING',
+            'manual_fulfillment_review'=>true,
+        ];
+    }catch(Throwable $e){
+        if($pdo->inTransaction()) $pdo->rollBack();
+        throw $e;
+    }
+}
+
 function bois_p6_process_webhook_raw(PDO $pdo,array $config,string $raw,string $timestamp,string $signature): array
 {
-    bois_p6_verify_signature($config,$raw,$timestamp,$signature);
+    bois_p6_adapter($config)->verifyWebhook($config,$raw,$timestamp,$signature);
     $event=json_decode($raw,true,64,JSON_THROW_ON_ERROR);
     if(!is_array($event)) throw new InvalidArgumentException('Ogiltigt webhook-underlag.');
 
@@ -606,31 +677,69 @@ function bois_p6_process_webhook_raw(PDO $pdo,array $config,string $raw,string $
         }
     }
     if(!in_array((string)$event['type'],[
-        'payment.succeeded','payment.failed','payment.cancelled','payment.refunded'
+        'payment.succeeded','payment.failed','payment.cancelled','payment.refund_pending','payment.refunded'
     ],true)){
         throw new InvalidArgumentException('Webhooktypen stöds inte.');
     }
-
-    $payloadHash=hash('sha256',$raw);
-    $claim=bois_p6_claim_event($pdo,$event,$payloadHash);
-    if($claim['duplicate']){
-        return ['ok'=>true,'duplicate'=>true,'event_id'=>$event['event_id'],'status'=>'PROCESSED'];
+    if((string)$event['provider']!==bois_p6_provider($config) ||
+       !bois_p6_payment_enabled($config)){
+        throw new DomainException('Betalprovider är inte aktiverad.');
     }
 
-    $eventDbId=(int)$claim['event_db_id'];
+    // Serialize all events for one payment across the event claim and downstream effects.
+    $lockName='bois:p6:'.substr(hash('sha256',(string)$event['provider'].':'.(string)$event['provider_ref']),0,50);
+    $lockStmt=$pdo->prepare('SELECT GET_LOCK(?,10)');
+    $lockStmt->execute([$lockName]);
+    if((int)$lockStmt->fetchColumn()!==1) throw new RuntimeException('Betalningen är upptagen; försök igen.');
     try{
-        $result=match((string)$event['type']){
-            'payment.succeeded'=>bois_p6_process_succeeded($pdo,$config,$event),
-            'payment.failed'=>bois_p6_process_failed_or_cancelled($pdo,$event,'FAILED'),
-            'payment.cancelled'=>bois_p6_process_failed_or_cancelled($pdo,$event,'CANCELLED'),
-            'payment.refunded'=>bois_p6_process_refund($pdo,$config,$event),
-        };
-        bois_p6_finish_event($pdo,$eventDbId,(int)$result['payment_id'],(int)$result['order_id']);
-        return ['ok'=>true,'duplicate'=>false,'event_id'=>$event['event_id'],'result'=>$result];
-    } catch(Throwable $e){
-        bois_p6_mark_event_error($pdo,$eventDbId,$e);
-        throw $e;
+        $payloadHash=hash('sha256',$raw);
+        $claim=bois_p6_claim_event($pdo,$event,$payloadHash);
+        if($claim['duplicate']){
+            return ['ok'=>true,'duplicate'=>true,'event_id'=>$event['event_id'],'status'=>'PROCESSED'];
+        }
+
+        $eventDbId=(int)$claim['event_db_id'];
+        try{
+            $linked=bois_p6_payment_by_provider_ref($pdo,(string)$event['provider'],(string)$event['provider_ref']);
+            if((string)($event['order_public_id']??'')!==(string)$linked['public_id'] ||
+               (string)($event['session_ref']??'')!==(string)$linked['checkout_session_ref'] ||
+               (string)($event['currency']??'')!==(string)$linked['currency']){
+                throw new InvalidArgumentException('Webhookens order, session eller valuta stämmer inte med betalningen.');
+            }
+            $result=match((string)$event['type']){
+                'payment.succeeded'=>bois_p6_process_succeeded($pdo,$config,$event),
+                'payment.failed'=>bois_p6_process_failed_or_cancelled($pdo,$event,'FAILED'),
+                'payment.cancelled'=>bois_p6_process_failed_or_cancelled($pdo,$event,'CANCELLED'),
+                'payment.refund_pending'=>bois_p6_process_refund_pending($pdo,$event),
+                'payment.refunded'=>bois_p6_process_refund($pdo,$config,$event),
+            };
+            bois_p6_finish_event($pdo,$eventDbId,(int)$result['payment_id'],(int)$result['order_id']);
+            return ['ok'=>true,'duplicate'=>false,'event_id'=>$event['event_id'],'result'=>$result];
+        } catch(Throwable $e){
+            bois_p6_mark_event_error($pdo,$eventDbId,$e);
+            throw $e;
+        }
+    } finally {
+        $release=$pdo->prepare('SELECT RELEASE_LOCK(?)');
+        $release->execute([$lockName]);
     }
+}
+
+function bois_p6_admin_simulate_paid(PDO $pdo,array $config,string $publicId): array
+{
+    bois_p6_require_mock($config);
+    $read=$pdo->prepare(
+        "SELECT o.public_token,p.status FROM bois_orders o
+         JOIN bois_payments p ON p.order_id=o.id WHERE o.public_id=? LIMIT 1"
+    );
+    $read->execute([$publicId]);
+    $order=$read->fetch();
+    if(!$order) throw new OutOfBoundsException('Ordern finns inte.');
+    if(in_array((string)$order['status'],['PAID','PARTIALLY_REFUNDED','REFUNDED'],true)){
+        throw new InvalidArgumentException('Ordern är redan betald eller återbetald.');
+    }
+    $checkout=bois_p6_checkout($pdo,$config,$publicId,(string)$order['public_token'],'card');
+    return bois_p6_mock_event($pdo,$config,$checkout['session_ref'],$checkout['session_token'],'paid');
 }
 
 function bois_p6_mock_event(PDO $pdo,array $config,string $sessionRef,string $token,string $outcome,int $refundOre=0): array
@@ -642,6 +751,7 @@ function bois_p6_mock_event(PDO $pdo,array $config,string $sessionRef,string $to
         'paid'=>'payment.succeeded',
         'failed'=>'payment.failed',
         'cancelled'=>'payment.cancelled',
+        'refund_pending'=>'payment.refund_pending',
         'refunded'=>'payment.refunded',
         default=>throw new InvalidArgumentException('Okänt betalutfall.')
     };
@@ -677,6 +787,25 @@ function bois_p6_admin_payments(PDO $pdo): array
     )->fetchAll();
 
     return ['payments'=>$payments,'events'=>$events,'outbox'=>$outbox];
+}
+
+function bois_p6_public_payment(PDO $pdo,string $publicId): array
+{
+    $stmt=$pdo->prepare(
+        "SELECT p.provider_ref,p.method,p.status,p.paid_at,p.refunded_at
+         FROM bois_payments p JOIN bois_orders o ON o.id=p.order_id
+         WHERE o.public_id=? LIMIT 1"
+    );
+    $stmt->execute([$publicId]);
+    $payment=$stmt->fetch();
+    if(!$payment) throw new OutOfBoundsException('Betalningen finns inte.');
+    return [
+        'status'=>$payment['status'],
+        'method'=>$payment['method'],
+        'reference'=>$payment['provider_ref'],
+        'paid_at'=>$payment['paid_at'],
+        'refunded_at'=>$payment['refunded_at'],
+    ];
 }
 
 function bois_p6_retry_outbox(PDO $pdo,int $id): array

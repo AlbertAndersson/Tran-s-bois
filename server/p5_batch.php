@@ -65,6 +65,26 @@ function bois_p5_matchkit_rule(PDO $pdo): array
 
 function bois_p5_apply_verified_paid(PDO $pdo, array $config, string $publicId, string $source='VERIFIED_PAYMENT', ?string $providerRef=null): array
 {
+    // Legacy P5 tests can simulate payment before P6 is installed. Once P6 exists,
+    // only its verified event handler may enter the shared fulfillment function.
+    $p6Installed=(int)$pdo->query(
+        "SELECT COUNT(*) FROM information_schema.tables
+         WHERE table_schema=DATABASE() AND table_name='bois_payment_events'"
+    )->fetchColumn()>0;
+    if($p6Installed){
+        if($source!=='P6_VERIFIED_WEBHOOK' || !$providerRef){
+            throw new DomainException('Verifierad P6-betalning krävs.');
+        }
+        $verified=$pdo->prepare(
+            "SELECT COUNT(*) FROM bois_payments p JOIN bois_orders o ON o.id=p.order_id
+             WHERE o.public_id=? AND p.provider_ref=? AND p.status='PAID'
+               AND p.effects_status IN ('PENDING','APPLIED')"
+        );
+        $verified->execute([$publicId,$providerRef]);
+        if((int)$verified->fetchColumn()!==1){
+            throw new DomainException('Betalningen är inte verifierad av P6.');
+        }
+    }
     $pdo->beginTransaction();
     try {
         $stmt = $pdo->prepare(
