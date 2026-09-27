@@ -4,21 +4,21 @@
 P1 gör konceptdemon till en tekniskt fungerande beställningsportal utan att aktivera betalning eller nya löpande kostnader.
 
 ## Arkitektur
-- `site/`: mobilanpassad kundvy och ledarvy.
-- `server/api.php`: minimalt JSON-API i PHP utan externa paket.
-- `server/bootstrap.php`: validering, orderlagring, statusflöde, rate limiting och auditlogg.
+- `site/`: statisk mobilanpassad frontend.
+- `server/api.php`: minimalt JSON-API i PHP utan externa ramverk eller paket.
+- `server/bootstrap.php`: validering, orderlagring, statusflöde, rate limiting och audit-logg.
 - Orderdata lagras som **en JSON-fil per order** i en privat katalog utanför `public_html`.
-- Adminnyckeln finns endast i privat runtime-konfiguration på servern.
-- GitHub Pages publicerar endast `site/` och fungerar som säker demo utan orderlagring.
+- Adminnyckeln lagras endast i privat runtime-konfiguration på servern.
+- GitHub Pages publicerar bara `site/`; serverkoden och runtime-hemligheter publiceras inte där.
 
 ## Varför filbaserad lagring?
-Volymen för matchställ till knatte-/ungdomslag är låg. En fil per order ger:
+Volymen för ett knatte-/ungdomslags matchställ är låg. En fil per order ger:
 - 0 kr i databaskostnad,
 - inga DB-konton eller migrationsberoenden,
 - atomiska skrivningar och enkel backup/export,
 - möjlighet att migrera till databas senare utan att ändra frontendflödet.
 
-Lösningen är avsiktligt dimensionerad för föreningens användningsfall, inte generell högvolym-e-handel.
+Detta är avsiktligt dimensionerat för föreningens användningsfall och ska inte användas som generell högvolym-e-handel.
 
 ## Orderstatus
 - `received` – Ny
@@ -29,26 +29,26 @@ Lösningen är avsiktligt dimensionerad för föreningens användningsfall, inte
 
 Betalningsstatus är i P1 alltid `not_enabled`.
 
-## Säkerhet
+## Säkerhet P1
 - runtime-konfiguration och orderdata utanför webbrot,
 - admin-API kräver Bearer-token,
-- adminnyckel sparas bara i `sessionStorage` i ledarvyn,
+- token sparas bara i `sessionStorage` i ledarvyn,
 - servervalidering av all orderdata,
-- priser beräknas server-side,
-- rate limiting,
-- honeypot mot enkla botar,
+- pris beräknas server-side,
+- enkel rate limiting,
+- honeypot mot botar,
 - origin-kontroll,
-- `no-store` på API-svar,
-- auditlogg för order- och statusändringar,
-- staging får endast innehålla testuppgifter.
+- no-store på API-svar,
+- audit-logg för order- och statusändringar,
+- staging ska endast innehålla testuppgifter.
 
 ## P1 acceptance
 - skapa order och få unikt ordernummer,
 - idempotent orderregistrering,
 - lista order i ledarvyn,
-- filtrera och söka,
+- filtrera/söka,
 - ändra status,
 - CSV-export,
 - mobilvänlig frontend,
-- ingen betalning aktiverad,
-- inga nya externa abonnemang eller löpande kostnader.
+- inga betalningar,
+- inga nya externa abonnemang.
