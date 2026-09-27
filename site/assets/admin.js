@@ -1,11 +1,152 @@
 (() => {
   'use strict';
-  const cfg=window.BOIS_CONFIG||{mode:'demo',apiBase:null,adminDemo:true,environmentLabel:'DEMO'};const $=id=>document.getElementById(id);
-  const statuses={received:'Ny',checked:'Kontrollerad',ready_for_supplier:'Klar fÃ¶r leverantÃ¶r',ordered:'BestÃ¤lld',cancelled:'Avbruten'};
-  const demoOrders=[{order_id:'BOIS-260927-A1B2C',player_name:'Albin Karlsson',parent_name:'Sara Karlsson',email:'sara@example.se',phone:'070-111 11 11',team:'P9',shirt_size:'140',shorts_size:'140',number:'10',name_print:true,total_ore:99800,status:'received',created_at:'2026-09-27T08:12:00+02:00'},{order_id:'BOIS-260927-D3E4F',player_name:'Hugo Andersson',parent_name:'Johan Andersson',email:'johan@example.se',phone:'070-222 22 22',team:'P9',shirt_size:'152',shorts_size:'152',number:'17',name_print:true,total_ore:99800,status:'checked',created_at:'2026-09-27T08:18:00+02:00'},{order_id:'BOIS-260927-G5H6J',player_name:'Leo Svensson',parent_name:'Maria Svensson',email:'maria@example.se',phone:'070-333 33 33',team:'P9',shirt_size:'140',shorts_size:'140',number:'8',name_print:true,total_ore:99800,status:'ready_for_supplier',created_at:'2026-09-27T08:24:00+02:00'},{order_id:'BOIS-260927-K7L8M',player_name:'Viggo Johansson',parent_name:'Anna Johansson',email:'anna@example.se',phone:'070-444 44 44',team:'F9',shirt_size:'128',shorts_size:'140',number:'22',name_print:true,total_ore:99800,status:'ordered',created_at:'2026-09-27T08:31:00+02:00'},{order_id:'BOIS-260927-N9P0Q',player_name:'Noah Larsson',parent_name:'Erik Larsson',email:'erik@example.se',phone:'070-555 55 55',team:'P13',shirt_size:'152',shorts_size:'152',number:'5',name_print:false,total_ore:89800,status:'received',created_at:'2026-09-27T08:36:00+02:00'}];
-  let orders=[],token=sessionStorage.getItem('boisAdminToken')||'';$('environmentLabel').textContent=cfg.environmentLabel||(cfg.apiBase?'P1 STAGING':'DEMO');
-  const authHeaders=()=>token?{Authorization:`Bearer ${token}`}:{},money=ore=>new Intl.NumberFormat('sv-SE',{style:'currency',currency:'SEK',maximumFractionDigits:0}).format((ore||0)/100),esc=s=>String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
-  async function api(action,options={}){const response=await fetch(`${cfg.apiBase}?action=${encodeURIComponent(action)}${options.query||''}`,{...options,headers:{Accept:'application/json',...(options.headers||{}),...authHeaders()}});if(response.status===401){token='';sessionStorage.removeItem('boisAdminToken');showLogin('Adminnyckeln Ã¤r fel eller har gÃ¥tt ut.');throw new Error('Ej behÃ¶rig');}const body=await response.json().catch(()=>({}));if(!response.ok)throw new Error(body.error||'API-fel');return body;}
-  function showLogin(error=''){$('loginPanel').hidden=false;$('dashboard').hidden=true;$('loginError').hidden=!error;$('loginError').textContent=error;}function showDashboard(){$('loginPanel').hidden=true;$('dashboard').hidden=false;$('logoutBtn').hidden=!cfg.apiBase;}
-  function filtered(){const team=$('filterTeam').value,status=$('filterStatus').value,q=$('filterSearch').value.trim().toLowerCase();return orders.filter(o=>(!team||o.team===team)&&(!status||o.status===status)&&(!q||[o.order_id,o.player_name,o.parent_name,o.number,o.email].join(' ').toLowerCase().includes(q)));}
-  function statusControl(o){if(!cfg.apiBase)return `<span class="status-${esc(o.status)}">${esc(statuses[o.status]||o.status)}</span>`;const opts=Object.entries(statuses).map(([v,l])=>`<option value="${v}" ${o.status===v?'selected':''}>${l}</option>`).i©½¥¸ œœ¤íÉ•ÑÕÉ¸€ñÍ•±•Ð±…ÍÌô‰ÍÑ…ÑÕÌµÍ•±•Ðˆ‘…Ñ„µ½É‘•Èôˆ‘í•ÍŒ¡¼¹½É‘•É}¥¥ôˆø‘í½ÁÑÍôð½Í•±•Ðù€íô(€™Õ¹Ñ¥½¸É•¹‘•È ¥í½¹ÍÐÉ½ÝÌõ™¥±Ñ•É• ¤±‰½‘äô ½É‘•ÉÍ	½‘äœ¤í‰½‘ä¹¥¹¹•É!Q50õÉ½ÝÌ¹µ…À¡¼ôù€ñÑÈøñÑøñˆø‘í•ÍŒ¡¼¹½É‘•É}¥¥ôð½ˆøñ‘¥Ø±…ÍÌô‰½¹Ñ…ÐµÍµ…±°ˆø‘í•ÍŒ ¡¼¹É•…Ñ•‘}…Ññðœœ¤¹É•Á±…” Pœ°œ€œ¤¹Í±¥” À°ÄØ¤¥ôð½‘¥Øøð½ÑøñÑøñˆø‘í•ÍŒ¡¼¹Á±…å•É}¹…µ”¥ôð½ˆø‘í¼¹¹…µ•}ÁÉ¥¹Ðüœñ‘¥Ø±…ÍÌô‰½¹Ñ…ÐµÍµ…±°ˆù9…µ¹ÑÉå¬ð½‘¥Øøœèœôð½ÑøñÑø‘í•ÍŒ¡¼¹Ñ•…´¥ôð½ÑøñÑø‘í•ÍŒ¡¼¹Í¡¥ÉÑ}Í¥é”¥ôð½ÑøñÑø‘í•ÍŒ¡¼¹Í¡½ÉÑÍ}Í¥é”¥ðð½ÑøñÑø‘í•ÍŒ¡¼¹¹Õµ‰•È¥ôð½ÑøñÑø‘í•ÍŒ¡¼¹Á…É•¹Ñ}¹…µ”¥ôñ‘¥Ø±…ÍÌô‰½¹Ñ…ÐµÍµ…±°ˆø‘í•ÍŒ¡¼¹•µ…¥°¥ôñ‰Èø‘í•ÍŒ¡¼¹Á¡½¹”¥ôð½‘¥Øøð½ÑøñÑøñˆø‘íµ½¹•ä¡¼¹Ñ½Ñ…±}½É”¥ôð½ˆøð½ÑøñÑø‘íÍÑ…ÑÕÍ½¹ÑÉ½°¡¼¥ôð½Ñøð½ÑÈù€¤¹©½¥¸ œœ¤ì •µÁÑåMÑ…Ñ”œ¤¹¡¥‘‘•¸õÉ½ÝÌ¹±•¹Ñ „ôôÀì ­Á¥=É‘•ÉÌœ¤¹Ñ•áÑ½¹Ñ•¹Ðõ½É‘•ÉÌ¹±•¹Ñ ì ­Á¥9•Üœ¤¹Ñ•áÑ½¹Ñ•¹Ðõ½É‘•ÉÌ¹™¥±Ñ•È¡¼ôù¼¹ÍÑ…ÑÕÌôôôÉ••¥Ù•œ¤¹±•¹Ñ ì ­Á¥I•…‘äœ¤¹Ñ•áÑ½¹Ñ•¹Ðõ½É‘•ÉÌ¹™¥±Ñ•È¡¼ôù¼¹ÍÑ…ÑÕÌôôôÉ•…‘å}™½É}ÍÕÁÁ±¥•Èœ¤¹±•¹Ñ ì ­Á¥Y…±Õ”œ¤¹Ñ•áÑ½¹Ñ•¹Ðõµ½¹•ä¡½É‘•ÉÌ¹™¥±Ñ•È¡¼ôù¼¹ÍÑ…ÑÕÌ„ôô…¹•±±•œ¤¹É•‘Õ” ¡Ì±¼¤ôùÌ¬¡¼¹Ñ½Ñ…±}½É•ñðÀ¤°À¤¤ì Ñ…‰±•½½Ðœ¤¹Ñ•áÑ½¹Ñ•¹Ðõ™œ¹…Á¥	…Í”ý€‘íÉ½ÝÌ¹±•¹Ñ¡ô…Ø€‘í½É‘•ÉÌ¹±•¹Ñ¡ôÑ•ÍÑ‰•ÍÓ‘±±¹¥¹…ÈÙ¥Í…Ì¹€è•µ½‘…Ñ„ƒŠL¥¹•¸É¥­Ñ¥œ½É‘•É¥¹™½Éµ…Ñ¥½¸Ù¥Í…ÌÃ”¥Ñ!ÕˆA…•Ì¸œí‰½‘ä¹ÅÕ•ÉåM•±•Ñ½É±° Í•±•Ñm‘…Ñ„µ½É‘•Étœ¤¹™½É… ¡Í•°ôùÍ•°¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È ¡…¹”œ±ÕÁ‘…Ñ•MÑ…ÑÕÌ¤¤íô(€…Íå¹Œ™Õ¹Ñ¥½¸ÕÁ‘…Ñ•MÑ…ÑÕÌ¡•Ù•¹Ð¥í½¹ÍÐÍ•±•Ðõ•Ù•¹Ð¹Ñ…É•Ð±¥õÍ•±•Ð¹‘…Ñ…Í•Ð¹½É‘•È±¹•áÐõÍ•±•Ð¹Ù…±Õ”±ÁÉ•Øõ½É‘•ÉÌ¹™¥¹¡¼ôù¼¹½É‘•É}¥ôôõ¥¤ü¹ÍÑ…ÑÕÌíÍ•±•Ð¹‘¥Í…‰±•õÑÉÕ”íÑÉåí½¹ÍÐÉ•ÍÕ±Ðõ…Ý…¥Ð…Á¤ …‘µ¥¹}½É‘•Èœ±íµ•Ñ¡½èAQ œ±ÅÕ•Éäé€™¥ô‘í•¹½‘•UI%½µÁ½¹•¹Ð¡¥¥õ€±¡•…‘•ÉÌéì½¹Ñ•¹ÐµQåÁ”œè…ÁÁ±¥…Ñ¥½¸½©Í½¸ô±‰½‘äé)M=8¹ÍÑÉ¥¹¥™ä¡íÍÑ…ÑÕÌé¹•áÑô¥ô¤í½¹ÍÐÑ…É•Ðõ½É‘•ÉÌ¹™¥¹¡¼ôù¼¹½É‘•É}¥ôôõ¥¤í¥˜¡Ñ…É•Ð¥=‰©•Ð¹…ÍÍ¥¸¡Ñ…É•Ð±É•ÍÕ±Ð¹½É‘•È¤íÉ•¹‘•È ¤íõ…Ñ ¡”¥íÍ•±•Ð¹Ù…±Õ”õÁÉ•ÙñðÉ••¥Ù•œí…±•ÉÐ¡”¹µ•ÍÍ…”¤íõ™¥¹…±±åíÍ•±•Ð¹‘¥Í…‰±•õ™…±Í”íõô(€™Õ¹Ñ¥½¸Á½ÁÕ±…Ñ•Q•…µÌ ¥í½¹ÍÐÕÉÉ•¹Ðô ™¥±Ñ•ÉQ•…´œ¤¹Ù…±Õ”±Ñ•…µÌõl¸¸¹¹•ÜM•Ð¡½É‘•ÉÌ¹µ…À¡¼ôù¼¹Ñ•…´¤¹™¥±Ñ•È¡	½½±•…¸¤¥t¹Í½ÉÐ ¡„±ˆ¤ôù„¹±½…±•½µÁ…É”¡ˆ°ÍØœ¤¤ì ™¥±Ñ•ÉQ•…´œ¤¹¥¹¹•É!Q50ôœñ½ÁÑ¥½¸Ù…±Õ”ôˆˆù±±„±…œð½½ÁÑ¥½¸øœ­Ñ•…µÌ¹µ…À¡Ðôù€ñ½ÁÑ¥½¸ø‘í•ÍŒ¡Ð¥ôð½½ÁÑ¥½¸ù€¤¹©½¥¸ œœ¤í¥˜¡Ñ•…µÌ¹¥¹±Õ‘•Ì¡ÕÉÉ•¹Ð¤¤ ™¥±Ñ•ÉQ•…´œ¤¹Ù…±Õ”õÕÉÉ•¹Ðíô(€…Íå¹Œ™Õ¹Ñ¥½¸±½…‘=É‘•ÉÌ ¥íÑÉåí½É‘•ÉÌõ™œ¹…Á¥	…Í”ü¡…Ý…¥Ð…Á¤ …‘µ¥¹}½É‘•ÉÌœ¤¤¹½É‘•ÉÌé‘•µ½=É‘•ÉÌ¹Í±¥” ¤íÁ½ÁÕ±…Ñ•Q•…µÌ ¤íÉ•¹‘•È ¤íÍ¡½Ý…Í¡‰½…É ¤íõ…Ñ ¡”¥í¥˜¡™œ¹…Á¥	…Í”˜™Ñ½­•¸¥Ñ¡É½Ü”íõô(€…Íå¹Œ™Õ¹Ñ¥½¸•áÁ½ÉÑÍØ ¥í¥˜ …™œ¹…Á¥	…Í”¥í½¹ÍÐÉ½ÝÌõml=É‘•Èœ°MÁ•±…É”œ°1…œœ°QËÙ©„œ°	åá„œ°9Õµµ•Èœ°ÙË‘±‘•Èœ°µÁ½ÍÐœ°Q•±•™½¸œ°MÑ…ÑÕÌt°¸¸¹™¥±Ñ•É• ¤¹µ…À¡¼ôùm¼¹½É‘•É}¥±¼¹Á±…å•É}¹…µ”±¼¹Ñ•…´±¼¹Í¡¥ÉÑ}Í¥é”±¼¹Í¡½ÉÑÍ}Í¥é”±¼¹¹Õµ‰•È±¼¹Á…É•¹Ñ}¹…µ”±¼¹•µ…¥°±¼¹Á¡½¹”±ÍÑ…ÑÕÍ•Ím¼¹ÍÑ…ÑÕÍuññ¼¹ÍÑ…ÑÕÍt¥tí½¹ÍÐÑ•áÐõÉ½ÝÌ¹µ…À¡ÈôùÈ¹µ…À¡Øôù€ˆ‘íMÑÉ¥¹œ¡Øüüœœ¤¹É•Á±…” ¼ˆ½œ°œˆˆœ¥ô‰€¤¹©½¥¸ œìœ¤¤¹©½¥¸ q¸œ¤í½¹ÍÐ„õ‘½Õµ•¹Ð¹É•…Ñ•±•µ•¹Ð „œ¤í„¹¡É•˜õUI0¹É•…Ñ•=‰©•ÑUI0¡¹•Ü	±½ˆ¡lqÕ™•™˜œ­Ñ•áÑt±íÑåÁ”èÑ•áÐ½ÍØí¡…ÉÍ•ÐõÕÑ˜´àô¤¤í„¹‘½Ý¹±½…ô‰½¥Ìµ‘•µ¼¹ÍØœí„¹±¥¬ ¤íUI0¹É•Ù½­•=‰©•ÑUI0¡„¹¡É•˜¤íÉ•ÑÕÉ¸íõ½¹ÍÐÉ•ÍÁ½¹Í”õ…Ý…¥Ð™•Ñ ¡€‘í™œ¹…Á¥	…Í•ôý…Ñ¥½¸õ…‘µ¥¹}•áÁ½ÉÑ€±í¡•…‘•ÉÌé…ÕÑ¡!•…‘•ÉÌ ¥ô¤í¥˜¡É•ÍÁ½¹Í”¹ÍÑ…ÑÕÌôôôÐÀÄ¥íÍ¡½Ý1½¥¸ ‘µ¥¹¹å­•±¸ƒ‘È™•°•±±•È¡…ÈŸ•ÑÐÕÐ¸œ¤íÉ•ÑÕÉ¸íõ¥˜ …É•ÍÁ½¹Í”¹½¬¥í…±•ÉÐ áÁ½ÉÑ•¸µ¥ÍÍ±å­…‘•Ì¸œ¤íÉ•ÑÕÉ¸íõ½¹ÍÐ‰±½ˆõ…Ý…¥ÐÉ•ÍÁ½¹Í”¹‰±½ˆ ¤±„õ‘½Õµ•¹Ð¹É•…Ñ•±•µ•¹Ð „œ¤í„¹¡É•˜õUI0¹É•…Ñ•=‰©•ÑUI0¡‰±½ˆ¤í„¹‘½Ý¹±½…ôÑÉ…¹…Ìµ‰½¥Ìµ‰•ÍÑ…±±¹¥¹…È¹ÍØœí„¹±¥¬ ¤íUI0¹É•Ù½­•=‰©•ÑUI0¡„¹¡É•˜¤íô(€€ ±½¥¹½É´œ¤¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È ÍÕ‰µ¥Ðœ±…Íå¹Œ”ôùí”¹ÁÉ•Ù•¹Ñ•™…Õ±Ð ¤íÑ½­•¸ô …‘µ¥¹Q½­•¸œ¤¹Ù…±Õ”¹ÑÉ¥´ ¤íÍ•ÍÍ¥½¹MÑ½É…”¹Í•Ñ%Ñ•´ ‰½¥Í‘µ¥¹Q½­•¸œ±Ñ½­•¸¤íÑÉåí…Ý…¥Ð±½…‘=É‘•ÉÌ ¤íõ…Ñ ¡•ÉÈ¥íõô¤ì ±½½ÕÑ	Ñ¸œ¤¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È ±¥¬œ° ¤ôùíÑ½­•¸ôœœíÍ•ÍÍ¥½¹MÑ½É…”¹É•µ½Ù•%Ñ•´ ‰½¥Í‘µ¥¹Q½­•¸œ¤ì …‘µ¥¹Q½­•¸œ¤¹Ù…±Õ”ôœœíÍ¡½Ý1½¥¸ ¤íô¤ì ÍÙ	Ñ¸œ¤¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È ±¥¬œ±•áÁ½ÉÑÍØ¤ì É•™É•Í¡	Ñ¸œ¤¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È ±¥¬œ° ¤ôù±½…‘=É‘•ÉÌ ¤¹…Ñ ¡”ôù…±•ÉÐ¡”¹µ•ÍÍ…”¤¤¤íl™¥±Ñ•ÉQ•…´œ°™¥±Ñ•ÉMÑ…ÑÕÌt¹™½É… ¡¥ôø¡¥¤¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È ¡…¹”œ±É•¹‘•È¤¤ì ™¥±Ñ•ÉM•…É œ¤¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È ¥¹ÁÕÐœ±É•¹‘•È¤ì(€¥˜¡™œ¹…Á¥	…Í”¥ì ‘…Í¡‰½…É‘MÕ‰Ñ¥Ñ±”œ¤¹Ñ•áÑ½¹Ñ•¹ÐôI¥­Ñ¥„Ñ•ÍÑ½É‘É…È™Ë•¸@ÄµÍÑ…¥¹œ¸%¹•¸‰•Ñ…±¹¥¹œƒ‘È…­Ñ¥Ù•É…¸œí¥˜ …Ñ½­•¸¥Í¡½Ý1½¥¸ ¤í•±Í”±½…‘=É‘•ÉÌ ¤¹…Ñ   ¤ôùíô¤íõ•±Í•íÍ¡½Ý…Í¡‰½…É ¤í±½…‘=É‘•ÉÌ ¤íô)ô¤ ¤ì
+  const cfg = window.BOIS_CONFIG || { apiBase: null, environmentLabel: 'DEMO' };
+  const $ = id => document.getElementById(id);
+  const statusNames = {
+    received: 'Ny',
+    checked: 'Kontrollerad',
+    ready_for_supplier: 'Klar fÃ¶r leverantÃ¶r',
+    ordered: 'BestÃ¤lld',
+    cancelled: 'Avbruten'
+  };
+  const demoOrders = [
+    {order_id:'BOIS-260927-A1B2C',player_name:'Albin Karlsson',parent_name:'Sara Karlsson',email:'sara@example.se',phone:'070-111 11 11',team:'P9',shirt_size:'140',shorts_size:'140',number:'10',name_print:true,total_ore:99800,status:'received',created_at:'2026-09-27T08:12:00+02:00'},
+    {order_id:'BOIS-260927-D3E4F',player_name:'Hugo Andersson',parent_name:'Johan Andersson',email:'johan@example.se',phone:'070-222 22 22',team:'P9',shirt_size:'152',shorts_size:'152',number:'17',name_print:true,total_ore:99800,status:'checked',created_at:'2026-09-27T08:18:00+02:00'},
+    {order_id:'BOIS-260927-G5H6J',player_name:'Leo Svensson',parent_name:'Maria Svensson',email:'maria@example.se',phone:'070-333 33 33',team:'P9',shirt_size:'140',shorts_size:'140',number:'8',name_print:true,total_ore:99800,status:'ready_for_supplier',created_at:'2026-09-27T08:24:00+02:00'},
+    {order_id:'BOIS-260927-K7L8M',player_name:'Viggo Johansson',parent_name:'Anna Johansson',email:'anna@example.se',phone:'070-444 44 44',team:'F9',shirt_size:'128',shorts_size:'140',number:'22',name_print:true,total_ore:99800,status:'ordered',created_at:'2026-09-27T08:31:00+02:00'},
+    {order_id:'BOIS-260927-N9P0Q',player_name:'Noah Larsson',parent_name:'Erik Larsson',email:'erik@example.se',phone:'070-555 55 55',team:'P13',shirt_size:'152',shorts_size:'152',number:'5',name_print:false,total_ore:89800,status:'received',created_at:'2026-09-27T08:36:00+02:00'}
+  ];
+  let token = sessionStorage.getItem('boisAdminToken') || '';
+  let orders = [];
+  const money = ore => new Intl.NumberFormat('sv-SE', {style:'currency',currency:'SEK',maximumFractionDigits:0}).format((ore || 0) / 100);
+  const esc = value => String(value ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+
+  function authHeaders(extra = {}) {
+    return token ? {...extra, Authorization: `Bearer ${token}`} : extra;
+  }
+  async function api(action, options = {}) {
+    const query = options.query || '';
+    const response = await fetch(`${cfg.apiBase}?action=${encodeURIComponent(action)}${query}`, {
+      ...options,
+      headers: {Accept:'application/json', ...authHeaders(options.headers || {})}
+    });
+    if (response.status === 401) {
+      token = '';
+      sessionStorage.removeItem('boisAdminToken');
+      showLogin('Adminnyckeln Ã¤r fel eller har gÃ¥tt ut.');
+      throw new Error('Ej behÃ¶rig');
+    }
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(body.error || 'API-fel');
+    return body;
+  }
+  function showLogin(message = '') {
+    $('loginPanel').hidden = false;
+    $('dashboard').hidden = true;
+    $('loginError').hidden = !message;
+    $('loginError').textContent = message;
+  }
+  function showDashboard() {
+    $('loginPanel').hidden = true;
+    $('dashboard').hidden = false;
+    $('logoutBtn').hidden = !cfg.apiBase;
+  }
+  function filteredOrders() {
+    const team = $('filterTeam').value;
+    const status = $('filterStatus').value;
+    const q = $('filterSearch').value.trim().toLowerCase();
+    return orders.filter(o =>
+      (!team || o.team === team) &&
+      (!status || o.status === status) &&
+      (!q || [o.order_id,o.player_name,o.parent_name,o.number,o.email].join(' ').toLowerCase().includes(q))
+    );
+  }
+  function statusControl(order) {
+    if (!cfg.apiBase) return `<span class="status-${esc(order.status)}">${esc(statusNames[order.status] || order.status)}</span>`;
+    const options = Object.entries(statusNames).map(([value,label]) =>
+      `<option value="${value}" ${order.status === value ? 'selected' : ''}>${label}</option>`
+    ).join('');
+    return `<select class="status-select" data-order="${esc(order.order_id)}">${options}</select>`;
+  }
+  function populateTeams() {
+    const current = $('filterTeam').value;
+    const teams = [...new Set(orders.map(o => o.team).filter(Boolean))].sort((a,b) => a.localeCompare(b,'sv'));
+    $('filterTeam').innerHTML = '<option value="">Alla lag</option>' + teams.map(t => `<option>${esc(t)}</option>`).join('');
+    if (teams.includes(current)) $('filterTeam').value = current;
+  }
+  function render() {
+    const rows = filteredOrders();
+    $('ordersBody').innerHTML = rows.map(o => `<tr>
+      <td><b>${esc(o.order_id)}</b><div class="contact-small">${esc((o.created_at || '').replace('T',' ').slice(0,16))}</div></td>
+      <td><b>${esc(o.player_name)}</b>${o.name_print ? '<div class="contact-small">Namntryck</div>' : ''}</td>
+      <td>${esc(o.team)}</td><td>${esc(o.shirt_size)}</td><td>${esc(o.shorts_size)}</td><td>${esc(o.number)}</td>
+      <td>${esc(o.parent_name)}<div class="contact-small">${esc(o.email)}<br>${esc(o.phone)}</div></td>
+      <td><b>${money(o.total_ore)}</b></td><td>${statusControl(o)}</td></tr>`).join('');
+    $('emptyState').hidden = rows.length !== 0;
+    $('kpiOrders').textContent = orders.length;
+    $('kpiNew').textContent = orders.filter(o => o.status === 'received').length;
+    $('kpiReady').textContent = orders.filter(o => o.status === 'ready_for_supplier').length;
+    $('kpiValue').textContent = money(orders.filter(o => o.status !== 'cancelled').reduce((sum,o) => sum + (o.total_ore || 0), 0));
+    $('tableFoot').textContent = cfg.apiBase ? `${rows.length} av ${orders.length} testbestÃ¤llningar visas.` : 'Demodata â€“ inga riktiga bestÃ¤llningar visas pÃ¥ GitHub Pages.';
+    document.querySelectorAll('select[data-order]').forEach(el => el.addEventListener('change', updateStatus));
+  }
+  async function updateStatus(event) {
+    const select = event.target;
+    const id = select.dataset.order;
+    const row = orders.find(o => o.order_id === id);
+    const previous = row ? row.status : 'received';
+    select.disabled = true;
+    try {
+      const result = await api('admin_order', {
+        method:'PATCH', query:`&id=${encodeURIComponent(id)}`,
+        headers:{'Content-Type':'application/json'}, body:JSON.stringify({status:select.value})
+      });
+      if (row) Object.assign(row, result.order);
+      render();
+    } catch (error) {
+      select.value = previous;
+      alert(error.message);
+    } finally {
+      select.disabled = false;
+    }
+  }
+  async function loadOrders() {
+    orders = cfg.apiBase ? (await api('admin_orders')).orders : demoOrders.slice();
+    populateTeams();
+    render();
+    showDashboard();
+  }
+  async function exportCsv() {
+    if (!cfg.apiBase) {
+      const rows = [['Order','Spelare','Lag','TrÃ¶ja','Byxa','Nummer','FÃ¶rÃ¤lder','E-post','Telefon','Status'],
+        ...filteredOrders().map(o => [o.order_id,o.player_name,o.team,o.shirt_size,o.shorts_size,o.number,o.parent_name,o.email,o.phone,statusNames[o.status] || o.status])];
+      const csv = rows.map(r => r.map(v => `"${String(v ?? '').replace(/"/g,'""')}"`).join(';')).join('\n');
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob(['\ufeff' + csv], {type:'text/csv;charset=utf-8'}));
+      a.download = 'bois-demo.csv'; a.click(); URL.revokeObjectURL(a.href); return;
+    }
+    const response = await fetch(`${cfg.apiBase}?action=admin_export`, {headers:authHeaders()});
+    if (response.status === 401) return showLogin('Adminnyckeln Ã¤r fel eller har gÃ¥tt ut.');
+    if (!response.ok) return alert('Exporten misslyckades.');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(await response.blob());
+    a.download = 'tranas-bois-bestallningar.csv'; a.click(); URL.revokeObjectURL(a.href);
+  }
+
+  $('environmentLabel').textContent = cfg.environmentLabel || (cfg.apiBase ? 'P1 STAGING' : 'DEMO');
+  $('loginForm').addEventListener('submit', async event => {
+    event.preventDefault(); token = $('adminToken').value.trim(); sessionStorage.setItem('boisAdminToken', token);
+    try { await loadOrders(); } catch (_) {}
+  });
+  $('logoutBtn').addEventListener('click', () => { token=''; sessionStorage.removeItem('boisAdminToken'); $('adminToken').value=''; showLogin(); });
+  $('csvBtn').addEventListener('click', exportCsv);
+  $('refreshBtn').addEventListener('click', () => loadOrders().catch(error => alert(error.message)));
+  ['filterTeam','filterStatus'].forEach(id => $(id).addEventListener('change', render));
+  $('filterSearch').addEventListener('input', render);
+  if (cfg.apiBase) {
+    $('dashboardSubtitle').textContent = 'Riktiga testordrar frÃ¥n P1-staging. Ingen betalning Ã¤r aktiverad.';
+    token ? loadOrders().catch(() => {}) : showLogin();
+  } else {
+    loadOrders();
+  }
+})();
