@@ -15,6 +15,7 @@ Läs först:
 5. `docs/P4-MEMBERSHIP-NORDIC.md`
 6. `docs/P5-MATCHKIT-BATCHING.md`
 7. `docs/P6-PAYMENT.md`
+8. `docs/P8-PAYMENT-STRIPE.md`
 
 Deployment ligger i `AlbertAndersson/work-capture`. Aktiv workflow är:
 `.github/workflows/simply-deploy-bois-p4.yml`
@@ -43,9 +44,11 @@ P6 staging använder:
 - receipt/refund outbox
 - `payment_mail_transport = disabled`
 
-Riktig payment provider, merchant-onboarding och providerkostnad är **inte** aktiverade.
+Riktig payment provider, merchant-onboarding och providerkostnad är **inte** aktiverade. **Stripe är vald som målprovider för P8**, men detta är endast ett dokumenterat framtida beslut under P7.
 
 **Nästa fas är P7 – 2027 assortment.**
+
+P7 ska **inte** implementera Stripe. Stripe hör till P8 production launch. P7 får endast bevara kompatibiliteten med den befintliga provider-adaptern och dokumentera eventuella beroenden som upptäcks.
 
 Bygg P7 så supporter-/merchsortimentet blir lanseringsklart men fortsatt dolt/orderblockerat före **1 januari 2027**.
 
@@ -68,6 +71,8 @@ Säkerställ att:
 - staging bara använder testuppgifter
 - inga riktiga externa mejl skickas
 - inga nya kostnader eller betaltjänster aktiveras utan uttryckligt godkännande
+- Stripe-konto/onboarding/credentials eller Stripe-kod inte skapas i P7
+- P8-planen behåller Stripe som vald provider och verifierar senare Swish-tillgänglighet för BoIS-kontot
 
 Behåll affärsreglerna:
 - ungdomsmedlemskap 200 kr
