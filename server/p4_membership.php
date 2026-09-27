@@ -143,6 +143,18 @@ function bois_p4_activate_paid_memberships(PDO $pdo, array $config, int $orderId
     foreach($rows as $row){
         $membershipId=(int)$row['membership_id'];
 
+        if ((string)$row['status'] === 'ACTIVE') {
+            $existingApplied=$pdo->prepare(
+                "SELECT id FROM bois_members WHERE source_membership_id=? LIMIT 1"
+            );
+            $existingApplied->execute([$membershipId]);
+            $existingMemberId=(int)$existingApplied->fetchColumn();
+            if($existingMemberId>0){
+                $activated[]=['membership_id'=>$membershipId,'member_id'=>$existingMemberId];
+                continue;
+            }
+        }
+
         $pdo->prepare(
             "UPDATE bois_memberships
              SET status='ACTIVE',
