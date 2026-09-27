@@ -54,6 +54,23 @@ $public = bois_p4_public_status_for_order($pdo, $new['public_id']);
 if (($public['memberships'][0]['status'] ?? '') !== 'ACTIVE') throw new RuntimeException('Public membership not active.');
 if (($public['benefits'][0]['status'] ?? '') !== 'ELIGIBLE') throw new RuntimeException('Public benefit not eligible.');
 
+$memberBefore = bois_p4_admin_members($pdo)[0];
+$renewal = bois_p3_create_order($pdo, [
+    'customer' => ['name' => 'Ny Medlem', 'email' => 'new@example.invalid', 'phone' => '070-100 00 00'],
+    'items' => [['sku' => 'MEM-ADULT', 'quantity' => 1, 'metadata' => ['member_name' => 'Ny Medlem']]],
+    'consent' => true,
+    'website' => '',
+    'idempotency_key' => 'p4-renewal',
+]);
+bois_p4_register_order($pdo, $renewal['public_id']);
+bois_p5_mark_order_paid($pdo, $config, $renewal['public_id']);
+bois_p4_apply_paid_order($pdo, $config, $renewal['public_id']);
+
+$membersAfterRenewal = bois_p4_admin_members($pdo);
+if (count($membersAfterRenewal) !== 1) throw new RuntimeException('Renewal created duplicate member.');
+if ($membersAfterRenewal[0]['member_uuid'] !== $memberBefore['member_uuid']) throw new RuntimeException('Renewal changed member identity.');
+if (strtotime((string)$membersAfterRenewal[0]['valid_to']) <= strtotime((string)$memberBefore['valid_to'])) throw new RuntimeException('Renewal did not extend validity.');
+
 $existing = bois_p3_create_order($pdo, [
     'customer' => ['name' => 'Befintlig Medlem', 'email' => 'existing@example.invalid', 'phone' => '070-200 00 00'],
     'items' => [['sku' => 'NW-GYM-ANNUAL', 'quantity' => 1, 'metadata' => []]],
@@ -103,6 +120,7 @@ if ($stats['active_members'] !== 2) throw new RuntimeException('Unpaid membershi
 
 echo "P4_SMOKE: pass\n";
 echo "NEW_MEMBER_AUTO_ELIGIBLE: pass\n";
+echo "MEMBERSHIP_RENEWAL: pass\n";
 echo "EXISTING_MEMBER_MANUAL_VERIFY: pass\n";
 echo "NORDIC_STATUS_FLOW: pass\n";
 echo "NORDIC_EXPORT_NO_PERSONNUMMER: pass\n";
