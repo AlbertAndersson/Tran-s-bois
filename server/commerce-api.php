@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
+
 require __DIR__ . '/p3_db.php';
+require __DIR__ . '/p5_batch.php';
 
 function commerce_respond(array $data, int $status=200): never
 {
@@ -50,9 +52,21 @@ function commerce_check_origin(array $config): void
     header('Vary: Origin');
 }
 
+function commerce_output_batch_csv(PDO $pdo, string $batchId): never
+{
+    $csv = bois_p5_batch_csv($pdo, $batchId);
+    http_response_code(200);
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename="tranas-bois-' . strtolower($batchId) . '.csv"');
+    header('Cache-Control: no-store');
+    echo $csv;
+    exit;
+}
+
 try {
     $config=bois_p3_load_config();
     $pdo=bois_p3_pdo($config);
+    bois_p5_apply_schema($pdo);
     commerce_check_origin($config);
 
     if(($_SERVER['REQUEST_METHOD']??'')==='OPTIONS'){
@@ -66,13 +80,17 @@ try {
     $method=(string)($_SERVER['REQUEST_METHOD']??'GET');
 
     if($action==='health'&&$method==='GET'){
+        $waiting=bois_p5_waiting_summary($pdo);
         commerce_respond([
             'ok'=>true,
             'service'=>'tranas-bois-commerce-api',
-            'phase'=>'P3',
+            'phase'=>'P5',
             'mode'=>$config['mode'],
             'storage_driver'=>'mysql',
             'payment_enabled'=>false,
+            'mail_transport'=>$config['mail_transport'] ?? 'disabled',
+            'batch_threshold_qty'=>$waiting['threshold_qty'],
+            'batch_max_wait_hours'=>$waiting['max_wait_hours'],
             'db'=>$pdo->query("SELECT DATABASE()")->fetchColumn() ? 'ok' : 'unknown',
         ]);
     }
@@ -99,13 +117,75 @@ try {
 
     if($action==='admin_catalog'&&$method==='GET'){
         commerce_require_admin($config);
-        commerce_respond(['ok'=>true,'products'=>bois_p3_catalog($pdo,true),'stats'=>bois_p3_stats($pdo)]);
+        commerce_respond([
+            'ok'=>true,
+            'products'=>bois_p3_catalog($pdo,true),
+            'stats'=>bois_p3_stats($pdo),
+            'batch_waiting'=>bois_p5_waiting_summary($pdo),
+        ]);
+    }
+
+    if($action==='admin_batches'&&$method==='GET'){
+        commerce_require_admin($config);
+        commerce_respond([
+            'ok'=>true,
+            'waiting'=>bois_p5_waiting_summary($pdo),
+            'batches'=>bois_p5_admin_batches($pdo),
+        ]);
+    }
+
+    if($action==='admin_simulate_paid'&&$method==='POST'){
+        commerce_require_admin($config);
+        $data=commerce_body();
+        $publicId=bois_p3_clean_string($data['public_id']??'',40);
+        commerce_respond([
+            'ok'=>true,
+            'result'=>bois_p5_mark_order_paid($pdo,$config,$publicId),
+            'waiting'=>bois_p5_waiting_summary($pdo),
+        ]);
+    }
+
+    if($action==='admin_batch_now'&&$method==='POST'){
+        commerce_require_admin($config);
+        commerce_respond([
+            'ok'=>true,
+            'batches'=>bois_p5_evaluate_batches($pdo,$config,true),
+            'waiting'=>bois_p5_waiting_summary($pdo),
+        ]);
+    }
+
+    if($action==='admin_batch_csv'&&$method==='GET'){
+        commerce_require_admin($config);
+        $batchId=bois_p3_clean_string($_GET['id']??'',50);
+        commerce_output_batch_csv($pdo,$batchId);
+    }
+
+    if($action==='admin_retry_outbox'&&$method==='POST'){
+        commerce_require_admin($config);
+        $data=commerce_body();
+        $outboxId=(int)($data['outbox_id']??0);
+        if($outboxId<1) throw new InvalidArgumentException('Ogiltigt outbox-id.');
+        commerce_respond(['ok'=>true,'outbox'=>bois_p5_retry_outbox($pdo,$outboxId)]);
+    }
+
+    if($action==='admin_run_worker'&&$method==='POST'){
+        commerce_require_admin($config);
+        $batches=bois_p5_evaluate_batches($pdo,$config,false);
+        $mail=bois_p5_deliver_outbox($pdo,$config);
+        commerce_respond([
+            'ok'=>true,
+            'batches'=>$batches,
+            'mail'=>$mail,
+            'waiting'=>bois_p5_waiting_summary($pdo),
+        ]);
     }
 
     commerce_respond(['error'=>'Okänd endpoint.'],404);
 
 } catch (DomainException $e) {
     commerce_respond(['error'=>$e->getMessage()],401);
+} catch (OutOfBoundsException $e) {
+    commerce_respond(['error'=>$e->getMessage()],404);
 } catch (InvalidArgumentException $e) {
     commerce_respond(['error'=>$e->getMessage()],422);
 } catch (JsonException) {

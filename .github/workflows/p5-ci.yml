@@ -1,0 +1,79 @@
+name: P5 Match Kit Batching CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "server/p5_*.php"
+      - "server/commerce-api.php"
+      - "site/commerce/admin.html"
+      - "site/commerce/assets/admin.js"
+      - "site/commerce/assets/p5.css"
+      - "tests/p5-smoke.php"
+      - "docs/P5-MATCHKIT-BATCHING.md"
+      - ".github/workflows/p5-ci.yml"
+  pull_request:
+    paths:
+      - "server/p5_*.php"
+      - "server/commerce-api.php"
+      - "site/commerce/admin.html"
+      - "site/commerce/assets/admin.js"
+      - "site/commerce/assets/p5.css"
+      - "tests/p5-smoke.php"
+      - "docs/P5-MATCHKIT-BATCHING.md"
+      - ".github/workflows/p5-ci.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: bois_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+
+    env:
+      BOIS_P3_TEST_DB_HOST: 127.0.0.1
+      BOIS_P3_TEST_DB_PORT: 3306
+      BOIS_P3_TEST_DB_NAME: bois_test
+      BOIS_P3_TEST_DB_USER: root
+      BOIS_P3_TEST_DB_PASSWORD: root
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: PHP syntax
+        run: |
+          php -l server/p5_batch.php
+          php -l server/p5-migrate.php
+          php -l server/p5-worker.php
+          php -l server/commerce-api.php
+
+      - name: P5 MySQL smoke
+        run: php tests/p5-smoke.php
+
+      - name: Admin JavaScript syntax
+        run: node --check site/commerce/assets/admin.js
+
+      - name: P5 safety checks
+        run: |
+          grep -q "payment_status='PAID'" server/p5_batch.php
+          grep -q "supplier@example.invalid" server/p5_batch.php
+          grep -q "erik@example.invalid" server/p5_batch.php
+          grep -q "threshold_qty" server/p5_batch.php
+          grep -q "max_wait_hours" server/p5_batch.php
+          grep -q "message_key" server/p5_batch.php
+          grep -q "BATCHED" server/p5_batch.php
+          grep -q "SENT_TO_SUPPLIER" server/p5_batch.php
+          ! grep -R -E "smtp_password|BEGIN PRIVATE KEY|sk_live_|pk_live_" server site/commerce

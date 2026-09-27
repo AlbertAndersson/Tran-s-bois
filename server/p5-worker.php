@@ -1,0 +1,24 @@
+<?php
+declare(strict_types=1);
+
+require __DIR__ . '/p3_db.php';
+require __DIR__ . '/p5_batch.php';
+
+try {
+    $config = bois_p3_load_config();
+    $pdo = bois_p3_pdo($config);
+    bois_p5_apply_schema($pdo);
+
+    $batches = bois_p5_evaluate_batches($pdo, $config, false);
+    $mail = bois_p5_deliver_outbox($pdo, $config);
+
+    echo "P5_WORKER: pass\n";
+    echo "BATCHES_CREATED: ".count($batches)."\n";
+    echo "MAIL_TRANSPORT: ".$mail['transport']."\n";
+    echo "MAIL_PROCESSED: ".$mail['processed']."\n";
+    echo "MAIL_SENT: ".$mail['sent']."\n";
+    echo "MAIL_FAILED: ".$mail['failed']."\n";
+} catch (Throwable $e) {
+    fwrite(STDERR, "P5_WORKER: fail\n");
+    exit(1);
+}

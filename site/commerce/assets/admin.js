@@ -1,32 +1,179 @@
 (() => {
   'use strict';
+
   const c=window.BOIS_COMMERCE,$=id=>document.getElementById(id);
   let token=sessionStorage.getItem('boisP3Admin')||'';
+  let orders=[];
 
   function auth(){return {Authorization:'Bearer '+token};}
-  async function api(action){
-    if(!c.cfg.apiBase) return demo(action);
-    return c.api(action,{headers:auth()});
+
+  async function api(action, options={}) {
+    if(!c.cfg.apiBase) return demo(action,options);
+    return c.api(action,{...options,headers:{...(options.headers||{}),...auth()}});
   }
-  function demo(action){
-    if(action==='admin_catalog') return Promise.resolve({products:[
-      {name:'Medlemskap Tranås BoIS',category:'membership',fulfillment_type:'DIGITAL_MEMBERSHIP',is_public:true,is_orderable:true},
-      {name:'Nordic Wellness gymkort',category:'member_benefit',fulfillment_type:'MEMBER_BENEFIT',is_public:true,is_orderable:true},
-      {name:'Matchställ',category:'match_kit',fulfillment_type:'BATCH_SUPPLIER',is_public:true,is_orderable:true},
-      {name:'BoIS 1941 Hoodie',category:'supporter',fulfillment_type:'DIRECT_SUPPLIER',is_public:false,is_orderable:false}
-    ],stats:{bois_products:10,bois_orders:0,bois_memberships:0,bois_email_outbox:0}});
-    return Promise.resolve({orders:[]});
+
+  function demo(action) {
+    if(action==='admin_catalog') return Promise.resolve({
+      products:[
+        {name:'Medlemskap Tranås BoIS',category:'membership',fulfillment_type:'DIGITAL_MEMBERSHIP',is_public:true,is_orderable:true},
+        {name:'Nordic Wellness gymkort',category:'member_benefit',fulfillment_type:'MEMBER_BENEFIT',is_public:true,is_orderable:true},
+        {name:'Matchställ',category:'match_kit',fulfillment_type:'BATCH_SUPPLIER',is_public:true,is_orderable:true},
+        {name:'BoIS 1941 Hoodie',category:'supporter',fulfillment_type:'DIRECT_SUPPLIER',is_public:false,is_orderable:false}
+      ],
+      stats:{bois_products:10,bois_orders:2,bois_memberships:1,bois_email_outbox:1},
+      batch_waiting:{waiting_order_count:2,waiting_item_count:2,threshold_qty:8,max_wait_hours:168,oldest_wait_hours:12,threshold_remaining:6}
+    });
+    if(action==='admin_batches') return Promise.resolve({
+      waiting:{waiting_order_count:2,waiting_item_count:2,threshold_qty:8,max_wait_hours:168,oldest_wait_hours:12,threshold_remaining:6},
+      batches:[{public_id:'BATCH-DEMO-001',trigger_reason:'MANUAL',order_count:2,item_count:2,status:'QUEUED',outbox_status:'PENDING',attempts:0,created_at:'2026-09-27 14:30:00',to_email:'supplier@example.invalid',cc_email:'erik@example.invalid'}]
+    });
+    if(action==='admin_orders') return Promise.resolve({orders:[
+      {public_id:'BOIS-DEMO-KIT1',customer_name:'Test Förälder',customer_email:'test@example.invalid',total_ore:99800,payment_status:'NOT_ENABLED',fulfillment_status:'ON_HOLD',created_at:'2026-09-27 14:00:00',items:[{sku:'MATCHKIT-STAGING',fulfillment_type:'BATCH_SUPPLIER'}]},
+      {public_id:'BOIS-DEMO-MEM1',customer_name:'Test Medlem',customer_email:'member@example.invalid',total_ore:300000,payment_status:'NOT_ENABLED',fulfillment_status:'ON_HOLD',created_at:'2026-09-27 14:05:00',items:[{sku:'MEM-ADULT',fulfillment_type:'DIGITAL_MEMBERSHIP'},{sku:'NW-GYM-ANNUAL',fulfillment_type:'MEMBER_BENEFIT'}]}
+    ]});
+    if(action==='admin_batch_now') return Promise.resolve({batches:[],waiting:{waiting_order_count:2,waiting_item_count:2,threshold_qty:8,max_wait_hours:168,oldest_wait_hours:12,threshold_remaining:6}});
+    if(action==='admin_run_worker') return Promise.resolve({batches:[],mail:{transport:'disabled',processed:0,sent:0,failed:0},waiting:{waiting_order_count:2,waiting_item_count:2,threshold_qty:8,max_wait_hours:168,oldest_wait_hours:12,threshold_remaining:6}});
+    return Promise.resolve({ok:true});
   }
+
   function esc(v){return String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));}
-  async function load(){
-    const [ordersBody,catalogBody]=await Promise.all([api('admin_orders'),api('admin_catalog')]);
-    const orders=ordersBody.orders||[],products=catalogBody.products||[],stats=catalogBody.stats||{};
-    $('ordersKpi').textContent=stats.bois_orders??orders.length;$('productsKpi').textContent=stats.bois_products??products.length;$('membershipsKpi').textContent=stats.bois_memberships??0;$('outboxKpi').textContent=stats.bois_email_outbox??0;
-    $('orders').innerHTML=orders.length?orders.map(o=>'<tr><td><b>'+esc(o.public_id)+'</b><div class="small">'+esc(o.created_at)+'</div></td><td>'+esc(o.customer_name)+'<div class="small">'+esc(o.customer_email)+'</div></td><td><div class="chips">'+(o.items||[]).map(i=>'<span class="chip">'+esc(i.sku)+'</span>').join('')+'</div></td><td>'+c.money(o.total_ore)+'</td><td>'+esc(o.payment_status)+'</td><td>'+esc(o.fulfillment_status)+'</td></tr>').join(''):'<tr><td colspan="6">Inga P3-order ännu.</td></tr>';
-    $('catalog').innerHTML=products.map(p=>'<tr><td><b>'+esc(p.name)+'</b></td><td>'+esc(p.category)+'</td><td><span class="chip">'+esc(p.fulfillment_type)+'</span></td><td>'+(p.is_public?'Ja':'Nej')+'</td><td>'+(p.is_orderable?'Ja':'Nej')+'</td></tr>').join('');
+
+  function matchKitOrder(order) {
+    return (order.items||[]).some(i=>i.fulfillment_type==='BATCH_SUPPLIER');
+  }
+
+  function renderWaiting(waiting) {
+    waiting=waiting||{};
+    $('waitingKpi').textContent=waiting.waiting_item_count??0;
+    $('waitingOrders').textContent=waiting.waiting_order_count??0;
+    $('waitingItems').textContent=waiting.waiting_item_count??0;
+    $('remainingItems').textContent=waiting.threshold_remaining??0;
+    $('oldestWait').textContent=waiting.oldest_wait_hours==null?'–':waiting.oldest_wait_hours+' h';
+    $('thresholdText').textContent=waiting.threshold_qty??8;
+    $('waitText').textContent=Math.round((waiting.max_wait_hours??168)/24)+' dagar';
+  }
+
+  function renderBatches(batches) {
+    $('batchesKpi').textContent=batches.length;
+    $('batches').innerHTML=batches.length ? batches.map(b=>{
+      const retry=(b.outbox_status==='RETRY'||b.outbox_status==='FAILED') && b.outbox_id
+        ? '<button class="btn ghost p5-retry" data-outbox="'+Number(b.outbox_id)+'">Retry</button>'
+        : '';
+      return '<tr>'+
+        '<td><b>'+esc(b.public_id)+'</b><div class="small">'+esc(b.supplier_name||'')+'</div></td>'+
+        '<td><span class="chip">'+esc(b.trigger_reason||'')+'</span></td>'+
+        '<td>'+esc(b.order_count)+' / <b>'+esc(b.item_count)+'</b></td>'+
+        '<td>'+esc(b.status)+'</td>'+
+        '<td>'+esc(b.outbox_status||'–')+'<div class="small">försök: '+esc(b.attempts??0)+'</div>'+retry+'</td>'+
+        '<td>'+esc(b.created_at||'')+'</td>'+
+        '<td><button class="btn ghost p5-csv" data-batch="'+esc(b.public_id)+'">CSV</button></td>'+
+      '</tr>';
+    }).join('') : '<tr><td colspan="7">Inga batcher ännu.</td></tr>';
+
+    document.querySelectorAll('.p5-csv').forEach(btn=>btn.addEventListener('click',()=>downloadCsv(btn.dataset.batch)));
+    document.querySelectorAll('.p5-retry').forEach(btn=>btn.addEventListener('click',()=>retryOutbox(Number(btn.dataset.outbox))));
+  }
+
+  function renderOrders() {
+    $('orders').innerHTML=orders.length ? orders.map(o=>{
+      const canSim=c.cfg.apiBase && matchKitOrder(o) && o.payment_status!=='PAID';
+      return '<tr>'+
+        '<td><b>'+esc(o.public_id)+'</b><div class="small">'+esc(o.created_at)+'</div></td>'+
+        '<td>'+esc(o.customer_name)+'<div class="small">'+esc(o.customer_email)+'</div></td>'+
+        '<td><div class="chips">'+(o.items||[]).map(i=>'<span class="chip">'+esc(i.sku)+'</span>').join('')+'</div></td>'+
+        '<td>'+c.money(o.total_ore)+'</td>'+
+        '<td>'+esc(o.payment_status)+'</td>'+
+        '<td>'+esc(o.fulfillment_status)+'</td>'+
+        '<td>'+(canSim?'<button class="btn ghost p5-paid" data-order="'+esc(o.public_id)+'">Simulera betald</button>':'–')+'</td>'+
+      '</tr>';
+    }).join('') : '<tr><td colspan="7">Inga order ännu.</td></tr>';
+
+    document.querySelectorAll('.p5-paid').forEach(btn=>btn.addEventListener('click',()=>simulatePaid(btn.dataset.order)));
+  }
+
+  function renderCatalog(products) {
+    $('catalog').innerHTML=products.map(p=>
+      '<tr><td><b>'+esc(p.name)+'</b></td><td>'+esc(p.category)+'</td><td><span class="chip">'+esc(p.fulfillment_type)+'</span></td><td>'+(p.is_public?'Ja':'Nej')+'</td><td>'+(p.is_orderable?'Ja':'Nej')+'</td></tr>'
+    ).join('');
+  }
+
+  async function load() {
+    const [ordersBody,catalogBody,batchesBody]=await Promise.all([
+      api('admin_orders'),api('admin_catalog'),api('admin_batches')
+    ]);
+    orders=ordersBody.orders||[];
+    const products=catalogBody.products||[],stats=catalogBody.stats||{};
+    $('ordersKpi').textContent=stats.bois_orders??orders.length;
+    $('outboxKpi').textContent=stats.bois_email_outbox??0;
+    renderWaiting(batchesBody.waiting||catalogBody.batch_waiting);
+    renderBatches(batchesBody.batches||[]);
+    renderOrders();
+    renderCatalog(products);
     $('login').hidden=true;$('dashboard').hidden=false;
   }
-  $('loginForm').addEventListener('submit',async e=>{e.preventDefault();token=$('token').value.trim();sessionStorage.setItem('boisP3Admin',token);$('loginError').hidden=true;try{await load();}catch(err){$('loginError').textContent=err.message;$('loginError').hidden=false;}});
+
+  async function post(action,payload={}) {
+    return api(action,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+  }
+
+  async function simulatePaid(publicId) {
+    if(!confirm('Simulera att denna TESTORDER är betald? Detta används bara i P5 staging.')) return;
+    clearMessages();
+    try {
+      const result=await post('admin_simulate_paid',{public_id:publicId});
+      showMessage('Testordern markerades betald. '+((result.result.auto_batches||[]).length?'En automatisk batch skapades.':'Den väntar nu på batch.'));
+      await load();
+    } catch(error) { showError(error.message); }
+  }
+
+  async function createBatchNow() {
+    if(!confirm('Skapa batch av alla betalda matchställ som väntar? I staging skickas inget externt mejl.')) return;
+    clearMessages();
+    try {
+      const result=await post('admin_batch_now',{});
+      if((result.batches||[]).length) showMessage('Batch skapad och leverantörsmejl lades i outbox. Ingen extern sändning sker i staging.');
+      else showMessage('Det finns inga betalda matchställ som väntar på batch.');
+      await load();
+    } catch(error){showError(error.message);}
+  }
+
+  async function runWorker() {
+    clearMessages();
+    try {
+      const result=await post('admin_run_worker',{});
+      const created=(result.batches||[]).length;
+      showMessage('Automatikkontroll klar. Nya batcher: '+created+'. Mailtransport: '+(result.mail?.transport||'disabled')+'.');
+      await load();
+    } catch(error){showError(error.message);}
+  }
+
+  async function downloadCsv(batchId) {
+    if(!c.cfg.apiBase){alert('CSV hämtas från riktig staging.');return;}
+    const response=await fetch(c.cfg.apiBase+'?action=admin_batch_csv&id='+encodeURIComponent(batchId),{headers:auth()});
+    if(!response.ok){alert('CSV kunde inte hämtas.');return;}
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(await response.blob());
+    a.download='tranas-bois-'+batchId.toLowerCase()+'.csv';
+    a.click();URL.revokeObjectURL(a.href);
+  }
+
+  async function retryOutbox(id) {
+    clearMessages();
+    try { await post('admin_retry_outbox',{outbox_id:id});showMessage('Outbox-posten återställd för nytt försök.');await load(); }
+    catch(error){showError(error.message);}
+  }
+
+  function clearMessages(){$('batchMessage').hidden=true;$('batchError').hidden=true;}
+  function showMessage(message){$('batchMessage').textContent=message;$('batchMessage').hidden=false;}
+  function showError(message){$('batchError').textContent=message;$('batchError').hidden=false;}
+
+  $('loginForm').addEventListener('submit',async e=>{
+    e.preventDefault();token=$('token').value.trim();sessionStorage.setItem('boisP3Admin',token);$('loginError').hidden=true;
+    try{await load();}catch(err){$('loginError').textContent=err.message;$('loginError').hidden=false;}
+  });
   $('logout').addEventListener('click',()=>{token='';sessionStorage.removeItem('boisP3Admin');$('dashboard').hidden=true;$('login').hidden=false;});
+  $('batchNow').addEventListener('click',createBatchNow);
+  $('runWorker').addEventListener('click',runWorker);
+
   if(!c.cfg.apiBase){load();} else if(token){load().catch(()=>{});}
 })();

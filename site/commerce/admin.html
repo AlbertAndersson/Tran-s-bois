@@ -1,15 +1,95 @@
 <!doctype html>
 <html lang="sv">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>BoIS Shopadmin – P3</title><link rel="stylesheet" href="assets/commerce.css"><script src="config.js" defer></script><script src="assets/common.js" defer></script><script src="assets/admin.js" defer></script></head>
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow">
+  <title>BoIS Shopadmin – P5</title>
+  <link rel="stylesheet" href="assets/commerce.css"><link rel="stylesheet" href="assets/p5.css">
+  <script src="config.js" defer></script>
+  <script src="assets/common.js" defer></script>
+  <script src="assets/admin.js" defer></script>
+</head>
 <body>
-<header class="header"><div class="nav"><a class="brand" href="index.html"><img src="https://cdn06.svenskalag.se/img/clubmarks/6245_w.png?3=" alt="Tranås BoIS"><div>TRANÅS BoIS<small>SHOPADMIN</small></div></a><span class="env" data-env>P3 DEMO</span></div></header>
+<header class="header">
+  <div class="nav">
+    <a class="brand" href="index.html"><img src="https://cdn06.svenskalag.se/img/clubmarks/6245_w.png?3=" alt="Tranås BoIS"><div>TRANÅS BoIS<small>SHOPADMIN · P5</small></div></a>
+    <span class="env" data-env>P5 DEMO</span>
+  </div>
+</header>
+
 <main class="wrap">
-  <section id="login" class="form-card" style="max-width:520px;margin:25px auto"><span class="tag">ADMIN</span><h1>P3 Shopadmin</h1><p class="sub">I staging krävs den tillfälliga adminnyckeln från deployen.</p><form id="loginForm"><div class="field"><label for="token">Adminnyckel</label><input id="token" type="password" autocomplete="off" required></div><div id="loginError" class="error" hidden></div><button class="btn block" type="submit">Öppna admin</button></form></section>
+  <section id="login" class="form-card" style="max-width:520px;margin:25px auto">
+    <span class="tag">ADMIN</span>
+    <h1>P5 Shopadmin</h1>
+    <p class="sub">Staging kräver den tillfälliga adminnyckeln från deployen.</p>
+    <form id="loginForm">
+      <div class="field"><label for="token">Adminnyckel</label><input id="token" type="password" autocomplete="off" required></div>
+      <div id="loginError" class="error" hidden></div>
+      <button class="btn block" type="submit">Öppna admin</button>
+    </form>
+  </section>
+
   <section id="dashboard" hidden>
-    <div class="section-head"><div><h2>Commerce Core</h2><p>MySQL-baserade testordrar och katalogstatus.</p></div><button class="btn ghost" id="logout">Logga ut</button></div>
-    <div class="kpis"><div class="kpi"><strong id="ordersKpi">0</strong><span>Order</span></div><div class="kpi"><strong id="productsKpi">0</strong><span>Produkter</span></div><div class="kpi"><strong id="membershipsKpi">0</strong><span>Medlemskapsposter</span></div><div class="kpi"><strong id="outboxKpi">0</strong><span>Outbox</span></div></div>
-    <h3 style="color:var(--blue)">Senaste order</h3><div class="table-wrap"><table><thead><tr><th>Order</th><th>Kund</th><th>Rader</th><th>Summa</th><th>Betalning</th><th>Fulfillment</th></tr></thead><tbody id="orders"></tbody></table></div>
-    <h3 style="color:var(--blue);margin-top:26px">Katalog</h3><div class="table-wrap"><table><thead><tr><th>Produkt</th><th>Kategori</th><th>Fulfillment</th><th>Publik</th><th>Beställningsbar</th></tr></thead><tbody id="catalog"></tbody></table></div>
+    <div class="section-head">
+      <div><h2>Commerce Core + Batchmotor</h2><p>MySQL-order, matchställskö, leverantörsbatcher och e-post-outbox.</p></div>
+      <button class="btn ghost" id="logout">Logga ut</button>
+    </div>
+
+    <div class="notice blue">
+      <b>P5 staging:</b> “Skicka batch nu” skapar batch, CSV och e-post-outbox men skickar inget externt mejl. Staging använder endast <code>example.invalid</code>-adresser.
+    </div>
+
+    <div class="kpis">
+      <div class="kpi"><strong id="ordersKpi">0</strong><span>Order</span></div>
+      <div class="kpi"><strong id="waitingKpi">0</strong><span>Matchställ väntar batch</span></div>
+      <div class="kpi"><strong id="batchesKpi">0</strong><span>Batcher</span></div>
+      <div class="kpi"><strong id="outboxKpi">0</strong><span>Outbox</span></div>
+    </div>
+
+    <section class="card" style="margin:18px 0">
+      <div class="section-head" style="margin:0 0 14px">
+        <div>
+          <h2 style="font-size:24px">Matchställsbatch</h2>
+          <p>Automatik: <b id="thresholdText">8</b> betalda matchställ eller <b id="waitText">7 dagar</b>. Samma orderrad kan bara tillhöra en batch.</p>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn ghost" id="runWorker">Kontrollera automatik</button>
+          <button class="btn secondary" id="batchNow">Skicka batch nu</button>
+        </div>
+      </div>
+      <div class="p5-progress">
+        <div><strong id="waitingOrders">0</strong><span>order</span></div>
+        <div><strong id="waitingItems">0</strong><span>matchställ</span></div>
+        <div><strong id="remainingItems">0</strong><span>kvar till tröskel</span></div>
+        <div><strong id="oldestWait">–</strong><span>äldsta väntetid</span></div>
+      </div>
+      <div id="batchMessage" class="success" hidden></div>
+      <div id="batchError" class="error" hidden></div>
+    </section>
+
+    <h3 style="color:var(--blue)">Batchhistorik</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Batch</th><th>Orsak</th><th>Order / ställ</th><th>Status</th><th>E-post</th><th>Skapad</th><th>Underlag</th></tr></thead>
+        <tbody id="batches"></tbody>
+      </table>
+    </div>
+
+    <h3 style="color:var(--blue);margin-top:28px">Senaste order</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Order</th><th>Kund</th><th>Rader</th><th>Summa</th><th>Betalning</th><th>Fulfillment</th><th>Stagingtest</th></tr></thead>
+        <tbody id="orders"></tbody>
+      </table>
+    </div>
+
+    <h3 style="color:var(--blue);margin-top:28px">Katalog</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Produkt</th><th>Kategori</th><th>Fulfillment</th><th>Publik</th><th>Beställningsbar</th></tr></thead>
+        <tbody id="catalog"></tbody>
+      </table>
+    </div>
   </section>
 </main>
-</body></html>
+</body>
+</html>
