@@ -77,3 +77,6 @@ Behåll affärsreglerna:
 - matchställ 998 kr är endast staging/testpris
 
 Dokumentera löpande i GitHub och synka handoff/status till Google Drive.
+
+## Kontroll före P7
+Kontrollera P6-skärpningen på `chatgpt/p6-payment-hardening-20260927` och dess CI/deploystatus. Adminens staging-simulering ska nu gå via signerad P6-mock. Kundvy och adminvy ska visa betalreferens respektive event. Fortsätt inte anta att den första P6-deployen inkluderar dessa ändringar förrän ny stagingdeploy har verifierats.

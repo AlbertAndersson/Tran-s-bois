@@ -249,3 +249,6 @@ Live verifierat:
 P7 – 2027 assortment.
 
 P6:s riktiga produktionsprovider är en separat P8/produktionsfråga och får inte aktiveras utan uttryckligt godkännande av provider, merchant-upplägg och kostnad.
+
+## Uppföljande P6-granskning 2026-09-27
+Första leveransen slogs samman i en implementation-commit trots den önskade uppdelningen P6A–D. Granskningen hittade en kvarvarande alternativ PAID-väg i admin. Skärpningen på `chatgpt/p6-payment-hardening-20260927` gör att adminens stagingtest skapar checkout och ett signerat mock-event genom P6. Den kräver också exakt order-ID, sessionsreferens, valuta och belopp, nekar återanvänt event-ID med ändrad payload och använder MySQL named lock per betalreferens över eventclaim och P4/P5-effekter. Publik ordervy visar en testbetalningsreferens; admin visar betalningar och event. Regressionerna omfattar dessa kontroller, CANCELLED och PARTIALLY_REFUNDED. Ny CI och stagingverifiering dokumenteras efter slutförd körning.
