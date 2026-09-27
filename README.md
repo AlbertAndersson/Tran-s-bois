@@ -90,7 +90,7 @@ Dolda/ej beställningsbara fram till 1 januari 2027:
 - Presentkort
 
 ## Nästa utvecklingsordning
-1. **P7 – 2027 assortment**: bygg leverantörs-/pris-/SKU-underlag och butikspresentation, men håll allt dolt till 1 januari 2027.
+1. **P7 – 2027 assortment**: genomför P7A–P7D enligt `docs/P7-2027-ASSORTMENT.md`; bygg verifierat leverantörs-/pris-/SKU-underlag, Commerce-modell, admin/preview och serverstyrd launch gate, men håll allt dolt till 1 januari 2027.
 2. **P8 – production launch**: Stripe som vald payment provider, produktionsdatabas, domän, villkor och skarpa integrationsuppgifter.
 3. **P9 – sales engine**.
 
