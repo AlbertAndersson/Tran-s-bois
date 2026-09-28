@@ -45,6 +45,7 @@ const key=()=>Math.random().toString(36).slice(2,12);
         await page.locator('#submitBtn').click();
         existingOrderId=await page.locator('#success .order-id').innerText();
         await page.getByRole('link',{name:/Gå till testbetalning/}).click();
+        await page.locator('#orderSummary').getByText('Betalstatus').waitFor();
         await page.locator('#cardBtn').click();
         await page.locator('#failBtn').click();
         await page.locator('#retryBtn').click();
@@ -70,9 +71,12 @@ const key=()=>Math.random().toString(36).slice(2,12);
       refundOrderId=await page.locator('#success .order-id').innerText();
       assert.equal(await page.evaluate(()=>sessionStorage.getItem('boisSalesSession')),null);
       await page.getByRole('link',{name:/Gå till testbetalning/}).click();
-      const checkoutResponse=page.waitForResponse(response=>response.url().includes('action=checkout')&&response.request().method()==='POST');
-      await page.locator('#cardBtn').click();
-      refundSession=(await (await checkoutResponse).json()).checkout;
+      await page.locator('#orderSummary').getByText('Betalstatus').waitFor();
+      const [checkoutResponse]=await Promise.all([
+        page.waitForResponse(response=>response.url().includes('action=checkout')&&response.request().method()==='POST'),
+        page.locator('#cardBtn').click()
+      ]);
+      refundSession=(await checkoutResponse.json()).checkout;
       await page.locator('#payBtn').click();
       await page.getByText('Signerad testwebhook verifierad.').waitFor();
       await page.locator('#orderLink').click();
@@ -92,6 +96,7 @@ const key=()=>Math.random().toString(36).slice(2,12);
       matchOrderId=await page.locator('#success .order-id').innerText();
       assert.ok(await page.evaluate(()=>sessionStorage.getItem('boisSalesSession')));
       await page.getByRole('link',{name:/Gå till testbetalning/}).click();
+      await page.locator('#orderSummary').getByText('Betalstatus').waitFor();
       await page.locator('#swishBtn').click();
       await page.locator('#payBtn').click();
       await page.locator('#orderLink').click();
