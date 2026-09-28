@@ -252,3 +252,30 @@ Implementerat:
 Full P2–P8 CI var grön på P8-PR-head. Inga Stripe credentials, KYC, riktiga betalningar, externa mejl eller nya kostnader aktiverades.
 
 Driftägarskapet flyttas samtidigt från `work-capture` till `Tran-s-bois`. Nästa verifieringsgrind är den manuella workflowen `Simply - deploy Tranås BoIS P8 readiness staging` i detta repo med `DEPLOY_BOIS_P8_READY`. Den ska fortfarande rapportera mock/testmode, Stripe ej aktiverat, production launch false och ny extern kostnad 0.
+
+
+## P9 – Sales Engine v1 – 2026-09-28
+
+P9 är implementerad på utvecklingsbranch och inväntar slutlig CI/merge samt BoIS-ägd stagingverifiering.
+
+Scope:
+- first-party pseudonym sessionspårning med UTM/ref-attribution,
+- funnel: page → product → checkout → order → PAID,
+- orderkoppling utan direkta kundidentifierare i sales-tabellerna,
+- admin-KPI för sessioner, konvertering, testvärde, kampanjer och produktmix,
+- lokal kampanjlänksbyggare,
+- serverstyrda zero-discount recommendations,
+- event-idempotens och per-session eventtak.
+
+Säkerhets-/kostnadsgräns:
+- ingen extern analytics,
+- inga annonser,
+- inga marketing-mail/SMS,
+- Stripe fortsatt ej aktiverat,
+- extern e-post fortsatt disabled i staging,
+- P7 launch gate oförändrad,
+- `sales_tracking_enabled=false` är production-default,
+- P9-staging använder endast syntetisk data,
+- ny extern kostnad: 0 kr.
+
+Canonical dokument: `docs/P9-SALES-ENGINE.md`.
