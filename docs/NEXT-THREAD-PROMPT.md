@@ -1,13 +1,98 @@
 # NEXT THREAD PROMPT
 
-Ta över **Tranås BoIS – Webbshop** från `AlbertAndersson/Tran-s-bois` på GitHub, som är source of truth. Verifiera aktuell `main` HEAD. Läs i ordning README.md, docs/CURRENT_STATUS.md, docs/00-WORK-HANDOFF.md, docs/P3-COMMERCE-CORE.md, docs/P4-MEMBERSHIP-NORDIC.md, docs/P5-MATCHKIT-BATCHING.md, docs/P6-PAYMENT.md, docs/P7-2027-ASSORTMENT.md, docs/P8-PAYMENT-STRIPE.md och detta dokument.
+Ta över **Tranås BoIS – Webbshop** från `AlbertAndersson/Tran-s-bois`. GitHub är source of truth och BoIS äger nu själv kod, CI och deployment. Börja alltid med att verifiera aktuell `main` HEAD.
 
-P1–P7 är tekniskt klara. P7A–D mergeades via PR #6 på `49883befb360fddb6e63e5c6b6a622fd2c0eed8b`; publik startsida rättades i `cfe18cce5a19ba4ec05a83323cbcbe07bf1aed29`. P7 CI run `36355561318` och slutlig Simply staging run `36355678030` lyckades. Deployment commit i `AlbertAndersson/work-capture` är `43d32430853b39c4c70a09aba4a98426078d3f24`, med skyddad workflow `.github/workflows/simply-deploy-bois-p4.yml`.
+## Läs först
 
-Staging är `https://alberiq.se/bois-shop-p3/`. Syntetisk mockcheckout → PAID → P4 medlemskap ACTIVE/Nordic ELIGIBLE, upprepning utan nya effekter, P5 8/168-konfiguration, P7 admin/preview och dold offentlig P7-katalog är live-verifierade. Snapshot av icke-BoIS-tabeller var identisk före/efter; den använda BoIS-databasen innehöll 0 sådana tabeller. Intern `assortment-preview.html` kräver adminnyckel för produktdata. Extern e-post är disabled, riktig provider saknas och ny extern kostnad är 0 kr.
+1. `README.md`
+2. `docs/CURRENT_STATUS.md`
+3. `docs/00-WORK-HANDOFF.md`
+4. `docs/P6-PAYMENT.md`
+5. `docs/P7-2027-ASSORTMENT.md`
+6. `docs/P8-PAYMENT-STRIPE.md`
+7. `docs/P8-PRODUCTION-READINESS.md`
+8. `docs/P8-CUTOVER-RUNBOOK.md`
+9. `docs/P9-SALES-ENGINE.md`
+10. detta dokument
 
-P7:s föreslagna första sortiment är BoIS 1941 Hoodie, Supporter-T-shirt och BoIS Läktarmössa. 549/249/199 kr är **ESTIMATE**, inte godkända priser. Leverantörsspecifika inköpspriser, MOQ, ledtider, dekoration, frakt, riktiga SKU och marginaler är **TBD**; Printful är bara kandidat. Se `data/p7-assortment.json` och `docs/P7A-COMMERCIAL-MODEL.md`. Alla produkter är opublicerade, ej orderbara och blockerade. Servern nekar merch i katalog och direkta orderanrop före 1 januari 2027 i Stockholmstid; efter datumet krävs fullständig verifierad data, länkade varianter och uttryckligt godkännande. Albert/Erik måste inhämta offerter, bildrättigheter, slutpriser och godkänna sortimentet innan försäljning.
+## Verifierat nuläge
 
-**Nästa planerade fas är P8 production launch**, se `docs/P8-PAYMENT-STRIPE.md`. Stripe är vald som målprovider, men inget konto, onboarding, credential, skarp betalning eller kostnad är aktiverad. Inled P8 med beslut om merchant/kontoägare, aktuell prisbild och uttryckligt kostnadsgodkännande, produktionsdatabas, domän, villkor, e-post och integrationsupplägg. Håll produktion skild från staging och använd bara syntetiska testuppgifter tills skarp cutover är godkänd. Bevara P4–P7-gates och Intersportgränsen.
+P1–P7 är kompletta. P8A–D är **TECHNICALLY COMPLETE / NOT ACTIVATED**.
 
-Befintliga priser: ungdomsmedlemskap 200 kr, vuxen 350 kr, pensionär 300 kr, Nordic gymkort 2 650 kr för aktiv medlem. Matchställ 998 kr är endast staging/testpris. Hitta inte på leverantörspriser eller SKU. Skicka inga verkliga externa mejl från staging och aktivera ingen extern kostnad utan Alberts uttryckliga godkännande.
+BoIS-ägd P8 readiness staging:
+- workflow: `Simply - deploy Tranås BoIS P8 readiness staging`
+- run: `36414148818`
+- job: `108901126748`
+- result: **success**
+- workflow source main: `1a29eb5ddb229144f255fe92a837d20953617832`
+- pinned P8 code: `818c262af23431be972986b9c79f70f319da90e2`
+
+Verifierat:
+- phase P8
+- payment provider mock
+- payment mode testmode
+- Stripe ej aktiverat
+- production launch false
+- syntetisk checkout → signerad mock-webhook → PAID
+- medlem ACTIVE
+- Nordic ELIGIBLE
+- replay-idempotens
+- P5 8/168h
+- P7 admin/preview
+- P7 merch dold/blockerad
+- extern payment-mail disabled
+- real Stripe calls no
+- production traffic no
+- new external cost 0 kr
+
+Work Capture äger inte längre BoIS deployment. Flytta inte tillbaka deployment eller databas dit.
+
+## P8 – vad som fortfarande väntar externt
+
+Vänta på Albert/Erik för:
+- juridisk merchant/betalningsmottagare
+- Stripe kontoägare/KYC
+- payout bankkonto
+- pris-/avgiftsgodkännande
+- verifierad Swish-access
+- produktionsdomän
+- separat produktionsdatabas
+- köpvillkor/integritet
+- refundpolicy
+- skarp mailtransport
+
+Aktivera inget av detta utan uttryckligt godkännande.
+
+## P9 – aktuell utvecklingsfas
+
+P9 är **Sales Engine v1** och ska hållas kostnadsfri i staging.
+
+Scope:
+- first-party funnel
+- campaign/referral attribution via UTM/ref
+- session → order → PAID attribution
+- admin funnel/KPI dashboard
+- campaign link builder
+- product mix
+- zero-discount server-driven recommendations
+
+P9 får inte:
+- använda extern analytics
+- köpa annonser
+- skicka marketing-mail/SMS
+- aktivera Stripe
+- skapa riktiga betalningar
+- ändra P7 launch gate
+- skapa rabatter utan separat affärsbeslut
+
+Staging använder endast syntetiska testuppgifter.
+
+## Befintliga priser
+
+- ungdomsmedlemskap: 200 kr
+- vuxenmedlemskap: 350 kr
+- pensionär: 300 kr
+- Nordic Wellness gymkort: 2 650 kr
+- matchställ: 998 kr **endast staging/testpris**
+
+P7:s framtida merchpriser är fortfarande uppskattningar/TBD och får inte göras orderbara utan verifierad kommersiell data och BoIS-godkännande.
