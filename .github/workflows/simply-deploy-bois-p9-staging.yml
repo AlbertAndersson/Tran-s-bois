@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     env:
-      BOIS_SOURCE_REF: 3219dba57fca1eb97b9d50022477131c8db2501b
+      BOIS_SOURCE_REF: fdb1053c69e929fa7430c74b9ea5a4e47cac31eb
       BOIS_PUBLIC_PATH: bois-shop-p3
       BOIS_BASE_URL: https://alberiq.se/bois-shop-p3
       SIMPLY_HOST: ssh.simply.com
@@ -57,6 +57,7 @@ jobs:
           php -l bois-src/server/p9_sales.php
           php -l bois-src/server/p9-migrate.php
           php -l bois-src/server/commerce-api.php
+          node --check bois-src/site/commerce/assets/common.js
           node --check bois-src/site/commerce/assets/admin.js
           node --check bois-src/site/commerce/assets/order.js
           node --check bois-src/site/commerce/assets/payment.js
@@ -234,6 +235,7 @@ jobs:
           curl --fail --silent --show-error -A "$UA" "$API?action=health" -o "$RUNNER_TEMP/health.json"
           grep -q '"phase":"P9"' "$RUNNER_TEMP/health.json"
           grep -q '"payment_enabled":true' "$RUNNER_TEMP/health.json"
+          grep -q '"checkout_enabled":true' "$RUNNER_TEMP/health.json"
           grep -q '"payment_provider":"mock"' "$RUNNER_TEMP/health.json"
           grep -q '"payment_mode":"testmode"' "$RUNNER_TEMP/health.json"
           grep -q '"stripe_ready_for_test":false' "$RUNNER_TEMP/health.json"
@@ -284,7 +286,7 @@ jobs:
           grep -q '"status":"ELIGIBLE"' "$RUNNER_TEMP/public.json"
 
           curl --fail --silent --show-error -A "$UA" "$API?action=admin_sales"             -H "Authorization: Bearer $BOIS_ADMIN_TOKEN" -o "$RUNNER_TEMP/p9-sales.json"
-          php -r '$d=json_decode(file_get_contents($argv[1]),true);$s=$d["sales"]??[];$p=$s["privacy"]??[];$k=$s["kpis"]??[];if(empty($p["first_party_only"])||!empty($p["personal_data_in_sales_tables"])||!empty($p["external_analytics"])||(int)($k["paid_sessions"]??0)<1)exit(1);$ok=false;foreach(($s["campaigns"]??[]) as $r){if(($r["campaign"]??"")==="p9-readiness"&&(int)($r["paid_orders"]??0)>=1){$ok=true;break;}}if(!$ok)exit(2);' "$RUNNER_TEMP/p9-sales.json"
+          php -r '$d=json_decode(file_get_contents($argv[1]),true);$s=$d["sales"]??[];$p=$s["privacy"]??[];$k=$s["kpis"]??[];if(($p["first_party_only"]??null)!==true||($p["direct_customer_identifiers_stored"]??null)!==false||($p["pseudonymous_session_identifier"]??null)!==true||($p["order_link_exists"]??null)!==true||($p["ip_stored"]??null)!==false||($p["user_agent_stored"]??null)!==false||($p["external_analytics"]??null)!==false||(int)($k["paid_sessions"]??0)<1)exit(1);$ok=false;foreach(($s["campaigns"]??[]) as $r){if(($r["campaign"]??"")==="p9-readiness"&&(int)($r["paid_orders"]??0)>=1){$ok=true;break;}}if(!$ok)exit(2);' "$RUNNER_TEMP/p9-sales.json"
 
           curl --fail --silent --show-error -A "$UA" "$BOIS_BASE_URL/assortment-preview.html" -o "$RUNNER_TEMP/p7-preview.html"
           grep -q 'INTERN GRANSKNING' "$RUNNER_TEMP/p7-preview.html"
