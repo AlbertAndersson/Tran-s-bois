@@ -6,6 +6,7 @@ require __DIR__ . '/p5_batch.php';
 require __DIR__ . '/p4_membership.php';
 require __DIR__ . '/p6_payment.php';
 require __DIR__ . '/p7_assortment.php';
+require __DIR__ . '/p9_sales.php';
 
 function commerce_respond(array $data, int $status=200): never
 {
@@ -74,6 +75,7 @@ try {
     bois_p6_apply_schema($pdo);
     bois_p7_apply_schema($pdo);
     bois_p8_apply_schema($pdo);
+    bois_p9_apply_schema($pdo);
     commerce_check_origin($config);
 
     if(($_SERVER['REQUEST_METHOD']??'')==='OPTIONS'){
@@ -93,7 +95,7 @@ try {
         commerce_respond([
             'ok'=>true,
             'service'=>'tranas-bois-commerce-api',
-            'phase'=>'P8',
+            'phase'=>'P9',
             'mode'=>$config['mode'],
             'storage_driver'=>'mysql',
             'payment_enabled'=>bois_p6_payment_enabled($config),
@@ -102,6 +104,8 @@ try {
             'payment_methods'=>bois_p8_payment_methods($config),
             'stripe_ready_for_test'=>$readiness['ready_for_stripe_test'],
             'production_launch_ready'=>$readiness['ready_for_production_launch'],
+            'sales_engine'=>'first_party',
+            'external_analytics'=>false,
             'mail_transport'=>$config['mail_transport'] ?? 'disabled',
             'batch_threshold_qty'=>$waiting['threshold_qty'],
             'batch_max_wait_hours'=>$waiting['max_wait_hours'],
@@ -109,6 +113,14 @@ try {
             'nordic_workflow'=>'manual_partner_handoff',
             'db'=>$pdo->query("SELECT DATABASE()")->fetchColumn() ? 'ok' : 'unknown',
         ]);
+    }
+
+    if($action==='sales_event'&&$method==='POST'){
+        commerce_respond(['ok'=>true,'sales'=>bois_p9_capture_event($pdo,commerce_body())],202);
+    }
+
+    if($action==='sales_recommendations'&&$method==='POST'){
+        commerce_respond(['ok'=>true,'recommendations'=>bois_p9_recommendations($pdo,commerce_body())]);
     }
 
     if($action==='catalog'&&$method==='GET'){
@@ -171,8 +183,10 @@ try {
     }
 
     if($action==='orders'&&$method==='POST'){
-        $order=bois_p3_create_order($pdo,commerce_body());
+        $input=commerce_body();
+        $order=bois_p3_create_order($pdo,$input);
         bois_p4_register_order($pdo,(string)$order['public_id']);
+        bois_p9_link_order($pdo,(string)$order['public_id'],$input);
         commerce_respond(['ok'=>true,'order'=>$order],201);
     }
 
@@ -257,6 +271,11 @@ try {
         header('Cache-Control: no-store');
         echo bois_p4_export_eligible_csv($pdo);
         exit;
+    }
+
+    if($action==='admin_sales'&&$method==='GET'){
+        commerce_require_admin($config);
+        commerce_respond(['ok'=>true,'sales'=>bois_p9_admin_dashboard($pdo)]);
     }
 
     if($action==='admin_p8_readiness'&&$method==='GET'){
