@@ -78,6 +78,31 @@ function bois_p8_stripe_runtime_ready(array $config): bool
     return true;
 }
 
+/**
+ * Permission to start a NEW checkout, not permission to settle an existing payment.
+ * Keep webhook/refund processing independent so closing the shop does not lose
+ * delayed, valid provider events for checkouts already created.
+ */
+function bois_p8_stripe_checkout_allowed(array $config): bool
+{
+    if(!bois_p8_stripe_runtime_ready($config)) return false;
+    $environment=(string)($config['mode'] ?? '');
+    $stripeMode=bois_p8_stripe_mode($config);
+    if($environment==='production'){
+        return $stripeMode==='live'
+            && ($config['production_launch_enabled'] ?? false)===true
+            && bois_p8_readiness($config)['ready_for_production_launch']===true;
+    }
+    return in_array($environment,['staging','test'],true) && $stripeMode==='test';
+}
+
+function bois_p8_require_stripe_checkout(array $config): void
+{
+    if(!bois_p8_stripe_checkout_allowed($config)){
+        throw new DomainException('Nya Stripe-betalningar är spärrade i denna miljö.');
+    }
+}
+
 function bois_p8_stripe_secret_key(array $config): string
 {
     if(!bois_p8_stripe_runtime_ready($config)){
@@ -106,6 +131,10 @@ function bois_p8_stripe_request(
     ?string $idempotencyKey=null,
     ?callable $transport=null
 ): array {
+    // Defence in depth: direct transport use cannot bypass the checkout gate.
+    if(strtoupper($method)==='POST' && rtrim($path,'/')==='/v1/checkout/sessions'){
+        bois_p8_require_stripe_checkout($config);
+    }
     $secret=bois_p8_stripe_secret_key($config);
     $url='https://api.stripe.com'.$path;
     $headers=[
@@ -166,9 +195,8 @@ function bois_p8_stripe_checkout(
     string $method,
     ?callable $transport=null
 ): array {
-    if(!bois_p8_stripe_runtime_ready($config)){
-        throw new DomainException('Stripe är inte aktiverat i denna miljö.');
-    }
+    // Check before reading/updating an order or contacting the provider.
+    bois_p8_require_stripe_checkout($config);
 
     $method=strtolower(trim($method));
     if(!in_array($method,bois_p8_payment_methods($config),true)){

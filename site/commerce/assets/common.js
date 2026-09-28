@@ -5,13 +5,46 @@
 
   const SALES_SESSION_KEY='boisSalesSession';
   const SALES_ATTR_KEY='boisSalesAttribution';
+  let pendingTrackingCheck=null;
+
+  // No analytics storage access before a positive server decision. Share only an
+  // in-flight check, never a cached approval; later interactions recheck the gate.
+  // Production stays blocked until the separate consent implementation is ready.
+  async function salesTrackingEnabled(){
+    if(!cfg.apiBase || document.body?.dataset?.salesIgnore==='true') return false;
+    if(pendingTrackingCheck) return pendingTrackingCheck;
+    pendingTrackingCheck=(async()=>{
+      let timer;
+      try{
+        const controller=new AbortController();
+        const deadline=new Promise(resolve=>{
+          timer=setTimeout(()=>{controller.abort();resolve(null);},1500);
+        });
+        const request=fetch(cfg.apiBase+'?action=health',{
+          headers:{Accept:'application/json'},
+          cache:'no-store',
+          signal:controller.signal
+        }).then(async response=>response.ok?await response.json():null).catch(()=>null);
+        const health=await Promise.race([request,deadline]);
+        return health?.ok===true
+          && ['staging','test'].includes(health.mode)
+          && health.sales_tracking_enabled===true;
+      }catch{
+        return false;
+      }finally{
+        clearTimeout(timer);
+      }
+    })();
+    try{return await pendingTrackingCheck;}finally{pendingTrackingCheck=null;}
+  }
 
   function safeToken(value,max){
     value=String(value||'').trim().slice(0,max);
     return /^[\p{L}\p{N}._:+\/-]+$/u.test(value)?value:'';
   }
 
-  function salesSessionId(){
+  // Private storage functions: call only after salesTrackingEnabled() succeeds.
+  function readSalesSessionId(){
     let id=sessionStorage.getItem(SALES_SESSION_KEY)||'';
     if(!/^[a-f0-9-]{36}$/i.test(id)){
       id=crypto.randomUUID?crypto.randomUUID():('00000000-0000-4000-8000-'+Math.random().toString(16).slice(2,14).padEnd(12,'0')).slice(0,36);
@@ -20,7 +53,7 @@
     return id;
   }
 
-  function salesAttribution(){
+  function readSalesAttribution(){
     let stored={};
     try{stored=JSON.parse(sessionStorage.getItem(SALES_ATTR_KEY)||'{}')||{};}catch{}
     if(!stored.landing_path){
@@ -37,23 +70,33 @@
     return stored;
   }
 
+  async function salesSessionId(){
+    if(!await salesTrackingEnabled()) return '';
+    try{return readSalesSessionId();}catch{return '';}
+  }
+
+  async function salesAttribution(){
+    if(!await salesTrackingEnabled()) return {};
+    try{return readSalesAttribution();}catch{return {};}
+  }
+
   function salesEventKey(){
     return 'web-'+(crypto.randomUUID?crypto.randomUUID():Date.now()+'-'+Math.random().toString(16).slice(2));
   }
 
   async function trackSales(eventType,{productKey='',pagePath=location.pathname}={}){
-    if(!cfg.apiBase || document.body?.dataset?.salesIgnore==='true') return;
+    if(!await salesTrackingEnabled()) return;
     try{
       await fetch(cfg.apiBase+'?action=sales_event',{
         method:'POST',
         headers:{'Content-Type':'application/json','Accept':'application/json'},
         body:JSON.stringify({
-          session_id:salesSessionId(),
+          session_id:readSalesSessionId(),
           event_key:salesEventKey(),
           event_type:eventType,
           page_path:pagePath,
           product_key:productKey,
-          attribution:salesAttribution()
+          attribution:readSalesAttribution()
         }),
         keepalive:true
       });
@@ -118,11 +161,20 @@
       return (await this.api('catalog')).products || [];
     },
     async createOrder(payload) {
-      payload={
-        ...payload,
-        sales_session_id:salesSessionId(),
-        sales_attribution:salesAttribution()
-      };
+      // Analytics is optional: strip caller-supplied attribution before deciding.
+      payload={...payload};
+      delete payload.sales_session_id;
+      delete payload.sales_attribution;
+      if(await salesTrackingEnabled()){
+        try{
+          const sessionId=readSalesSessionId();
+          const attribution=readSalesAttribution();
+          payload.sales_session_id=sessionId;
+          payload.sales_attribution=attribution;
+        }catch{
+          // Storage restrictions must never prevent an ordinary order.
+        }
+      }
       if (!cfg.apiBase) {
         return {
           public_id:'BOIS-DEMO-0001',
@@ -142,6 +194,7 @@
       });
       return body.order;
     },
+    salesTrackingEnabled,
     salesSessionId,
     salesAttribution,
     trackSales,
