@@ -6,7 +6,7 @@ require dirname(__DIR__) . '/server/p5_batch.php';
 require dirname(__DIR__) . '/server/p4_membership.php';
 require dirname(__DIR__) . '/server/p6_payment.php';
 require dirname(__DIR__) . '/server/p7_assortment.php';
-require dirname(__DIR__) . '/server/p8_stripe.php';
+require_once dirname(__DIR__) . '/server/p8_stripe.php';
 
 $config=[
     'mode'=>'staging',
