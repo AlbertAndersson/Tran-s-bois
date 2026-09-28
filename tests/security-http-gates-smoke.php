@@ -23,18 +23,18 @@ fclose($socket);
 $base='http://'.$address.'/commerce-api.php';
 $process=null;
 
-function security_http_request(string $base,string $action,?array $data=null): array
+function security_http_request(string $base,string $action,?array $data=null,string $cookie=''): array
 {
     $context=stream_context_create(['http'=>[
         'method'=>$data===null?'GET':'POST',
-        'header'=>"Content-Type: application/json\r\nAccept: application/json\r\n",
+        'header'=>"Content-Type: application/json\r\nAccept: application/json\r\n".($cookie!==''?"Cookie: boisConsent=$cookie\r\n":''),
         'content'=>$data===null?'':json_encode($data,JSON_THROW_ON_ERROR),
         'ignore_errors'=>true,'timeout'=>5,
     ]]);
     $raw=@file_get_contents($base.'?action='.rawurlencode($action),false,$context);
     if($raw===false) return [0,[]];
     preg_match('/\s(\d{3})\s/',$http_response_header[0]??'',$match);
-    return [(int)($match[1]??0),json_decode($raw,true,64,JSON_THROW_ON_ERROR)];
+    return [(int)($match[1]??0),json_decode($raw,true,64,JSON_THROW_ON_ERROR),$http_response_header];
 }
 
 try{
@@ -92,16 +92,57 @@ try{
     // Restore synthetic staging permission and prove the API still passes server config.
     $writeConfig(array_replace($config,['mode'=>'staging','sales_tracking_enabled'=>true]));
     [$status,$body]=security_http_request($base,'sales_event',$forged);
+    if($status!==202 || ($body['sales']['disabled']??false)!==true) throw new RuntimeException('No-choice direct event was accepted.');
+    $noChoiceBefore=$snapshot();
+    [$status,$body]=security_http_request($base,'orders',[
+        'customer'=>['name'=>'No Choice Fixture','email'=>'no-choice@example.invalid'],
+        'items'=>[['sku'=>'MEM-ADULT','quantity'=>1,'metadata'=>['member_name'=>'No Choice Fixture']]],
+        'consent'=>true,'website'=>'','idempotency_key'=>'security-http-no-choice',
+    ]+$forged);
+    if($status!==201)throw new RuntimeException('No-choice order failed.');
+    $noChoiceOrder=$body['order'];
+    if($snapshot()!==$noChoiceBefore)throw new RuntimeException('No-choice order wrote sales data.');
+    [$status,$body]=security_http_request($base,'checkout',[
+        'public_id'=>$noChoiceOrder['public_id'],'public_token'=>$noChoiceOrder['public_token'],'method'=>'card',
+    ]);
+    if($status!==201||($body['checkout']['provider']??'')!=='mock')throw new RuntimeException('No-choice mock checkout failed.');
+    $session=$body['checkout'];
+    [$status,$body]=security_http_request($base,'mock_payment_event',[
+        'session_ref'=>$session['session_ref'],'session_token'=>$session['session_token'],'outcome'=>'paid',
+    ]);
+    if($status!==200||($body['payment']['result']['status']??'')!=='PAID')throw new RuntimeException('No-choice mock payment failed.');
+    [$status,$body,$headers]=security_http_request($base,'consent',['statistics'=>true]);
+    if($status!==200 || ($body['choice']['statistics']??false)!==true) throw new RuntimeException('Consent choice failed.');
+    $cookie='';
+    foreach($headers as $header){if(preg_match('/^Set-Cookie:\s*boisConsent=([a-f0-9]{64})/i',$header,$match))$cookie=$match[1];}
+    if($cookie==='')throw new RuntimeException('Consent capability missing.');
+    [$status,$body]=security_http_request($base,'sales_event',$forged,$cookie);
     if($status!==202 || ($body['sales']['accepted']??false)!==true) throw new RuntimeException('Enabled synthetic HTTP event broken.');
     [$status,$body]=security_http_request($base,'orders',[
         'customer'=>['name'=>'HTTP Enabled','email'=>'http-enabled@example.invalid'],
         'items'=>[['sku'=>'MEM-ADULT','quantity'=>1,'metadata'=>['member_name'=>'HTTP Enabled']]],
         'consent'=>true,'website'=>'','idempotency_key'=>'security-http-enabled',
-    ]+$forged);
+    ]+$forged,$cookie);
     if($status!==201) throw new RuntimeException('Enabled synthetic HTTP order failed.');
     $link=$pdo->prepare('SELECT l.session_id FROM bois_sales_order_links l JOIN bois_orders o ON o.id=l.order_id WHERE o.public_id=?');
     $link->execute([$body['order']['public_id']]);
     if($link->fetchColumn()!==$forged['sales_session_id']) throw new RuntimeException('Enabled HTTP order attribution missing.');
+    [$status,$body]=security_http_request($base,'consent',['statistics'=>false],$cookie);
+    if($status!==200 || ($body['choice']['statistics']??true)!==false)throw new RuntimeException('Withdrawal failed.');
+    [$status,$body]=security_http_request($base,'sales_event',array_replace($forged,['event_key'=>'evt-revoked-must-not-exist']),$cookie);
+    if($status!==202 || ($body['sales']['disabled']??false)!==true)throw new RuntimeException('Revoked cookie was accepted.');
+    [$status,$body]=security_http_request($base,'sales_event',array_replace($forged,['event_key'=>'evt-tampered-must-not-exist']),str_repeat('a',64));
+    if($status!==202 || ($body['sales']['disabled']??false)!==true)throw new RuntimeException('Tampered cookie was accepted.');
+    foreach(['expired','policy'] as $case){
+        [$status,$body,$headers]=security_http_request($base,'consent',['statistics'=>true]);
+        $next='';foreach($headers as $header){if(preg_match('/^Set-Cookie:\s*boisConsent=([a-f0-9]{64})/i',$header,$m))$next=$m[1];}
+        if($status!==200||$next==='')throw new RuntimeException('New consent fixture missing.');
+        $column=$case==='expired'?'expires_at':'policy_version';
+        $value=$case==='expired'?'2000-01-01 00:00:00':'obsolete-policy';
+        $pdo->prepare("UPDATE bois_consent_choices SET $column=? WHERE token_hash=?")->execute([$value,hash('sha256',$next)]);
+        [$status,$body]=security_http_request($base,'sales_event',array_replace($forged,['event_key'=>'evt-'.$case.'-must-not-exist']),$next);
+        if($status!==202||($body['sales']['disabled']??false)!==true)throw new RuntimeException($case.' consent was accepted.');
+    }
     echo "HTTP_TRACKING_OFF_ZERO_WRITES: pass\n";
     echo "HTTP_ORDER_WITHOUT_TRACKING: pass\n";
     echo "HTTP_CHECKOUT_CLOSED_NO_PAYMENT_MUTATION: pass\n";

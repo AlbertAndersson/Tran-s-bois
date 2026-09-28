@@ -6,6 +6,16 @@
   const SALES_SESSION_KEY='boisSalesSession';
   const SALES_ATTR_KEY='boisSalesAttribution';
   let pendingTrackingCheck=null;
+  let consentRevision=0;
+  const eventControllers=new Set();
+  async function consentChoice(){
+    try{
+      const response=await fetch(cfg.apiBase+'?action=consent',{headers:{Accept:'application/json'},cache:'no-store',credentials:'same-origin'});
+      if(!response.ok)return null;
+      const result=await response.json();
+      return result.ok===true?result.choice:null;
+    }catch{return null;}
+  }
 
   // No analytics storage access before a positive server decision. Share only an
   // in-flight check, never a cached approval; later interactions recheck the gate.
@@ -16,6 +26,9 @@
     pendingTrackingCheck=(async()=>{
       let timer;
       try{
+        const revision=consentRevision;
+        const choice=await consentChoice();
+        if(choice?.statistics!==true || revision!==consentRevision)return false;
         const controller=new AbortController();
         const deadline=new Promise(resolve=>{
           timer=setTimeout(()=>{controller.abort();resolve(null);},1500);
@@ -26,7 +39,7 @@
           signal:controller.signal
         }).then(async response=>response.ok?await response.json():null).catch(()=>null);
         const health=await Promise.race([request,deadline]);
-        return health?.ok===true
+        return revision===consentRevision && health?.ok===true
           && ['staging','test'].includes(health.mode)
           && health.sales_tracking_enabled===true;
       }catch{
@@ -86,21 +99,71 @@
 
   async function trackSales(eventType,{productKey='',pagePath=location.pathname}={}){
     if(!await salesTrackingEnabled()) return;
+    const revision=consentRevision;
+    const controller=new AbortController();
     try{
+      const sessionId=readSalesSessionId(),attribution=readSalesAttribution();
+      if(revision!==consentRevision)return;
+      eventControllers.add(controller);
       await fetch(cfg.apiBase+'?action=sales_event',{
         method:'POST',
-        headers:{'Content-Type':'application/json','Accept':'application/json'},
+        headers:{'Content-Type':'application/json','Accept':'application/json'},credentials:'same-origin',signal:controller.signal,
         body:JSON.stringify({
-          session_id:readSalesSessionId(),
+          session_id:sessionId,
           event_key:salesEventKey(),
           event_type:eventType,
           page_path:pagePath,
           product_key:productKey,
-          attribution:readSalesAttribution()
+          attribution
         }),
-        keepalive:true
       });
-    }catch{}
+    }catch{}finally{eventControllers.delete(controller);}
+  }
+
+  function clearOptionalSales(){
+    consentRevision++;
+    eventControllers.forEach(controller=>controller.abort());
+    eventControllers.clear();
+    try{sessionStorage.removeItem(SALES_SESSION_KEY);sessionStorage.removeItem(SALES_ATTR_KEY);}catch{}
+  }
+
+  async function saveConsent(statistics){
+    // Stop queued tracking before the server receives a withdrawal.
+    clearOptionalSales();
+    const result=await window.BOIS_COMMERCE.api('consent',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({statistics})
+    });
+    return result.choice;
+  }
+
+  async function setupConsent(){
+    if(!document.createElement || document.body?.dataset?.salesIgnore==='true')return;
+    const link=document.createElement('a');
+    link.href='#bois-consent';link.textContent='Kakinställningar';link.className='consent-link';
+    link.addEventListener('click',event=>{event.preventDefault();show(true);});
+    document.body.append(link);
+    const info=document.createElement('a');info.href='cookies.html';info.textContent='Om kakor och lagring';info.className='consent-info-link';document.body.append(info);
+    const panel=document.createElement('section');panel.id='bois-consent';panel.className='consent-panel';
+    panel.setAttribute('aria-labelledby','bois-consent-title');
+    panel.innerHTML='<h2 id="bois-consent-title">Kakor och statistik</h2><p>Vi använder nödvändig lagring för ditt val och orderflödet. Valfri besöksstatistik och kampanjattribution är av tills du väljer ja. Du kan handla utan att välja.</p><p><a href="cookies.html">Läs om lagringen</a></p><div class="consent-actions"><button type="button" data-choice="false">Avvisa statistik</button><button type="button" data-choice="true">Acceptera statistik</button></div><details><summary>Inställningar</summary><p>Nödvändig lagring används för ditt val och administration av tjänsten.</p><label><input type="checkbox" id="bois-statistics"> Tillåt besöksstatistik och kampanjattribution</label><button type="button" data-save="true">Spara inställningar</button></details><p role="status" class="consent-status" hidden></p>';
+    document.body.append(panel);
+    const status=panel.querySelector('.consent-status');
+    function show(focus){panel.hidden=false;if(focus)panel.querySelector('[data-choice="false"]').focus();}
+    async function choose(value){
+      try{
+        await saveConsent(value);
+        status.hidden=true;panel.hidden=true;link.focus();
+      }catch{
+        status.textContent='Ditt val kunde inte sparas. Statistik förblir avstängd och du kan fortsätta handla.';
+        status.hidden=false;
+      }
+    }
+    panel.querySelectorAll('[data-choice]').forEach(button=>button.addEventListener('click',()=>choose(button.dataset.choice==='true')));
+    panel.querySelector('[data-save]').addEventListener('click',()=>choose(panel.querySelector('#bois-statistics').checked));
+    const choice=await consentChoice();
+    if(!choice?.decided)show(false);
+    else panel.hidden=true;
   }
 
   window.BOIS_COMMERCE = {
@@ -198,6 +261,8 @@
     salesSessionId,
     salesAttribution,
     trackSales,
+    saveConsent,
+    clearOptionalSales,
     async recommendations(context={}) {
       if(!cfg.apiBase) return [];
       const body=await this.api('sales_recommendations',{
@@ -215,6 +280,7 @@
   };
 
   window.BOIS_COMMERCE.setEnvironmentLabel();
+  setupConsent();
 
   if(document.body?.dataset?.salesIgnore!=='true'){
     const name=(location.pathname.split('/').pop()||'index.html').toLowerCase();

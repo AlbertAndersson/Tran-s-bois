@@ -10,7 +10,7 @@ const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 
 function browser(options={}){
   const requests=[],storageAccess=[],store=new Map();
-  const state={health:options.health??{ok:true,mode:'staging',sales_tracking_enabled:false}};
+  const state={health:options.health??{ok:true,mode:'staging',sales_tracking_enabled:false},consent:options.consent??false};
   const context={
     window:{BOIS_COMMERCE_CONFIG:{apiBase:options.demo?null:'./commerce-api.php',environmentLabel:'TEST'}},
     document:{body:{dataset:{salesIgnore:options.admin?'true':'false'}},querySelectorAll:()=>[]},
@@ -26,6 +26,7 @@ function browser(options={}){
     fetch:async(url,init={})=>{
       const action=new URL(url,'https://example.test').searchParams.get('action');
       requests.push({action,body:init.body?JSON.parse(init.body):null});
+      if(action==='consent')return {ok:true,json:async()=>({ok:true,choice:{decided:true,statistics:state.consent}})};
       if(action==='health'){
         if(options.failure==='network')throw new Error('offline');
         if(options.failure==='timeout')return new Promise(()=>{});
@@ -88,8 +89,8 @@ for(const failure of ['network','http','json','timeout']){
   });
 }
 
-test('Explicit synthetic staging permission preserves attribution',async()=>{
-  const b=browser({health:{ok:true,mode:'staging',sales_tracking_enabled:true}});
+test('Explicit synthetic staging consent preserves attribution',async()=>{
+  const b=browser({consent:true,health:{ok:true,mode:'staging',sales_tracking_enabled:true}});
   await sleep(30);
   await b.app.createOrder(payload());
   const sent=orderRequest(b).body;
@@ -102,7 +103,7 @@ test('Explicit synthetic staging permission preserves attribution',async()=>{
 });
 
 test('Next interaction rechecks server after switch changes to off',async()=>{
-  const b=browser({health:{ok:true,mode:'staging',sales_tracking_enabled:true}});
+  const b=browser({consent:true,health:{ok:true,mode:'staging',sales_tracking_enabled:true}});
   await sleep(30);
   assert.ok(b.storageAccess.length>0);
   b.state.health={ok:true,mode:'staging',sales_tracking_enabled:false};
@@ -115,7 +116,7 @@ test('Next interaction rechecks server after switch changes to off',async()=>{
 });
 
 test('Restricted browser storage never breaks the order',async()=>{
-  const b=browser({storageBlocked:true,health:{ok:true,mode:'staging',sales_tracking_enabled:true}});
+  const b=browser({consent:true,storageBlocked:true,health:{ok:true,mode:'staging',sales_tracking_enabled:true}});
   await sleep(30);
   assert.equal((await b.app.createOrder(payload())).public_id,'TEST-ORDER');
   assert.equal('sales_session_id' in orderRequest(b).body,false);
@@ -124,11 +125,34 @@ test('Restricted browser storage never breaks the order',async()=>{
 
 test('Admin and disconnected demo never initialise sales tracking',async()=>{
   for(const option of [{admin:true},{demo:true}]){
-    const b=browser({...option,health:{ok:true,mode:'staging',sales_tracking_enabled:true}});
+    const b=browser({...option,consent:true,health:{ok:true,mode:'staging',sales_tracking_enabled:true}});
     await sleep(30);
     await b.app.trackSales('page_view');
     await b.app.createOrder(payload());
     assert.equal(b.storageAccess.length,0);
     assert.equal(b.requests.filter(r=>r.action==='sales_event'||r.action==='health').length,0);
   }
+});
+
+test('No statistics decision leaves optional storage and attribution empty',async()=>{
+  const b=browser({health:{ok:true,mode:'staging',sales_tracking_enabled:true}});
+  await sleep(30);
+  await b.app.trackSales('page_view');
+  await b.app.createOrder(payload());
+  assert.equal(b.storageAccess.length,0);
+  assert.equal(b.requests.filter(r=>r.action==='sales_event').length,0);
+  assert.equal('sales_session_id' in orderRequest(b).body,false);
+});
+
+test('Withdrawal clears keys and stops later attribution',async()=>{
+  const b=browser({consent:true,health:{ok:true,mode:'staging',sales_tracking_enabled:true}});
+  await sleep(30);
+  assert.equal(b.store.has('boisSalesSession'),true);
+  b.state.consent=false;
+  b.app.clearOptionalSales();
+  await b.app.trackSales('checkout_started');
+  await b.app.createOrder(payload());
+  assert.equal(b.store.has('boisSalesSession'),false);
+  assert.equal(b.store.has('boisSalesAttribution'),false);
+  assert.equal('sales_session_id' in orderRequest(b).body,false);
 });
