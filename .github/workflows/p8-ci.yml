@@ -52,6 +52,7 @@ jobs:
           php -l server/p6_payment.php
           php -l server/commerce-api.php
           php -l tests/p8-stripe-smoke.php
+          php -l ops/p8-production-preflight.php
           node --check site/commerce/assets/payment.js
 
       - name: Existing P3-P7 regression on isolated databases
