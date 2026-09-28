@@ -73,6 +73,7 @@ try {
     bois_p4_apply_schema($pdo);
     bois_p6_apply_schema($pdo);
     bois_p7_apply_schema($pdo);
+    bois_p8_apply_schema($pdo);
     commerce_check_origin($config);
 
     if(($_SERVER['REQUEST_METHOD']??'')==='OPTIONS'){
@@ -87,15 +88,20 @@ try {
 
     if($action==='health'&&$method==='GET'){
         $waiting=bois_p5_waiting_summary($pdo);
+        $readiness=bois_p8_readiness($config);
+        $provider=bois_p6_provider($config);
         commerce_respond([
             'ok'=>true,
             'service'=>'tranas-bois-commerce-api',
-            'phase'=>'P6',
+            'phase'=>'P8',
             'mode'=>$config['mode'],
             'storage_driver'=>'mysql',
             'payment_enabled'=>bois_p6_payment_enabled($config),
-            'payment_provider'=>bois_p6_provider($config),
-            'payment_mode'=>bois_p6_provider($config)==='mock'?'testmode':'disabled',
+            'payment_provider'=>$provider,
+            'payment_mode'=>$provider==='mock'?'testmode':($provider==='stripe'?bois_p8_stripe_mode($config):'disabled'),
+            'payment_methods'=>bois_p8_payment_methods($config),
+            'stripe_ready_for_test'=>$readiness['ready_for_stripe_test'],
+            'production_launch_ready'=>$readiness['ready_for_production_launch'],
             'mail_transport'=>$config['mail_transport'] ?? 'disabled',
             'batch_threshold_qty'=>$waiting['threshold_qty'],
             'batch_max_wait_hours'=>$waiting['max_wait_hours'],
@@ -141,6 +147,24 @@ try {
     if($action==='payment_webhook'&&$method==='POST'){
         $raw=file_get_contents('php://input');
         if(!is_string($raw)||$raw==='') throw new InvalidArgumentException('Webhook-underlag saknas.');
+
+        if(bois_p6_provider($config)==='stripe'){
+            $stripeSignature=(string)($_SERVER['HTTP_STRIPE_SIGNATURE']??'');
+            $translated=bois_p8_stripe_translate_webhook($pdo,$config,$raw,$stripeSignature);
+            if(($translated['ignored']??false)===true){
+                commerce_respond([
+                    'ok'=>true,
+                    'ignored'=>true,
+                    'stripe_event_id'=>$translated['stripe_event_id']??null,
+                    'stripe_event_type'=>$translated['stripe_event_type']??null,
+                    'reason'=>$translated['reason']??'ignored',
+                ]);
+            }
+            commerce_respond(
+                bois_p6_process_verified_event($pdo,$config,(array)$translated['event'],$raw)
+            );
+        }
+
         $timestamp=(string)($_SERVER['HTTP_X_BOIS_PAYMENT_TIMESTAMP']??'');
         $signature=(string)($_SERVER['HTTP_X_BOIS_PAYMENT_SIGNATURE']??'');
         commerce_respond(bois_p6_process_webhook_raw($pdo,$config,$raw,$timestamp,$signature));
@@ -233,6 +257,23 @@ try {
         header('Cache-Control: no-store');
         echo bois_p4_export_eligible_csv($pdo);
         exit;
+    }
+
+    if($action==='admin_p8_readiness'&&$method==='GET'){
+        commerce_require_admin($config);
+        commerce_respond(['ok'=>true,'readiness'=>bois_p8_readiness($config)]);
+    }
+
+    if($action==='admin_stripe_refund'&&$method==='POST'){
+        commerce_require_admin($config);
+        $data=commerce_body();
+        $publicId=bois_p3_clean_string($data['public_id']??'',40);
+        $amountOre=max(0,(int)($data['amount_ore']??0));
+        if($publicId==='') throw new InvalidArgumentException('Orderreferens krävs.');
+        commerce_respond([
+            'ok'=>true,
+            'refund'=>bois_p8_stripe_request_refund($pdo,$config,$publicId,$amountOre)
+        ]);
     }
 
     if($action==='admin_payments'&&$method==='GET'){
