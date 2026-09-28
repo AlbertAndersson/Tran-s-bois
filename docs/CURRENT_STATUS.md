@@ -1,6 +1,6 @@
 # CURRENT STATUS
 
-Datum: 2026-09-27
+Datum: 2026-09-28
 
 ## Övergripande status
 - **P1 – ordermotor: COMPLETE**
@@ -10,6 +10,7 @@ Datum: 2026-09-27
 - **P5 – Match kit batching: COMPLETE / LIVE STAGING VERIFIED**
 - **P6 – Payment: COMPLETE / LIVE STAGING VERIFIED**
 - **P7 – 2027 assortment: COMPLETE / LIVE STAGING VERIFIED**
+- **P8 – production readiness: TECHNICALLY COMPLETE / NOT ACTIVATED / BOIS-OWNED STAGING VERIFY PENDING**
 
 Betalning: **ISOLERAD MOCK/TESTMODE I STAGING – RIKTIG PROVIDER AVSTÄNGD**  
 Extern mejlsändning: **AVSTÄNGD I STAGING**  
@@ -20,8 +21,8 @@ Ny extern kostnad: **0 kr**
 - Medlemskap + gym: https://alberiq.se/bois-shop-p3/membership.html
 - Matchställ: https://alberiq.se/bois-shop-p3/match-kit.html
 - Orderstatus: https://alberiq.se/bois-shop-p3/order.html
-- Shopadmin P4 + P5 + P6: https://alberiq.se/bois-shop-p3/admin.html
-- Testbetalning P6: https://alberiq.se/bois-shop-p3/payment.html
+- Shopadmin P4 + P5 + P6 + P8 readiness: https://alberiq.se/bois-shop-p3/admin.html
+- Testbetalning P6/P8 mock: https://alberiq.se/bois-shop-p3/payment.html
 - API health: https://alberiq.se/bois-shop-p3/commerce-api.php?action=health
 
 Staging använder endast testuppgifter.
