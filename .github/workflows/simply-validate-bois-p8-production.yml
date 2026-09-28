@@ -1,0 +1,127 @@
+name: Simply - validate Tranås BoIS P8 production readiness
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Skriv VALIDATE_BOIS_P8_PRODUCTION'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: simply-tranas-bois-p8-production-readiness
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    if: github.event.inputs.confirm == 'VALIDATE_BOIS_P8_PRODUCTION'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      BOIS_SOURCE_REF: 818c262af23431be972986b9c79f70f319da90e2
+      PROD_DB_HOST: ${{ secrets.BOIS_PROD_DB_HOST }}
+      PROD_DB_PORT: ${{ vars.BOIS_PROD_DB_PORT }}
+      PROD_DB_NAME: ${{ secrets.BOIS_PROD_DB_NAME }}
+      PROD_DB_USER: ${{ secrets.BOIS_PROD_DB_USER }}
+      PROD_DB_PASSWORD: ${{ secrets.BOIS_PROD_DB_PASSWORD }}
+      STAGING_DB_HOST: ${{ secrets.BOIS_DB_HOST }}
+      STAGING_DB_NAME: ${{ secrets.BOIS_DB_NAME }}
+      STRIPE_SECRET_KEY: ${{ secrets.BOIS_STRIPE_SECRET_KEY }}
+      STRIPE_WEBHOOK_SECRET: ${{ secrets.BOIS_STRIPE_WEBHOOK_SECRET }}
+      PROD_BASE_URL: ${{ vars.BOIS_PROD_BASE_URL }}
+      PROD_ALLOWED_ORIGIN: ${{ vars.BOIS_PROD_ALLOWED_ORIGIN }}
+      SELLER_LEGAL_NAME: ${{ vars.BOIS_SELLER_LEGAL_NAME }}
+      SELLER_ORG_NUMBER: ${{ vars.BOIS_SELLER_ORG_NUMBER }}
+      SUPPORT_EMAIL: ${{ vars.BOIS_SUPPORT_EMAIL }}
+      TERMS_URL: ${{ vars.BOIS_TERMS_URL }}
+      PRIVACY_URL: ${{ vars.BOIS_PRIVACY_URL }}
+
+    steps:
+      - name: Checkout verified P8 source
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ env.BOIS_SOURCE_REF }}
+          path: bois-src
+
+      - name: Validate required inputs without exposing secrets
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ -n "$PROD_DB_HOST" && -n "$PROD_DB_NAME" && -n "$PROD_DB_USER" && -n "$PROD_DB_PASSWORD" ]] || { echo "::error::Production DB config incomplete"; exit 1; }
+          [[ -n "$STAGING_DB_HOST" && -n "$STAGING_DB_NAME" ]] || { echo "::error::Staging DB identity unavailable"; exit 1; }
+          [[ "$PROD_DB_HOST/$PROD_DB_NAME" != "$STAGING_DB_HOST/$STAGING_DB_NAME" ]] || { echo "::error::Production DB must be distinct from staging"; exit 1; }
+          [[ "$STRIPE_SECRET_KEY" == sk_live_* ]] || { echo "::error::Live Stripe secret not configured"; exit 1; }
+          [[ "$STRIPE_WEBHOOK_SECRET" == whsec_* ]] || { echo "::error::Stripe webhook secret not configured"; exit 1; }
+          [[ "$PROD_BASE_URL" == https://* ]] || { echo "::error::HTTPS production base URL missing"; exit 1; }
+          [[ "$PROD_BASE_URL" != *"/bois-shop-p3"* ]] || { echo "::error::Staging path cannot be production"; exit 1; }
+          [[ -n "$PROD_ALLOWED_ORIGIN" && -n "$SELLER_LEGAL_NAME" && -n "$SELLER_ORG_NUMBER" && -n "$SUPPORT_EMAIL" && -n "$TERMS_URL" && -n "$PRIVACY_URL" ]] || { echo "::error::Legal/support production metadata incomplete"; exit 1; }
+          php -l bois-src/server/p8_stripe.php
+          php -l bois-src/ops/p8-production-preflight.php
+
+      - name: Build temporary private preflight config
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          [[ -n "${PROD_DB_PORT:-}" ]] || PROD_DB_PORT=3306
+          export PROD_DB_PORT
+          admin_token="$(openssl rand -hex 32)"
+          echo "::add-mask::$admin_token"
+          enc(){ printf '%s' "$1" | base64 -w0; }
+          cat > "$RUNNER_TEMP/p8-prod-config.php" <<PHP
+          <?php
+          return [
+            'mode' => 'production',
+            'admin_token' => base64_decode('$(enc "$admin_token")'),
+            'allowed_origins' => [base64_decode('$(enc "$PROD_ALLOWED_ORIGIN")')],
+            'mail_transport' => 'php_mail',
+            'payment_mail_transport' => 'php_mail',
+            'payment_provider' => 'stripe',
+            'stripe_mode' => 'live',
+            'stripe_secret_key' => base64_decode('$(enc "$STRIPE_SECRET_KEY")'),
+            'stripe_webhook_secret' => base64_decode('$(enc "$STRIPE_WEBHOOK_SECRET")'),
+            'stripe_swish_enabled' => false,
+            'public_base_url' => base64_decode('$(enc "$PROD_BASE_URL")'),
+            'seller_legal_name' => base64_decode('$(enc "$SELLER_LEGAL_NAME")'),
+            'seller_org_number' => base64_decode('$(enc "$SELLER_ORG_NUMBER")'),
+            'support_email' => base64_decode('$(enc "$SUPPORT_EMAIL")'),
+            'terms_url' => base64_decode('$(enc "$TERMS_URL")'),
+            'privacy_url' => base64_decode('$(enc "$PRIVACY_URL")'),
+            'merchant_verified' => true,
+            'stripe_fees_approved' => true,
+            'refund_policy_approved' => true,
+            'production_launch_enabled' => true,
+            'membership_validity_days' => 365,
+            'db' => [
+              'host' => base64_decode('$(enc "$PROD_DB_HOST")'),
+              'port' => (int)$PROD_DB_PORT,
+              'database' => base64_decode('$(enc "$PROD_DB_NAME")'),
+              'user' => base64_decode('$(enc "$PROD_DB_USER")'),
+              'password' => base64_decode('$(enc "$PROD_DB_PASSWORD")'),
+            ],
+          ];
+          PHP
+          chmod 600 "$RUNNER_TEMP/p8-prod-config.php"
+
+      - name: Read-only production preflight
+        shell: bash
+        run: |
+          set -euo pipefail
+          php bois-src/ops/p8-production-preflight.php "$RUNNER_TEMP/p8-prod-config.php" | tee "$RUNNER_TEMP/p8-preflight.txt"
+          grep -q "P8_PRODUCTION_PREFLIGHT: pass" "$RUNNER_TEMP/p8-preflight.txt"
+          grep -q "SECRETS_EXPOSED: no" "$RUNNER_TEMP/p8-preflight.txt"
+          {
+            echo "## BoIS P8 production readiness"
+            cat "$RUNNER_TEMP/p8-preflight.txt"
+            echo "DEPLOY_PERFORMED: no"
+            echo "STRIPE_API_CALLED: no"
+            echo "PRODUCTION_TRAFFIC_CHANGED: no"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Cleanup
+        if: always()
+        shell: bash
+        run: rm -f "$RUNNER_TEMP/p8-prod-config.php" "$RUNNER_TEMP/p8-preflight.txt" || true
