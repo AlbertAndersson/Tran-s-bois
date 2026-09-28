@@ -40,6 +40,19 @@
       {public_id:'BOIS-DEMO-MEM1',customer_name:'Test Medlem',customer_email:'member@example.invalid',total_ore:300000,payment_status:'NOT_ENABLED',fulfillment_status:'ON_HOLD',created_at:'2026-09-27 14:05:00',items:[{sku:'MEM-ADULT',fulfillment_type:'DIGITAL_MEMBERSHIP'},{sku:'NW-GYM-ANNUAL',fulfillment_type:'MEMBER_BENEFIT'}]}
     ]});
     if(action==='admin_payments') return Promise.resolve({payments:[],events:[],outbox:[]});
+    if(action==='admin_sales') return Promise.resolve({sales:{
+      privacy:{first_party_only:true,personal_data_in_sales_tables:false,ip_stored:false,user_agent_stored:false,external_analytics:false},
+      kpis:{sessions:12,events:24,sessions_with_orders:4,paid_sessions:3,paid_orders:3,gross_paid_ore:335000,net_paid_ore:335000,average_paid_order_ore:111667,session_to_paid_pct:25},
+      funnel:{page_view:12,product_view:8,checkout_view:5,checkout_started:4,order_created:4,paid:3},
+      campaigns:[
+        {source:'direct',medium:'none',campaign:'none',ref_code:'none',sessions:7,orders:2,paid_orders:2,net_paid_ore:300000},
+        {source:'facebook',medium:'social',campaign:'hostkampanj-2026',ref_code:'p13',sessions:5,orders:2,paid_orders:1,net_paid_ore:35000}
+      ],
+      products:[
+        {sku:'NW-GYM-ANNUAL',product_name:'Nordic Wellness gymkort',quantity:1,paid_orders:1,gross_item_ore:265000},
+        {sku:'MEM-ADULT',product_name:'Medlemskap Tranås BoIS',quantity:2,paid_orders:2,gross_item_ore:70000}
+      ]
+    }});
     if(action==='admin_p7') return Promise.resolve({assortment:[]});
     if(action==='admin_batch_now') return Promise.resolve({batches:[],waiting:{waiting_order_count:2,waiting_item_count:2,threshold_qty:8,max_wait_hours:168,oldest_wait_hours:12,threshold_remaining:6}});
     if(action==='admin_run_worker') return Promise.resolve({batches:[],mail:{transport:'disabled',processed:0,sent:0,failed:0},waiting:{waiting_order_count:2,waiting_item_count:2,threshold_qty:8,max_wait_hours:168,oldest_wait_hours:12,threshold_remaining:6}});
@@ -115,6 +128,58 @@
     $('paymentEvents').innerHTML=events.length?events.map(e=>
       '<tr><td>'+esc(e.event_id)+'</td><td>'+esc(e.event_type)+'</td><td>'+esc(e.status)+'</td><td>'+esc(e.attempts)+'</td><td>'+esc(e.last_error||'–')+'</td></tr>'
     ).join(''):'<tr><td colspan="5">Inga betalhändelser.</td></tr>';
+  }
+
+  function renderSales(body){
+    const sales=body.sales||{},k=sales.kpis||{},f=sales.funnel||{};
+    $('salesSessionsKpi').textContent=k.sessions??0;
+    $('salesPaidKpi').textContent=k.paid_sessions??0;
+    $('salesConversionKpi').textContent=(k.session_to_paid_pct??0)+' %';
+    $('salesNetKpi').textContent=c.money(k.net_paid_ore??0);
+
+    const labels={
+      page_view:'Besök',
+      product_view:'Produktvisning',
+      checkout_view:'Betalningssida',
+      checkout_started:'Betalning startad',
+      order_created:'Order skapad',
+      paid:'Betald'
+    };
+    $('salesFunnel').innerHTML=Object.keys(labels).map(key=>
+      '<tr><td>'+esc(labels[key])+'</td><td><b>'+esc(f[key]??0)+'</b></td></tr>'
+    ).join('');
+
+    const campaigns=sales.campaigns||[];
+    $('salesCampaigns').innerHTML=campaigns.length?campaigns.map(row=>
+      '<tr><td>'+esc(row.source)+'</td><td>'+esc(row.medium)+'</td><td>'+esc(row.campaign)+'</td>'+
+      '<td>'+esc(row.ref_code)+'</td><td>'+esc(row.sessions)+'</td><td>'+esc(row.orders)+'</td>'+
+      '<td>'+esc(row.paid_orders)+'</td><td>'+c.money(row.net_paid_ore)+'</td></tr>'
+    ).join(''):'<tr><td colspan="8">Ingen attribution ännu.</td></tr>';
+
+    const products=sales.products||[];
+    $('salesProducts').innerHTML=products.length?products.map(row=>
+      '<tr><td><b>'+esc(row.sku)+'</b></td><td>'+esc(row.product_name)+'</td><td>'+esc(row.quantity)+'</td>'+
+      '<td>'+esc(row.paid_orders)+'</td><td>'+c.money(row.gross_item_ore)+'</td></tr>'
+    ).join(''):'<tr><td colspan="5">Inga attribuerade betalda order ännu.</td></tr>';
+  }
+
+  function campaignToken(value){
+    return String(value||'').trim().replace(/[^\p{L}\p{N}._:+\/-]/gu,'').slice(0,120);
+  }
+
+  function buildCampaignLink(){
+    const base=new URL('index.html',location.href);
+    const params=new URLSearchParams();
+    const source=campaignToken($('campaignSource').value);
+    const medium=campaignToken($('campaignMedium').value);
+    const campaign=campaignToken($('campaignName').value);
+    const ref=campaignToken($('campaignRef').value);
+    if(source) params.set('utm_source',source);
+    if(medium) params.set('utm_medium',medium);
+    if(campaign) params.set('utm_campaign',campaign);
+    if(ref) params.set('ref',ref);
+    base.search=params.toString();
+    $('campaignLink').value=base.toString();
   }
 
   function renderP7(items){
@@ -213,8 +278,8 @@
   function showP4Error(message){$('p4Error').textContent=message;$('p4Error').hidden=false;}
 
   async function load() {
-    const [ordersBody,catalogBody,batchesBody,p4Body,paymentBody,p7Body]=await Promise.all([
-      api('admin_orders'),api('admin_catalog'),api('admin_batches'),api('admin_p4'),api('admin_payments'),api('admin_p7')
+    const [ordersBody,catalogBody,batchesBody,p4Body,paymentBody,p7Body,salesBody]=await Promise.all([
+      api('admin_orders'),api('admin_catalog'),api('admin_batches'),api('admin_p4'),api('admin_payments'),api('admin_p7'),api('admin_sales')
     ]);
     orders=ordersBody.orders||[];
     const products=catalogBody.products||[],stats=catalogBody.stats||{};
@@ -227,6 +292,7 @@
     renderP4(p4Body);
     renderPayments(paymentBody);
     renderP7(p7Body.assortment||[]);
+    renderSales(salesBody);
     $('login').hidden=true;$('dashboard').hidden=false;
   }
 
@@ -295,6 +361,7 @@
   $('batchNow').addEventListener('click',createBatchNow);
   $('runWorker').addEventListener('click',runWorker);
   $('nordicExport').addEventListener('click',downloadNordicCsv);
+  $('buildCampaignLink').addEventListener('click',buildCampaignLink);
 
   if(!c.cfg.apiBase){load();} else if(token){load().catch(()=>{});}
 })();
