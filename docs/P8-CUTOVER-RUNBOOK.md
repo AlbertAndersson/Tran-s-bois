@@ -4,7 +4,7 @@ Datum: 2026-09-28
 
 ## Syfte
 
-Detta är körordningen för den framtida skarpa lanseringen. Den är förberedd nu men ska inte exekveras förrän alla externa uppgifter och godkännanden finns.
+Detta är körordningen för den framtida skarpa lanseringen. Den är förberedd nu men ska inte exekveras förrän alla externa uppgifter och godkännanden finns. All BoIS-specifik deploy/preflight ska köras från `AlbertAndersson/Tran-s-bois`; Work Capture ska inte vara produktionsorkestrerare för BoIS.
 
 ## Förkrav
 

@@ -10,6 +10,17 @@ P8 ska göra webshoppen produktionsredo utan att aktivera någon extern kostnad 
 
 Detta dokument är source of truth för P8:s produktionsgrind. Maskinläsbar spegling finns i `data/p8-readiness.json`.
 
+
+## Deployment ownership
+
+BoIS äger nu sin egen deployment i detta repository.
+
+Canonical workflows:
+- `.github/workflows/simply-deploy-bois-p8-readiness.yml`
+- `.github/workflows/simply-validate-bois-p8-production.yml`
+
+Staging-workflowen är manuellt skyddad och ska verifieras från `Tran-s-bois` innan de äldre BoIS-workflowsen i Work Capture pensioneras. Flytten ändrar inte runtimeprincipen: staging är fortsatt mock, Stripe-secrets är tomma och production launch är stängd.
+
 ## P8A – Stripe foundation
 
 Implementerat:

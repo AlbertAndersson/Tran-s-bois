@@ -1,6 +1,6 @@
 # CURRENT STATUS
 
-Datum: 2026-09-27
+Datum: 2026-09-28
 
 ## Övergripande status
 - **P1 – ordermotor: COMPLETE**
@@ -10,6 +10,7 @@ Datum: 2026-09-27
 - **P5 – Match kit batching: COMPLETE / LIVE STAGING VERIFIED**
 - **P6 – Payment: COMPLETE / LIVE STAGING VERIFIED**
 - **P7 – 2027 assortment: COMPLETE / LIVE STAGING VERIFIED**
+- **P8 – production readiness: TECHNICALLY COMPLETE / NOT ACTIVATED / BOIS-OWNED STAGING VERIFY PENDING**
 
 Betalning: **ISOLERAD MOCK/TESTMODE I STAGING – RIKTIG PROVIDER AVSTÄNGD**  
 Extern mejlsändning: **AVSTÄNGD I STAGING**  
@@ -20,8 +21,8 @@ Ny extern kostnad: **0 kr**
 - Medlemskap + gym: https://alberiq.se/bois-shop-p3/membership.html
 - Matchställ: https://alberiq.se/bois-shop-p3/match-kit.html
 - Orderstatus: https://alberiq.se/bois-shop-p3/order.html
-- Shopadmin P4 + P5 + P6: https://alberiq.se/bois-shop-p3/admin.html
-- Testbetalning P6: https://alberiq.se/bois-shop-p3/payment.html
+- Shopadmin P4 + P5 + P6 + P8 readiness: https://alberiq.se/bois-shop-p3/admin.html
+- Testbetalning P6/P8 mock: https://alberiq.se/bois-shop-p3/payment.html
 - API health: https://alberiq.se/bois-shop-p3/commerce-api.php?action=health
 
 Staging använder endast testuppgifter.
@@ -188,10 +189,11 @@ Senast verifierad P6-hardening-deploy: workflow run `36327128975`, conclusion **
 - new external cost: 0
 
 ## Drift
-Aktiv deployment:
-- `work-capture/.github/workflows/simply-deploy-bois-p4.yml`
+BoIS-specifik deployment flyttas nu till detta repo:
+- `.github/workflows/simply-deploy-bois-p8-readiness.yml`
+- `.github/workflows/simply-validate-bois-p8-production.yml`
 
-Workflowen är nu uppgraderad till P6. Äldre P3- och P5-deployworkflow är pensionerade så de inte kan skriva över aktuell staging.
+P8-readiness-workflowen är manuellt skyddad och använder fortsatt mock, tomma Stripe-secrets, avstängd extern payment-mail och stängd production launch-gate. Den första körningen från `Tran-s-bois` återstår att liveverifiera. Work Capture-kopian behålls endast som tillfällig rollback tills dess och pensioneras därefter.
 
 ## Kostnad
 **Ny extern kostnad: 0 kr.**
@@ -232,3 +234,21 @@ P6 förblir testmode under P7. **Stripe är vald som målprovider för P8**, men
 BoIS staging använder den separata dedikerade databasen genom privat runtime `$HOME/.bois-p3/config.php`. Den vanliga P7-deployen använder endast `BOIS_DB_HOST`, `BOIS_DB_NAME`, `BOIS_DB_USER`, `BOIS_DB_PASSWORD` och valfri `BOIS_DB_PORT` (3306 om ej satt); den ska inte använda `WORKCAPTURE_DB_*`. Inga hemligheter eller databasnamn finns i repositoryt.
 
 Merge-run `36358028481` bevarade äldre BoIS-rader tillsammans med P7-data och målbasens migrationsledger. P7-acceptans `36358111506` skrev en ny syntetisk order endast till den dedikerade databasen; läsande cutover-kontroll `36358232965` passerade. Exakt 18 äldre `bois_*`-tabeller i Work Capture-källan droppades via skyddad run `36394705592` efter förnyad data-, runtime- och backupkontroll. Privata rollback-backuper behölls utanför webbroten. Diagnos `36394944351` bekräftade 0 BoIS-tabeller och 0 andra främmande tabeller i Work Capture, komplett Work Capture-ledger samt 20 BoIS-tabeller utan främmande tabeller i målet. Work Capture AI-01 + Trackson-deploy återställdes därefter i run `36403070406` (success; befintlig data bevarad, AI-10/AI-01/Trackson-preview och regressioner gröna, testdata städad). BoIS P4–P7-staging och mockbetalning är fortsatt det verifierade produktläget.
+
+
+## P8 – tekniskt genomförd, extern aktivering blockerad – 2026-09-28
+
+P8A–D är mergeat på `main` i commit `818c262af23431be972986b9c79f70f319da90e2`.
+
+Implementerat:
+- hosted Stripe Checkout bakom P6 payment gate,
+- Stripe-Signature-verifiering och eventnormalisering,
+- PaymentIntent/refund-mappning till P6 state machine,
+- Swish bakom explicit feature flag,
+- fail-closed production readiness,
+- maskinläsbar readiness och cutover/rollback-runbook,
+- offline Stripe-kontrakttest utan externa API-anrop.
+
+Full P2–P8 CI var grön på P8-PR-head. Inga Stripe credentials, KYC, riktiga betalningar, externa mejl eller nya kostnader aktiverades.
+
+Driftägarskapet flyttas samtidigt från `work-capture` till `Tran-s-bois`. Nästa verifieringsgrind är den manuella workflowen `Simply - deploy Tranås BoIS P8 readiness staging` i detta repo med `DEPLOY_BOIS_P8_READY`. Den ska fortfarande rapportera mock/testmode, Stripe ej aktiverat, production launch false och ny extern kostnad 0.
