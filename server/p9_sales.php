@@ -10,6 +10,11 @@ require_once __DIR__ . '/p3_db.php';
  * Public analytics never stores name, email, phone, IP address or user agent.
  */
 
+function bois_p9_tracking_enabled(array $config): bool
+{
+    return ($config['sales_tracking_enabled'] ?? false)===true;
+}
+
 function bois_p9_apply_schema(PDO $pdo): void
 {
     $pdo->exec(
@@ -141,6 +146,12 @@ function bois_p9_capture_event(PDO $pdo,array $input): array
     $pdo->beginTransaction();
     try{
         bois_p9_upsert_session($pdo,$sessionId,$attribution);
+        $countStmt=$pdo->prepare("SELECT event_count FROM bois_sales_sessions WHERE session_id=? FOR UPDATE");
+        $countStmt->execute([$sessionId]);
+        if((int)$countStmt->fetchColumn()>=200){
+            $pdo->commit();
+            return ['accepted'=>false,'duplicate'=>false,'limited'=>true];
+        }
         $stmt=$pdo->prepare(
             "INSERT IGNORE INTO bois_sales_events(event_key,session_id,event_type,page_path,product_key)
              VALUES(?,?,?,?,?)"
@@ -311,7 +322,9 @@ function bois_p9_admin_dashboard(PDO $pdo): array
     return [
         'privacy'=>[
             'first_party_only'=>true,
-            'personal_data_in_sales_tables'=>false,
+            'direct_customer_identifiers_stored'=>false,
+            'pseudonymous_session_identifier'=>true,
+            'order_link_exists'=>true,
             'ip_stored'=>false,
             'user_agent_stored'=>false,
             'external_analytics'=>false,
