@@ -78,6 +78,7 @@
         ? '<b>Signerad testwebhook verifierad.</b> Ordern har gått genom P6 och vidare till P4/P5.'
         : '<b>Testutfall registrerat.</b> Status: '+status+'.';
       $('success').hidden=false;$('orderLink').hidden=false;
+      if(value==='failed'||value==='cancelled')$('retryBtn').hidden=false;
       if(value==='paid') $('providerStep').querySelectorAll('button').forEach(b=>b.disabled=true);
     }catch(error){showError(error.message);}
     finally{if(value!=='paid') setBusy(false);}
@@ -88,6 +89,7 @@
   $('payBtn').addEventListener('click',()=>outcome('paid'));
   $('failBtn').addEventListener('click',()=>outcome('failed'));
   $('cancelBtn').addEventListener('click',()=>outcome('cancelled'));
+  $('retryBtn').addEventListener('click',()=>{session=null;$('providerStep').hidden=true;$('methodStep').hidden=false;$('retryBtn').hidden=true;clear();});
 
   loadOrder().catch(error=>showError(error.message));
 })();

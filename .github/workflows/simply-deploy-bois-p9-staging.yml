@@ -19,7 +19,7 @@ jobs:
   deploy:
     if: github.event.inputs.confirm == 'DEPLOY_BOIS_P9_READY'
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 25
     env:
       BOIS_SOURCE_REF: fdb1053c69e929fa7430c74b9ea5a4e47cac31eb
       BOIS_PUBLIC_PATH: bois-shop-p3
@@ -222,6 +222,10 @@ jobs:
           rm -rf -- "$HOME/$target"; mkdir -p "$HOME/$target"; chmod 755 "$HOME/$target"
           REMOTE
           tar -C "$RUNNER_TEMP/bois-p9-public" -czf - . | ssh "${SSH_OPTS[@]}" -l "$SIMPLY_SSH_USER" "$SIMPLY_HOST"             "set -eu; tar -xzf - -C \"\$HOME/$TARGET_REL\"; find \"\$HOME/$TARGET_REL\" -type d -exec chmod 755 {} +; find \"\$HOME/$TARGET_REL\" -type f -exec chmod 644 {} +"
+          (cd "$RUNNER_TEMP/bois-p9-public" && sha256sum assets/common.js commerce-api.php consent.php cookies.html) > "$RUNNER_TEMP/local-files.sha256"
+          ssh "${SSH_OPTS[@]}" -l "$SIMPLY_SSH_USER" "$SIMPLY_HOST" \
+            'cd "$HOME/public_html/bois-shop-p3" && sha256sum assets/common.js commerce-api.php consent.php cookies.html' > "$RUNNER_TEMP/deployed-files.sha256"
+          diff -u "$RUNNER_TEMP/local-files.sha256" "$RUNNER_TEMP/deployed-files.sha256"
           ssh "${SSH_OPTS[@]}" -l "$SIMPLY_SSH_USER" "$SIMPLY_HOST" 'export BOIS_P3_CONFIG_PATH="$HOME/.bois-p3/config.php"; php "$HOME/public_html/bois-shop-p3/p5-migrate.php"; php "$HOME/public_html/bois-shop-p3/p4-migrate.php"; php "$HOME/public_html/bois-shop-p3/p6-migrate.php"; export BOIS_P7_ASSORTMENT_PATH="$HOME/.bois-p3/p7-assortment.json"; php "$HOME/public_html/bois-shop-p3/p7-migrate.php"; php "$HOME/public_html/bois-shop-p3/p8-migrate.php"; php "$HOME/public_html/bois-shop-p3/p9-migrate.php"'
           ssh "${SSH_OPTS[@]}" -l "$SIMPLY_SSH_USER" "$SIMPLY_HOST" 'php "$HOME/.bois-p3/db-snapshot.php" "$HOME/.bois-p3/config.php"' > "$RUNNER_TEMP/after.txt"
           [[ "$(head -n1 "$RUNNER_TEMP/after.txt")" = "$NON_BOIS_HASH" ]]
@@ -297,6 +301,18 @@ jobs:
           grep -q '"status":"ACTIVE"' "$RUNNER_TEMP/public.json"
           grep -q '"status":"ELIGIBLE"' "$RUNNER_TEMP/public.json"
 
+          cp "$RUNNER_TEMP/consent-cookies.txt" "$RUNNER_TEMP/old-consent-cookies.txt"
+          curl --fail --silent --show-error -A "$UA" -b "$RUNNER_TEMP/consent-cookies.txt" \
+            -c "$RUNNER_TEMP/consent-cookies.txt" -X POST "$API?action=consent" \
+            -H "Origin: https://alberiq.se" -H "Content-Type: application/json" \
+            --data '{"statistics":false}' -o "$RUNNER_TEMP/revoked.json"
+          grep -q '"statistics":false' "$RUNNER_TEMP/revoked.json"
+          curl --fail --silent --show-error -A "$UA" -b "$RUNNER_TEMP/old-consent-cookies.txt" -X POST "$API?action=sales_event" \
+            -H "Origin: https://alberiq.se" -H "Content-Type: application/json" \
+            --data "{\"session_id\":\"$sales_session\",\"event_key\":\"gh-$GITHUB_RUN_ID-revoked\",\"event_type\":\"page_view\"}" \
+            -o "$RUNNER_TEMP/revoked-event.json"
+          grep -q '"disabled":true' "$RUNNER_TEMP/revoked-event.json"
+
           curl --fail --silent --show-error -A "$UA" "$API?action=admin_sales"             -H "Authorization: Bearer $BOIS_ADMIN_TOKEN" -o "$RUNNER_TEMP/p9-sales.json"
           php -r '$d=json_decode(file_get_contents($argv[1]),true);$s=$d["sales"]??[];$p=$s["privacy"]??[];$k=$s["kpis"]??[];if(($p["first_party_only"]??null)!==true||($p["direct_customer_identifiers_stored"]??null)!==false||($p["pseudonymous_session_identifier"]??null)!==true||($p["order_link_exists"]??null)!==true||($p["ip_stored"]??null)!==false||($p["user_agent_stored"]??null)!==false||($p["external_analytics"]??null)!==false||(int)($k["paid_sessions"]??0)<1)exit(1);$ok=false;foreach(($s["campaigns"]??[]) as $r){if(($r["campaign"]??"")==="p9-readiness"&&(int)($r["paid_orders"]??0)>=1){$ok=true;break;}}if(!$ok)exit(2);' "$RUNNER_TEMP/p9-sales.json"
 
@@ -319,6 +335,10 @@ jobs:
             echo "P9_PHASE: pass"
             echo "P9_FIRST_PARTY_FUNNEL: pass"
             echo "P9_CAMPAIGN_ATTRIBUTION_TO_PAID: pass"
+            echo "CONSENT_NO_CHOICE_DIRECT_EVENT_BLOCKED: pass"
+            echo "CONSENT_ACCEPTED_SYNTHETIC_ATTRIBUTION: pass"
+            echo "CONSENT_WITHDRAWAL_EVENT_BLOCKED: pass"
+            echo "DEPLOYED_SOURCE_FILE_HASHES: pass"
             echo "P9_ZERO_DISCOUNT_RECOMMENDATION: pass"
             echo "P9_DIRECT_CUSTOMER_IDENTIFIERS_IN_SALES_TABLES: no"
             echo "P9_PSEUDONYMOUS_SESSION_DATA: yes"
@@ -344,6 +364,24 @@ jobs:
             echo "PAID_ADVERTISING: no"
             echo "NEW_EXTERNAL_COST: 0"
           } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Browser customer and admin acceptance at 375, 390 and desktop
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --prefix "$RUNNER_TEMP/bois-browser" --no-save --ignore-scripts playwright@1.62.1
+          "$RUNNER_TEMP/bois-browser/node_modules/.bin/playwright" install --with-deps chromium
+          NODE_PATH="$RUNNER_TEMP/bois-browser/node_modules" \
+            node bois-src/tests/staging-browser-smoke.cjs
+
+      - name: Save synthetic browser screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bois-p9-synthetic-browser-${{ github.run_id }}
+          path: ${{ runner.temp }}/bois-browser-evidence/*.png
+          if-no-files-found: ignore
+          retention-days: 7
 
       - name: Cleanup runner secrets
         if: always()

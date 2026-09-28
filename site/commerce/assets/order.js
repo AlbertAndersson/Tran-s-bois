@@ -13,6 +13,8 @@
     const o=body.order;
     $('intro').textContent='Här visas status direkt från Commerce Core.';
     $('content').hidden=false;$('orderId').textContent=o.public_id;$('status').textContent=o.status;$('payment').textContent=o.payment_status;$('fulfillment').textContent=o.fulfillment_status;$('total').textContent=c.money(o.total_ore);
+    $('retryPayment').hidden=!['PENDING','FAILED','CANCELLED'].includes(o.payment_status);
+    if(!$('retryPayment').hidden)$('retryPayment').href='payment.html?id='+encodeURIComponent(id)+'&token='+encodeURIComponent(token);
     if(o.payment?.reference){
       $('paymentReference').textContent='Betalreferens: '+o.payment.reference+(o.payment.method?' · '+o.payment.method:'');
       $('paymentReference').hidden=false;
