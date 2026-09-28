@@ -11,7 +11,7 @@ Detta är den primära överlämningen för en ny utvecklingstråd. GitHub är s
 - P6 slutlig hardening merge: `b5b9a157a7462277cdab27bb304c5c1b31706fa0` (PR #3)
 - P7 implementation merge: `49883befb360fddb6e63e5c6b6a622fd2c0eed8b` (PR #6); slutlig publik startsiderättning: `cfe18cce5a19ba4ec05a83323cbcbe07bf1aed29`; kontrollera ny `main` HEAD efter dokumentationscommit
 - Verifiera alltid aktuell `main` HEAD innan ändring
-- Deployment/secrets: `AlbertAndersson/work-capture`
+- Deployment/source/secrets: `AlbertAndersson/Tran-s-bois` (BoIS äger nu sin egen drift; Work Capture är endast temporär fallback tills första BoIS-ägda P8-deployen verifierats)
 
 Verifiera alltid aktuell HEAD innan du ändrar något.
 
@@ -30,8 +30,11 @@ Verifiera alltid aktuell HEAD innan du ändrar något.
 
 ## Aktiv deployment
 
-Aktiv workflow i deployment-repot:
-`AlbertAndersson/work-capture/.github/workflows/simply-deploy-bois-p4.yml`
+Ny canonical BoIS-deployment finns i samma repo:
+- `.github/workflows/simply-deploy-bois-p8-readiness.yml`
+- `.github/workflows/simply-validate-bois-p8-production.yml`
+
+Första BoIS-ägda P8 readiness-deployen är ännu inte liveverifierad. Fram till dess behålls Work Capture-workflows endast som rollback/fallback och ska pensioneras direkt efter verifierad körning från `Tran-s-bois`.
 
 Senast verifierad P6-deploy:
 - run: `36327128975`
@@ -67,7 +70,7 @@ Staging får endast innehålla testuppgifter.
 - P5 – Match kit batching: **COMPLETE / LIVE STAGING VERIFIED**
 - P6 – Payment: **COMPLETE / LIVE STAGING VERIFIED**
 - P7 – 2027 assortment: **COMPLETE / LIVE STAGING VERIFIED**
-- P8 – production launch: **NOT STARTED**
+- P8 – production readiness: **TECHNICALLY COMPLETE / NOT ACTIVATED / BOIS-OWNED STAGING VERIFY PENDING**
 - P9 – sales engine: **NOT STARTED**
 
 P6-betalning kör isolerad `mock`/testmode i staging. Riktig payment provider är avstängd. Extern mejlsändning är avstängd i staging. Ny extern driftkostnad hittills: **0 kr**.
@@ -268,14 +271,14 @@ Slutverifiering efter P6-hardening:
 ## Öppna blockers före produktion
 
 ### Payment – produktion
-P6-staging är klar och **Stripe är vald som målprovider för P8**. Före skarp betalning återstår:
+P8:s Stripe-kod och produktionsgrindar är implementerade men **inte aktiverade**. Före skarp betalning återstår:
 - vem är merchant/betalningsmottagare?
 - aktuell Stripe-prisbild och uttryckligt kostnadsgodkännande
 - merchant onboarding/KYC och kontoägarskap
 - verifiera att Stripe-Swish är tillgängligt i production för BoIS-kontot (Swish är märkt Beta av Stripe 2026-09-27)
 - produktionscredentials/secrets
 - verklig webhook-konfiguration
-- beslut Stripe Checkout kontra Payment Element
+- Hosted Stripe Checkout är valt och implementerat; ingen skarp Stripe-session skapas förrän aktivering godkänts
 - slutlig refund-policy för medlemskap/Nordic/matchställ
 
 Aktivera ingen kostnad eller betaltjänst utan uttryckligt godkännande.
