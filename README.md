@@ -2,6 +2,8 @@
 
 Fristående BoIS-webshop med medlemskap, Nordic Wellness-förmån, matchställ och förberett supporter-/merchsortiment.
 
+**Aktuell ändring:** PR #12 bygger C1–C4 för valfri statistik med serververifierat, återkalleligt samtycke. P2–P9 och Security controls CI ska vara gröna på slutlig PR-head före merge. Den nya samtyckesversionen är inte liveverifierad förrän den manuella stagingworkflowen har körts med ny source-ref. Se `docs/CONSENT-INVENTORY-AND-ACCEPTANCE.md` och `docs/SYNTHETIC-DEMO.md`. Rättningsdeployen före samtycket lyckades som run `36463946785` med kodref `fdb1053c69e929fa7430c74b9ea5a4e47cac31eb`.
+
 ## Status
 - P1 ordermotor: **COMPLETE**
 - P2 produktionsförberedelse: **COMPLETE**

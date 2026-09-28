@@ -2,6 +2,8 @@
 
 Ta över **Tranås BoIS – Webbshop** från `AlbertAndersson/Tran-s-bois`. GitHub är source of truth och BoIS äger kod, CI, secrets och deployment. Verifiera aktuell `main` HEAD; utgå inte från ett gammalt handoff-SHA.
 
+**Aktuell arbetsgrind:** Rättningsdeploy `36463946785` lyckades med pinnad kodref `fdb1053c69e929fa7430c74b9ea5a4e47cac31eb`. PR #12 inför C1–C4 och syntetiskt browsertest, men ny kod är ännu inte driftsatt. Kontrollera grön P2–P9 och Security controls CI på slutlig PR-head, mergea, uppdatera workflowens source-ref, kör manuellt skyddad stagingdeploy och läs Chromiumbevis innan C1–C4 eller kvalitetsrundor markeras liveverifierade. Bredare demo blockeras tills faktiskt åtkomstskydd har verifierats. Senare stycken om att rättningsdeploy och samtycke återstår beskriver det äldre överlämningsläget.
+
 ## Läs först
 
 1. `docs/SECURITY-CONTROL-POINTS.md`

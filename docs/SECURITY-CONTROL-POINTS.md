@@ -1,7 +1,7 @@
 # Kontrollpunkter efter P9 – betalningsstart och spårningsstopp
 
 Datum: 2026-09-28
-Status: **MERGED / CI VERIFIED / STAGING DEPLOY PENDING**
+Status: **MERGED / CI VERIFIED / STAGING VERIFIED** för PR #11. Deploy run `36463946785` publicerade pinnad `fdb1053c69e929fa7430c74b9ea5a4e47cac31eb` och passerade P4–P9-acceptans. Avsnittet "Separat stagingverifiering – återstår" nedan är historisk plan från före denna körning. Samtycke i PR #12 har en separat, ännu väntande staginggrind.
 
 Utgångspunkt: `main` vid P9-closeout `3983c5e65726390cd59fcf65fe3d69000376030f`. Tidigare P9-stagingverifiering är run `36445454316`, med kodref `3219dba57fca1eb97b9d50022477131c8db2501b`. Den körningen verifierar inte automatiskt senare rättningar.
 

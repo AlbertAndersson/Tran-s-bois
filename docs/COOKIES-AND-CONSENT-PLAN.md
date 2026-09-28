@@ -1,7 +1,7 @@
 # Kakor, webbläsarlagring och samtycke – plan inför lansering
 
 Datum: 2026-09-28
-Status: **PLANNED / NOT IMPLEMENTED / REQUIRED BEFORE PRODUCTION ANALYTICS**
+Status: **IMPLEMENTED IN PR #12 / STAGING VERIFICATION PENDING / PRODUCTION ANALYTICS BLOCKED**. Nedan ursprunglig plan och historisk ordning bevaras. Aktuellt genomförande och inventering finns i `docs/CONSENT-INVENTORY-AND-ACCEPTANCE.md`; syntetiskt manus i `docs/SYNTHETIC-DEMO.md`. Endast grön CI och senare manuell stagingdeploy med ny source-ref får uppgradera status till liveverifierad.
 
 ## Beslut och avgränsning
 

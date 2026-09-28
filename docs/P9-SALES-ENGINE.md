@@ -6,6 +6,8 @@ Datum: 2026-09-28
 
 **COMPLETE / LIVE STAGING VERIFIED**
 
+Detta avser historiska P9-refen. PR #11:s säkerhetsrättning publicerades separat i run `36463946785`, pinnad `fdb1053c69e929fa7430c74b9ea5a4e47cac31eb`. PR #12 inför nödvändigt C1–C4-samtycke för valfri syntetisk P9-statistik. Den versionen är ännu inte publicerad; äldre automatiska P9-eventtest har ersatts av explicita samtyckessteg i den nya stagingworkflowen. Production tracking är fortsatt globalt blockerad. Se `docs/CONSENT-INVENTORY-AND-ACCEPTANCE.md`.
+
 P9 bygger ett eget first-party sales engine ovanpå befintlig Commerce Core. Syftet är att förstå vilka kampanjer, referrals och produktvägar som faktiskt leder till testorder och verifierad mock-PAID utan att köpa analytics, annonsering, e-postverktyg eller andra externa tjänster.
 
 P9 ändrar inte P4–P8:s ekonomiska eller juridiska gränser.
