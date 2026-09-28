@@ -4,7 +4,7 @@ Datum: 2026-09-28
 
 ## Status
 
-**IMPLEMENTATION IN PROGRESS / COST-FREE STAGING**
+**IMPLEMENTED / COST-FREE STAGING VERIFY PENDING**
 
 P9 bygger ett eget first-party sales engine ovanpå befintlig Commerce Core. Syftet är att förstå vilka kampanjer, referrals och produktvägar som faktiskt leder till testorder och verifierad mock-PAID utan att köpa analytics, annonsering, e-postverktyg eller andra externa tjänster.
 
@@ -26,12 +26,14 @@ Attribution:
 
 Principer:
 - session-id skapas i browserns `sessionStorage`
+- sessionspåret är pseudonymt och kan internt kopplas till en order
 - inga tredjepartscookies
 - ingen extern analytics
 - ingen IP-adress lagras
 - ingen user-agent lagras
-- inga namn/e-post/telefonnummer lagras i sales-tabellerna
+- inga direkta kundidentifierare som namn/e-post/telefon lagras i sales-tabellerna
 - events har eget idempotent `event_key`
+- `sales_tracking_enabled=false` är production-default; P9-staging sätter flaggan explicit till true för syntetisk testdata
 
 ## P9B – Funnel
 
@@ -94,9 +96,11 @@ P9 v1 får inte:
 
 ## Integritet
 
-Sales-tabellerna är uttryckligen separerade från kundtabellerna. Koppling till order sker endast genom `bois_sales_order_links.order_id`; attribution-dashboarden är aggregerad.
+Sales-tabellerna är uttryckligen separerade från kundtabellerna. Koppling till order sker endast genom `bois_sales_order_links.order_id`; det gör sessionen indirekt kopplingsbar och därför behandlas den som pseudonym data. Attribution-dashboarden är aggregerad.
 
-Förbjudna sales-fält:
+Före eventuell produktionsaktivering ska integritetsinformationen och rättslig grund/consent-bedömning bekräftas. Tracking är därför fail-closed i produktionskonfigurationen.
+
+Förbjudna direkta sales-fält:
 - namn
 - e-post
 - telefon
