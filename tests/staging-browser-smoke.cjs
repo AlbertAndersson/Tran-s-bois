@@ -73,23 +73,23 @@ const key=()=>Math.random().toString(36).slice(2,12);
       await page.getByRole('link',{name:/Gå till testbetalning/}).click();
       await page.locator('#orderSummary').getByText('Betalstatus').waitFor();
       const apiResponses=[];
+      let checkoutPayload=null;
       page.on('response',response=>{
-        if(response.url().includes('commerce-api.php')){
-          const action=new URL(response.url()).searchParams.get('action');
-          apiResponses.push({action,method:response.request().method(),status:response.status()});
-        }
+        if(!response.url().includes('commerce-api.php'))return;
+        const action=new URL(response.url()).searchParams.get('action');
+        apiResponses.push({action,method:response.request().method(),status:response.status()});
+        if(action==='checkout')response.json().then(body=>{checkoutPayload=body;}).catch(()=>{});
       });
-      const checkoutResponse=page.waitForResponse(response=>new URL(response.url()).searchParams.get('action')==='checkout')
-        .catch(async error=>{
-          console.log('CHECKOUT_DIAGNOSTIC: '+JSON.stringify({
-            apiResponses,errorText:await page.locator('#error').innerText(),
-            providerVisible:await page.locator('#providerStep').isVisible()
-          }));
-          throw error;
-        });
       await page.locator('#cardBtn').click();
-      refundSession=(await (await checkoutResponse).json()).checkout;
-      await page.locator('#providerStep').waitFor({state:'visible'});
+      await page.locator('#providerStep').waitFor({state:'visible',timeout:10000}).catch(async error=>{
+        console.log('CHECKOUT_DIAGNOSTIC: '+JSON.stringify({
+          apiResponses,errorText:await page.locator('#error').textContent()
+        }));
+        throw error;
+      });
+      for(let attempt=0;attempt<30&&!checkoutPayload;attempt++)await page.waitForTimeout(100);
+      assert.ok(checkoutPayload?.checkout,'checkout response captured: '+JSON.stringify(apiResponses));
+      refundSession=checkoutPayload.checkout;
       await page.locator('#payBtn').click();
       await page.getByText('Signerad testwebhook verifierad.').waitFor();
       await page.locator('#orderLink').click();
