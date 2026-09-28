@@ -154,7 +154,8 @@
     panel.setAttribute('aria-modal','false');
     panel.setAttribute('aria-labelledby','bois-consent-title');
     panel.innerHTML='<h2 id="bois-consent-title">Kakor och statistik</h2><p>Vi använder nödvändig lagring för ditt val och orderflödet. Valfri besöksstatistik och kampanjattribution är av tills du väljer ja. Du kan handla utan att välja.</p><p><a href="cookies.html">Läs om lagringen</a></p><div class="consent-actions"><button type="button" data-choice="false">Avvisa statistik</button><button type="button" data-choice="true">Acceptera statistik</button></div><details><summary>Inställningar</summary><p>Nödvändig lagring används för ditt val och administration av tjänsten.</p><label><input type="checkbox" id="bois-statistics"> Tillåt besöksstatistik och kampanjattribution</label><button type="button" data-save="true">Spara inställningar</button></details><p role="status" class="consent-status" hidden></p>';
-    document.body.append(panel);
+    panel.hidden=true;
+    document.body.prepend(panel);
     const status=panel.querySelector('.consent-status');
     function show(focus){panel.hidden=false;if(focus)panel.querySelector('[data-choice="false"]').focus();}
     async function choose(value){
