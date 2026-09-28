@@ -1,0 +1,91 @@
+name: P8 Production Readiness CI
+
+on:
+  push:
+    branches: [main, "chatgpt/**"]
+    paths:
+      - "server/p6_payment.php"
+      - "server/p8_stripe.php"
+      - "server/p8-migrate.php"
+      - "server/commerce-api.php"
+      - "server/p3-config.example.php"
+      - "tests/p8-stripe-smoke.php"
+      - "site/commerce/payment.html"
+      - "site/commerce/assets/payment.js"
+      - "docs/P8-*.md"
+      - "data/p8-*.json"
+      - ".github/workflows/p8-ci.yml"
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+    env:
+      BOIS_P3_TEST_DB_HOST: 127.0.0.1
+      BOIS_P3_TEST_DB_PORT: 3306
+      BOIS_P3_TEST_DB_USER: root
+      BOIS_P3_TEST_DB_PASSWORD: root
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: P8 PHP and JavaScript syntax
+        run: |
+          php -l server/p8_stripe.php
+          php -l server/p8-migrate.php
+          php -l server/p6_payment.php
+          php -l server/commerce-api.php
+          php -l tests/p8-stripe-smoke.php
+          php -l ops/p8-production-preflight.php
+          node --check site/commerce/assets/payment.js
+
+      - name: Existing P3-P7 regression on isolated databases
+        shell: bash
+        run: |
+          set -euo pipefail
+          for phase in p3 p4 p5 p6 p7-gate; do
+            export BOIS_P3_TEST_DB_NAME="bois_p8_reg_${phase//-/_}"
+            mysql -h127.0.0.1 -uroot -proot -e "CREATE DATABASE \`$BOIS_P3_TEST_DB_NAME\`"
+            php "tests/${phase}-smoke.php"
+          done
+
+      - name: P8 Stripe contract without external network
+        shell: bash
+        run: |
+          set -euo pipefail
+          export BOIS_P3_TEST_DB_NAME="bois_p8_stripe"
+          mysql -h127.0.0.1 -uroot -proot -e "CREATE DATABASE \`$BOIS_P3_TEST_DB_NAME\`"
+          php tests/p8-stripe-smoke.php | tee "$RUNNER_TEMP/p8.txt"
+          grep -q "P8_STRIPE_CONTRACT: pass" "$RUNNER_TEMP/p8.txt"
+          grep -q "REAL_STRIPE_CALLS: no" "$RUNNER_TEMP/p8.txt"
+          grep -q "NEW_EXTERNAL_COST: 0" "$RUNNER_TEMP/p8.txt"
+
+      - name: Production fail-closed safety checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q "'payment_provider' => 'mock'" server/p3-config.example.php
+          grep -q "'stripe_secret_key' => ''" server/p3-config.example.php
+          grep -q "'stripe_webhook_secret' => ''" server/p3-config.example.php
+          grep -q "'stripe_swish_enabled' => false" server/p3-config.example.php
+          grep -q "'production_launch_enabled' => false" server/p3-config.example.php
+          grep -q "'payment_mail_transport' => 'disabled'" server/p3-config.example.php
+          grep -q "Stripe-Signature" server/p8_stripe.php
+          grep -q "ready_for_production_launch" server/p8_stripe.php
+          ! grep -REn --exclude='p3-config.example.php' --exclude='p8-stripe-smoke.php' 'sk_(live|test)_[A-Za-z0-9]{20,}|whsec_[A-Za-z0-9]{20,}' server site .github

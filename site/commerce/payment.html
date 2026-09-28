@@ -12,15 +12,15 @@
   <section class="form-card">
     <span class="tag">P6 PAYMENT</span>
     <h1>Betala din order</h1>
-    <p class="sub">I staging används en isolerad betalningsmock. Ingen riktig Swish- eller kortbetalning genomförs och inga avgifter uppstår.</p>
-    <div class="notice"><b>Testläge:</b> välj betalmetod och simulera sedan betalproviderens signerade webhook. Samma verifierade <code>PAID</code>-händelse driver medlemskap, Nordic-förmån och matchställsbatchning.</div>
+    <p class="sub" id="paymentIntro">Betalningssättet styrs av aktuell miljö. Staging använder en isolerad betalningsmock och orsakar inga betalavgifter.</p>
+    <div class="notice" id="paymentNotice"><b>Testläge:</b> samma verifierade <code>PAID</code>-händelse driver medlemskap, Nordic-förmån och matchställsbatchning.</div>
 
     <div id="orderSummary" class="summary"><div class="small">Laddar order…</div></div>
     <div id="methodStep">
       <h2>Välj betalmetod</h2>
       <div class="choice-grid">
-        <button class="btn block" type="button" id="swishBtn">Test-Swish</button>
-        <button class="btn secondary block" type="button" id="cardBtn">Test-kort</button>
+        <button class="btn block" type="button" id="swishBtn">Swish</button>
+        <button class="btn secondary block" type="button" id="cardBtn">Kort</button>
       </div>
     </div>
 

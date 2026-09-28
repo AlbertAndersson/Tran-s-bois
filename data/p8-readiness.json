@@ -1,0 +1,46 @@
+{
+  "phase": "P8",
+  "updated": "2026-09-28",
+  "target_state": "TECHNICALLY_READY_NOT_ACTIVATED",
+  "cost_activation": false,
+  "stripe": {
+    "selected": true,
+    "integration": "hosted_checkout",
+    "mode_target": "live",
+    "swish_target": true,
+    "swish_access_verified": false,
+    "account_created": false,
+    "merchant_verified": false,
+    "fees_approved": false,
+    "bank_payout_verified": false,
+    "live_credentials_configured": false,
+    "webhook_endpoint_configured": false
+  },
+  "production": {
+    "dedicated_database_verified": false,
+    "domain_verified": false,
+    "seller_legal_name_verified": false,
+    "seller_org_number_verified": false,
+    "support_email_verified": false,
+    "terms_published": false,
+    "privacy_published": false,
+    "refund_policy_approved": false,
+    "external_mail_verified": false,
+    "backup_restore_tested": false,
+    "launch_approval": false
+  },
+  "product_blockers": {
+    "matchkit_real_price_verified": false,
+    "matchkit_supplier_verified": false,
+    "membership_period_verified": false,
+    "merch_2027_commercial_data_verified": false
+  },
+  "invariants": [
+    "staging_payment_provider_remains_mock",
+    "no_real_email_from_staging",
+    "no_live_stripe_key_in_repository",
+    "no_production_launch_without_explicit_gate",
+    "p4_p7_regressions_must_remain_green",
+    "merch_remains_server_gated"
+  ]
+}

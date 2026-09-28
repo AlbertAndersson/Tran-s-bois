@@ -6,8 +6,20 @@
   const publicId=q.get('id')||'';
   const publicToken=q.get('token')||'';
   let session=null;
+  const provider=c.cfg.paymentProvider||'mock';
+  const methods=Array.isArray(c.cfg.paymentMethods)&&c.cfg.paymentMethods.length?c.cfg.paymentMethods:['card','swish'];
 
   $('orderLink').href='order.html?id='+encodeURIComponent(publicId)+'&token='+encodeURIComponent(publicToken);
+  if(!methods.includes('swish')) $('swishBtn').hidden=true;
+  if(!methods.includes('card')) $('cardBtn').hidden=true;
+  if(provider==='stripe'){
+    $('paymentIntro').textContent='Betalningen genomförs hos Stripe. Ingen kort- eller Swishinformation sparas i BoIS-webbshoppen.';
+    $('paymentNotice').innerHTML='<b>Säker betalning:</b> du skickas vidare till Stripe Checkout och återgår sedan till orderstatus.';
+  }else{
+    $('swishBtn').textContent='Test-Swish';
+    $('cardBtn').textContent='Test-kort';
+    $('paymentNotice').innerHTML='<b>Testläge:</b> välj betalmetod och simulera sedan betalproviderens signerade webhook.';
+  }
 
   function showError(message){$('error').textContent=message;$('error').hidden=false;}
   function clear(){ $('error').hidden=true; $('success').hidden=true; }
@@ -38,8 +50,12 @@
         body:JSON.stringify({public_id:publicId,public_token:publicToken,method})
       });
       session=body.checkout;
+      if(session.redirect_url){
+        location.assign(session.redirect_url);
+        return;
+      }
       $('methodStep').hidden=true;$('providerStep').hidden=false;
-      $('methodLabel').textContent=method==='swish'?'Test-Swish':'Test-kort';
+      $('methodLabel').textContent=method==='swish'?(provider==='mock'?'Test-Swish':'Swish'):(provider==='mock'?'Test-kort':'Kort');
       $('sessionLabel').textContent=session.session_ref;
       $('paymentStatus').textContent=session.status;
     }catch(error){showError(error.message);}

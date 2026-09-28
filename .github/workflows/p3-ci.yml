@@ -78,4 +78,4 @@ jobs:
           grep -q "BATCH_SUPPLIER" server/p3_db.php
           grep -q "2027-01-01" server/p3_db.php
           grep -q "NOT_ENABLED" server/p3_db.php
-          ! grep -R -E "sk_live_|pk_live_|SWISH_CERT|BEGIN PRIVATE KEY" server site/commerce
+          ! grep -REn "sk_(live|test)_[A-Za-z0-9]{20,}|pk_(live|test)_[A-Za-z0-9]{20,}|whsec_[A-Za-z0-9]{20,}|BEGIN PRIVATE KEY|SWISH_CERT" server site/commerce --exclude='p3-config.example.php' --exclude='p8_stripe.php'

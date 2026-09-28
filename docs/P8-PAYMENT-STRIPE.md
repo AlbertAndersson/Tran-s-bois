@@ -1,84 +1,153 @@
-# P8 – Payment provider decision: Stripe
+# P8 – Payment provider: Stripe
 
-Datum: 2026-09-27
+Datum: 2026-09-28
 
 ## Status
 
-**PROVIDER SELECTED FOR P8 – NOT ACTIVATED**
+**TECHNICALLY IMPLEMENTED / NOT ACTIVATED**
 
-Tranås BoIS har valt **Stripe** som målprovider för skarp betalning i P8 / production launch.
+Stripe är vald som målprovider för skarp betalning. P8A–P8D bygger integrationskod, produktionsgrindar och cutover-underlag, men ingen extern betaltjänst, KYC, credential, riktig transaktion eller ny kostnad aktiveras av implementationen.
 
-Detta beslut ändrar **inte** P7. P7 ska fortsätta med 2027-sortiment, pris, SKU, produktdata, fulfillment och launch gate. Ingen Stripe-kod, merchant-onboarding eller betaltjänst ska aktiveras i P7.
+Se även:
+- `docs/P8-PRODUCTION-READINESS.md`
+- `docs/P8-CUTOVER-RUNBOOK.md`
+- `data/p8-readiness.json`
 
-## Varför beslutet passar nuvarande arkitektur
+## Arkitektur
 
-P6 har redan:
-- provider-adapter
-- serverstyrd checkout
-- signerad webhook
-- event-idempotens
-- payment state machine
-- verifierad PAID-handler till P4/P5
-- refund-flöde
-- payment outbox
+P6 är fortsatt den gemensamma payment gate som får driva P4/P5.
 
-Stripe ska därför implementeras som en ny provider bakom P6-kontraktet i P8. P4/P5 ska inte byggas om.
+Stripe kopplas bakom P6:
+1. BoIS skapar ordern och fastställer beloppet
+2. servern skapar Stripe Checkout Session
+3. kunden lämnar BoIS-sidan och betalar hos Stripe Checkout
+4. Stripe skickar signerad webhook
+5. Stripe-event översätts till P6:s interna eventmodell
+6. P6 verifierar order, session, belopp och valuta
+7. endast verifierad `PAID` får driva medlemskap/Nordic/matchställ
+8. Stripe refund går via P6 `REFUND_PENDING` och manuell fulfillment review
 
-## Mål för P8
+P4/P5 byggs alltså inte om.
 
-P8 ska utreda och därefter, efter uttryckligt godkännande av kostnad och merchant-upplägg, implementera:
-- Stripe merchant/account för rätt juridisk betalningsmottagare
-- kort
-- Swish om det är produktionsmässigt tillgängligt för kontot
-- Stripe webhook → befintlig P6 eventmodell
-- checkout-integration bakom befintlig provider-adapter
-- refunds via Stripe → befintlig P6 state machine
-- produktionscredentials/secrets
-- testmode → production cutover
-- kvitto/orderbekräftelse i skarp mailtransport
-- observability och reconciliation
+## P8A – Stripe foundation
 
-## Viktigt om Swish
+Implementerat:
+- hosted Stripe Checkout
+- kortstöd
+- Swish-stöd bakom explicit `stripe_swish_enabled`
+- separat Stripe PaymentIntent-referens
+- serverstyrd total i Checkout
+- idempotency key för Stripe API-anrop
+- `Stripe-Signature` verifiering mot exakt rå webhook-body
+- Checkout-event → P6
+- refund.updated → P6 refund state machine
+- irrelevanta Stripe-event ignoreras säkert
+- felaktiga signaturer, order, session, belopp och valuta nekas
 
-Stripe visar 2026-09-27 stöd för Swish i Sverige men märker Swish som **Beta**.
+## P8B – Production isolation
 
-P8 får därför inte anta att Swish är skarpt tillgängligt för BoIS-kontot. Innan produktionsaktivering ska Work verifiera:
-- att BoIS/merchant-kontot är berättigat till Swish
-- att Swish kan aktiveras i production
-- eventuella onboardingkrav
-- faktisk prislista vid aktivering
+P8-runtime är fail-closed:
+- staging behåller `payment_provider=mock`
+- Stripe kräver komplett privat runtime
+- `stripe_mode=test` accepterar endast test-secret
+- `stripe_mode=live` accepterar endast live-secret
+- webhook secret måste vara separat
+- Swish är av tills access uttryckligen verifierats
+- `production_launch_enabled=false` är default
+- extern payment-mail är fortsatt av i staging
+- inga credentials finns i repositoryt
 
-Om Swish inte kan aktiveras ska kort kunna gå live via Stripe utan att P6/P4/P5 behöver ändras.
+Den verifierade BoIS-databasen är staging. Skarp produktion ska använda en separat produktionsdatabas.
 
-## Prisbild – endast planeringssnapshot
+## P8C – Readiness gate
 
-Stripe visade 2026-09-27 följande svenska standardpriser:
-- standardkort från EES: **1,5 % + 1,80 kr**
-- Swish: **1 % + 3,00 kr**, max **7,00 kr**
-- standardupplägget anges utan start- eller månadsavgift
+Kodens readiness-grind kräver före launch:
+- Stripe provider + live mode
+- live secret + webhook secret
+- HTTPS production base URL
+- juridiskt säljar-/merchantunderlag
+- supportmejl
+- köpvillkor
+- integritetspolicy
+- merchant verified
+- avgifter godkända
+- refundpolicy godkänd
+- extern mailtransport aktiverad
+- explicit production launch approval
 
-Detta är inte ett budgetgodkännande och får inte användas som fast framtida pris. P8 ska verifiera aktuell Stripe-prissättning före aktivering.
+Aktuella blockerare ligger i `data/p8-readiness.json`.
 
-## Fortsatta beslut före skarp betalning
+## P8D – Cutover
 
-Stripe är valt som provider, men följande återstår:
-- juridisk betalningsmottagare / merchant
-- vem som äger och administrerar Stripe-kontot
-- bankkonto för utbetalningar
-- slutlig refund-policy för medlemskap, Nordic och matchställ
-- produktionsdatabas/credentials
-- skarpa villkor, integritet och säljaruppgifter
-- skarp mailtransport
-- om Stripe Checkout eller Payment Element bäst passar den befintliga P6-arkitekturen
-- verifierad Swish-tillgänglighet för merchant-kontot
+Cutover är dokumenterad men blockerad tills externa uppgifter finns.
+
+Produktionspreflight finns i:
+- `ops/p8-production-preflight.php`
+
+Den ska köras efter P3–P8-migration i den framtida separata produktionsdatabasen. Den failar om readiness inte är komplett, om staging/example-URL används, om främmande tabeller finns, om P8-ledgern saknas eller om launch-grinden inte uttryckligen är öppnad.
+
+## Stripe Checkout
+
+Hosted Checkout valdes för att:
+- BoIS inte behöver hantera kort-/Swishuppgifter
+- servern behåller kontrollen över order och belopp
+- Stripe kan hantera betalmetodens UI
+- P6 behöver bara lita på signerade server-events
+
+Stripe dokumenterar Checkout Sessions som server-skapade sessioner med en hosted Checkout-URL.
+
+## Webhook
+
+Stripe-webhook använder Stripes standard:
+- rå request body
+- `Stripe-Signature`
+- endpoint signing secret
+
+P8 accepterar inte frontend-status som betalningsbevis.
+
+## Swish
+
+Stripe dokumenterar Swish för svenska kunder i SEK och stöd i Checkout. Stripe-sidan anger samtidigt att access behöver begäras/aktiveras för kontot.
+
+Därför gäller:
+- kodstöd: ja
+- aktiverad i staging: nej
+- skarp access verifierad: nej
+- `stripe_swish_enabled`: false tills kontot visar stöd
+
+Om Swish inte är tillgängligt vid första produktionscutover kan kort gå live utan att P4/P5/P6 byggs om.
+
+## Refunds
+
+Stripe Refund API kan skapa hel eller partiell refund mot PaymentIntent.
+
+BoIS-flödet:
+1. admin begär refund
+2. Stripe API-anrop använder PaymentIntent
+3. BoIS går omedelbart till `REFUND_PENDING` + `REVIEW_REQUIRED`
+4. signerad Stripe refund-webhook avgör slutlig finansiell status
+5. redan startat medlems-/partner-/leverantörsflöde återkallas inte automatiskt
+
+## Aktuell prisbild
+
+Prisbild ska verifieras igen precis före aktivering och kräver uttryckligt godkännande.
+
+Ingen prisuppgift i dokumentationen räknas som godkännande av kostnad.
 
 ## Kostnadsgräns
 
-Ingen riktig Stripe-tjänst, transaktion, merchant-onboarding med kostnad eller annan extern kostnad får aktiveras förrän Albert/Erik uttryckligen godkänt det.
+Följande är fortsatt förbjudet utan nytt uttryckligt beslut:
+- starta betald extern tjänst
+- genomföra riktig Stripe-transaktion
+- godkänna Stripe-avgifter
+- skapa/aktivera live credentials
+- slå på skarp e-post
+- slå på production launch gate
 
-## Källor för pris/tillgänglighet
+## Officiella Stripe-källor kontrollerade 2026-09-28
 
-Kontrollerade 2026-09-27:
+- https://docs.stripe.com/api/checkout/sessions/create
+- https://docs.stripe.com/webhooks/signature
+- https://docs.stripe.com/api/refunds/create
+- https://docs.stripe.com/payments/swish
 - https://stripe.com/se/pricing
-- https://stripe.com/se/pricing/local-payment-methods
-- https://stripe.com/se/payment-method/swish

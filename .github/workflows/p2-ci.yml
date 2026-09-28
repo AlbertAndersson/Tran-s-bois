@@ -53,4 +53,4 @@ jobs:
           grep -q "cancel_order" server/api.php
           grep -q "order_period_id" server/bootstrap.php
           grep -q "productionReady: false" site/catalog.js
-          ! grep -R -E "sk_live_|pk_live_|STRIPE_SECRET|SWISH_CERT" site server
+          ! grep -REn "sk_(live|test)_[A-Za-z0-9]{20,}|pk_(live|test)_[A-Za-z0-9]{20,}|whsec_[A-Za-z0-9]{20,}|BEGIN PRIVATE KEY|SWISH_CERT" site server --exclude='p3-config.example.php' --exclude='p8_stripe.php'

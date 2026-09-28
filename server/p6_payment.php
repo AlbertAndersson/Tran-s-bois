@@ -4,6 +4,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/p3_db.php';
 require_once __DIR__ . '/p5_batch.php';
 require_once __DIR__ . '/p4_membership.php';
+require_once __DIR__ . '/p8_stripe.php';
 
 interface BoisPaymentProviderAdapter
 {
@@ -27,6 +28,20 @@ final class BoisMockPaymentProvider implements BoisPaymentProviderAdapter
     }
 }
 
+final class BoisStripePaymentProvider implements BoisPaymentProviderAdapter
+{
+    public function name(): string { return 'stripe'; }
+    public function enabled(array $config): bool { return bois_p8_stripe_runtime_ready($config); }
+    public function checkoutSession(): array
+    {
+        throw new LogicException('Stripe Checkout kräver orderkontext.');
+    }
+    public function verifyWebhook(array $config,string $raw,string $timestamp,string $signature): void
+    {
+        bois_p8_stripe_verify_signature($config,$raw,$signature);
+    }
+}
+
 final class BoisDisabledPaymentProvider implements BoisPaymentProviderAdapter
 {
     public function name(): string { return 'disabled'; }
@@ -40,9 +55,11 @@ final class BoisDisabledPaymentProvider implements BoisPaymentProviderAdapter
 
 function bois_p6_adapter(array $config): BoisPaymentProviderAdapter
 {
-    return bois_p6_provider($config)==='mock'
-        ? new BoisMockPaymentProvider()
-        : new BoisDisabledPaymentProvider();
+    return match(bois_p6_provider($config)){
+        'mock'=>new BoisMockPaymentProvider(),
+        'stripe'=>new BoisStripePaymentProvider(),
+        default=>new BoisDisabledPaymentProvider(),
+    };
 }
 
 function bois_p6_apply_schema(PDO $pdo): void
@@ -168,8 +185,11 @@ function bois_p6_event_id(): string
     return 'P6EVT-'.gmdate('ymd').'-'.strtoupper(substr(bin2hex(random_bytes(10)),0,16));
 }
 
-function bois_p6_checkout(PDO $pdo,array $config,string $publicId,string $publicToken,string $method): array
+function bois_p6_checkout(PDO $pdo,array $config,string $publicId,string $publicToken,string $method,?callable $stripeTransport=null): array
 {
+    if(bois_p6_provider($config)==='stripe'){
+        return bois_p8_stripe_checkout($pdo,$config,$publicId,$publicToken,$method,$stripeTransport);
+    }
     if(!bois_p6_payment_enabled($config)){
         throw new DomainException('Betalning är inte aktiverad i denna miljö.');
     }
@@ -670,7 +690,11 @@ function bois_p6_process_webhook_raw(PDO $pdo,array $config,string $raw,string $
     bois_p6_adapter($config)->verifyWebhook($config,$raw,$timestamp,$signature);
     $event=json_decode($raw,true,64,JSON_THROW_ON_ERROR);
     if(!is_array($event)) throw new InvalidArgumentException('Ogiltigt webhook-underlag.');
+    return bois_p6_process_verified_event($pdo,$config,$event,$raw);
+}
 
+function bois_p6_process_verified_event(PDO $pdo,array $config,array $event,string $payloadHashSource): array
+{
     foreach(['event_id','type','provider','provider_ref'] as $key){
         if(!is_string($event[$key] ?? null) || trim((string)$event[$key])===''){
             throw new InvalidArgumentException('Webhook saknar '.$key.'.');
@@ -692,7 +716,7 @@ function bois_p6_process_webhook_raw(PDO $pdo,array $config,string $raw,string $
     $lockStmt->execute([$lockName]);
     if((int)$lockStmt->fetchColumn()!==1) throw new RuntimeException('Betalningen är upptagen; försök igen.');
     try{
-        $payloadHash=hash('sha256',$raw);
+        $payloadHash=hash('sha256',$payloadHashSource);
         $claim=bois_p6_claim_event($pdo,$event,$payloadHash);
         if($claim['duplicate']){
             return ['ok'=>true,'duplicate'=>true,'event_id'=>$event['event_id'],'status'=>'PROCESSED'];
