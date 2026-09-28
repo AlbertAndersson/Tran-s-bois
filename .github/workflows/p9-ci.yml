@@ -81,7 +81,8 @@ jobs:
           mysql -h127.0.0.1 -uroot -proot -e "CREATE DATABASE \`$BOIS_P3_TEST_DB_NAME\`"
           php tests/p9-sales-smoke.php | tee "$RUNNER_TEMP/p9.txt"
           grep -q "P9_SALES_ENGINE: pass" "$RUNNER_TEMP/p9.txt"
-          grep -q "SALES_PII_STORED: no" "$RUNNER_TEMP/p9.txt"
+          grep -q "DIRECT_CUSTOMER_IDENTIFIERS_IN_SALES_TABLES: no" "$RUNNER_TEMP/p9.txt"
+          grep -q "PSEUDONYMOUS_SESSION_DATA: yes" "$RUNNER_TEMP/p9.txt"
           grep -q "EXTERNAL_ANALYTICS: no" "$RUNNER_TEMP/p9.txt"
           grep -q "REAL_PAYMENT: no" "$RUNNER_TEMP/p9.txt"
           grep -q "NEW_EXTERNAL_COST: 0" "$RUNNER_TEMP/p9.txt"
@@ -93,5 +94,6 @@ jobs:
           grep -q "first_party_only" server/p9_sales.php
           grep -q "external_analytics.*false" server/p9_sales.php
           grep -q "discount_ore.*0" server/p9_sales.php
+          grep -q "'sales_tracking_enabled' => false" server/p3-config.example.php
           ! grep -REn "gtag\\(|googletagmanager|google-analytics|connect.facebook.net|plausible.io|posthog|segment.io|mixpanel" site/commerce server
           ! grep -REn "mailto:|smtp_password" server/p9_sales.php site/commerce/assets/common.js site/commerce/assets/admin.js
