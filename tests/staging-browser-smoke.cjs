@@ -19,6 +19,12 @@ const key=()=>Math.random().toString(36).slice(2,12);
       const page=await context.newPage();
       await page.goto(base+'/');
       await page.locator('#bois-consent').waitFor({state:'visible'});
+      const inventory=await page.evaluate(()=>({
+        sessionKeys:Object.keys(sessionStorage),localKeys:Object.keys(localStorage),
+        resourceOrigins:[...new Set(performance.getEntriesByType('resource').map(entry=>new URL(entry.name).origin))]
+      }));
+      const cookieNames=(await context.cookies()).map(cookie=>cookie.name);
+      console.log('C1_BEFORE_CHOICE_'+width+': '+JSON.stringify({cookieNames,...inventory}));
       assert.equal(await page.evaluate(()=>sessionStorage.getItem('boisSalesSession')),null);
       assert.equal(await page.evaluate(()=>sessionStorage.getItem('boisSalesAttribution')),null);
       assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2),true,'horizontal overflow on shop '+width);
