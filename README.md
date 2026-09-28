@@ -10,6 +10,7 @@ Fristående BoIS-webshop med medlemskap, Nordic Wellness-förmån, matchställ o
 - P5 Match kit batching: **COMPLETE / LIVE STAGING VERIFIED**
 - P6 Payment: **COMPLETE / LIVE STAGING VERIFIED**
 - P7 2027 assortment: **COMPLETE / LIVE STAGING VERIFIED**
+- P8 production readiness: **TECHNICALLY COMPLETE / BOIS-OWNED STAGING DEPLOY PENDING**
 - Betalning: **ISOLERAD MOCK/TESTMODE I STAGING – RIKTIG PROVIDER AVSTÄNGD**
 - Extern mejlsändning: **AVSTÄNGD I STAGING**
 - Ny extern driftkostnad: **0 kr**
@@ -88,11 +89,11 @@ P7 föreslår ett litet första sortiment: BoIS 1941 Hoodie, Supporter-T-shirt o
 P7:s separata `bois_`-tabeller, adminvy och interna preview är live-verifierade i staging. Servern blockerar offentlig katalog och direkta orderanrop före **1 januari 2027**, även om produktflaggor ändras. Efter datumet krävs dessutom uttryckligt godkännande och verifierad kommersiell data. Ingen P7-produkt är godkänd eller orderbar nu. Den publika startsidan visar inga produktnamn från det interna förslaget. P2–P7 CI är grön; Simply-run `36355678030` verifierade slutlig stagingkod.
 
 ## Nästa utvecklingsordning
-1. **Kommersiell P7-beredning**: inhämta riktiga offerter och godkänn data inför eventuell lansering; nuvarande förslag är inte säljklart.
-2. **P8 – production launch**: Stripe som vald payment provider, produktionsdatabas, domän, villkor och skarpa integrationsuppgifter.
-3. **P9 – sales engine**.
+1. **Verifiera P8 readiness staging från detta repo**: kör den manuella BoIS-ägda Simply-workflowen utan Stripe-aktivering eller kostnad.
+2. **P9 – sales engine** kan fortsätta parallellt medan merchant/KYC/bank/domän/villkor för skarp P8 inväntas.
+3. **Kommersiell P7-beredning**: inhämta riktiga offerter och godkänn data inför eventuell merchlansering.
 
-P6:s payment gate är nu den gemensamma gränsen för medlemskap, Nordic och matchställ. **Stripe är vald som målprovider för P8**, men ska inte implementeras eller aktiveras i P7. Stripe ska senare kopplas bakom samma checkout/webhook-kontrakt utan att bygga om P4/P5.
+P6:s payment gate är den gemensamma gränsen för medlemskap, Nordic och matchställ. P8:s Stripe-adapter, produktionsgrindar och cutover-underlag är implementerade, men Stripe är **inte aktiverat** och staging fortsätter med mock. BoIS-specifika deploy/readiness-workflows ägs nu av detta repo; Work Capture-versionerna är endast tillfällig rollback tills den nya stagingdeployen är verifierad.
 
 ## Kostnadsprincip
 Inga nya betaltjänster, abonnemang eller externa kostnader aktiveras utan uttryckligt godkännande.
