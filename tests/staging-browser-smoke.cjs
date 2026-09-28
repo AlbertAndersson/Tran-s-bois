@@ -13,6 +13,7 @@ const key=()=>Math.random().toString(36).slice(2,12);
 
 (async()=>{
   const browser=await chromium.launch({headless:true});
+  let existingOrderId='',matchOrderId='',refundOrderId='',refundSession=null;
   try{
     for(const width of [375,390,1280]){
       const context=await browser.newContext({viewport:{width,height:850},deviceScaleFactor:1});
@@ -41,6 +42,7 @@ const key=()=>Math.random().toString(36).slice(2,12);
         await page.locator('#email').fill('bo-'+key()+'@example.invalid');
         await page.locator('#consent').check();
         await page.locator('#submitBtn').click();
+        existingOrderId=await page.locator('#success .order-id').innerText();
         await page.getByRole('link',{name:/Gå till testbetalning/}).click();
         await page.locator('#cardBtn').click();
         await page.locator('#failBtn').click();
@@ -64,9 +66,12 @@ const key=()=>Math.random().toString(36).slice(2,12);
       await page.locator('#consent').check();
       await page.locator('#submitBtn').click();
       await page.getByRole('link',{name:/Gå till testbetalning/}).waitFor();
+      refundOrderId=await page.locator('#success .order-id').innerText();
       assert.equal(await page.evaluate(()=>sessionStorage.getItem('boisSalesSession')),null);
       await page.getByRole('link',{name:/Gå till testbetalning/}).click();
+      const checkoutResponse=page.waitForResponse(response=>response.url().includes('action=checkout')&&response.request().method()==='POST');
       await page.locator('#cardBtn').click();
+      refundSession=(await (await checkoutResponse).json()).checkout;
       await page.locator('#payBtn').click();
       await page.getByText('Signerad testwebhook verifierad.').waitFor();
       await page.locator('#orderLink').click();
@@ -83,7 +88,13 @@ const key=()=>Math.random().toString(36).slice(2,12);
       await page.locator('#consent').check();
       await page.locator('#submitBtn').click();
       await page.getByRole('link',{name:/Gå till testbetalning/}).waitFor();
+      matchOrderId=await page.locator('#success .order-id').innerText();
       assert.ok(await page.evaluate(()=>sessionStorage.getItem('boisSalesSession')));
+      await page.getByRole('link',{name:/Gå till testbetalning/}).click();
+      await page.locator('#swishBtn').click();
+      await page.locator('#payBtn').click();
+      await page.locator('#orderLink').click();
+      await page.locator('#payment').getByText('PAID').waitFor();
       await page.getByRole('link',{name:'Kakinställningar'}).first().click();
       await page.getByRole('button',{name:'Avvisa statistik'}).click();
       assert.equal(await page.evaluate(()=>sessionStorage.getItem('boisSalesSession')),null);
@@ -101,6 +112,36 @@ const key=()=>Math.random().toString(36).slice(2,12);
     for(const id of ['admin-orders','admin-membership','admin-batches','admin-payments','admin-sales']){
       assert.equal(await admin.locator('#'+id).count(),1,'admin navigation '+id);
     }
+    const pending=admin.locator('#entitlements tr').filter({hasText:existingOrderId});
+    const answerMemberPrompt=async dialog=>{
+      if(dialog.type()==='prompt')await dialog.accept(dialog.message().startsWith('Medlemmens')?'Bo Test':dialog.message().startsWith('Medlemstyp')?'adult':'');
+      else await dialog.dismiss();
+    };
+    admin.on('dialog',answerMemberPrompt);
+    await pending.getByRole('button',{name:'Verifiera medlem'}).click();
+    await admin.locator('#entitlements tr').filter({hasText:existingOrderId}).getByRole('button',{name:'Skickad till Nordic'}).waitFor();
+    admin.off('dialog',answerMemberPrompt);
+    assert.ok((await admin.locator('#orders').innerText()).includes(matchOrderId));
+    assert.ok(Number(await admin.locator('#waitingItems').innerText())>=1);
+    await admin.locator('#salesCampaigns').getByText('synthetic').waitFor();
+    const waitingCount=Number(await admin.locator('#waitingItems').innerText());
+    if(waitingCount===1){
+      admin.once('dialog',dialog=>dialog.accept());
+      await admin.locator('#batchNow').click();
+      await admin.locator('#batchMessage').waitFor({state:'visible'});
+      assert.match(await admin.locator('#batchMessage').innerText(),/Batch skapad/);
+      console.log('ADMIN_SYNTHETIC_BATCH: pass');
+    }else{
+      console.log('ADMIN_SYNTHETIC_BATCH: skipped; other waiting rows exist');
+    }
+    const refund=await admin.request.post(base+'/commerce-api.php?action=mock_payment_event',{
+      data:{session_ref:refundSession.session_ref,session_token:refundSession.session_token,outcome:'refunded',refund_ore:refundSession.amount_ore},
+      headers:{Origin:'https://alberiq.se'}
+    });
+    assert.equal(refund.ok(),true,'synthetic mock refund endpoint');
+    await admin.reload();
+    await admin.locator('#dashboard').waitFor({state:'visible'});
+    assert.ok((await admin.locator('#payments').innerText()).includes('REFUNDED'));
     await admin.screenshot({path:path.join(output,'admin-desktop.png')});
     await context.close();
     console.log('CHROMIUM_HEADLESS_VIEWPORTS: 375,390,1280');
@@ -108,6 +149,8 @@ const key=()=>Math.random().toString(36).slice(2,12);
     console.log('EXISTING_MEMBER_FAILED_CANCELLED_RETRY: pass');
     console.log('CONSENT_ACCEPT_ATTRIBUTION_WITHDRAWAL: pass');
     console.log('ADMIN_SECTIONS_WITH_PRIVATE_STAGING_TOKEN: pass');
+    console.log('ADMIN_MEMBER_VERIFICATION_MATCH_QUEUE_MOCK_REFUND: pass');
+    console.log('DEMO_ORDER_REFS: '+JSON.stringify({existingOrderId,matchOrderId,refundOrderId}));
     console.log('SCREENSHOTS: '+output);
   }finally{await browser.close();}
 })().catch(error=>{console.error(error);process.exitCode=1;});
