@@ -4,9 +4,11 @@ Datum: 2026-09-28
 
 ## Status
 
-**TECHNICALLY IMPLEMENTED / NOT ACTIVATED**
+**TECHNICALLY COMPLETE / NOT ACTIVATED / LIVE STAGING VERIFIED**
 
 Stripe är vald som målprovider för skarp betalning. P8A–P8D bygger integrationskod, produktionsgrindar och cutover-underlag, men ingen extern betaltjänst, KYC, credential, riktig transaktion eller ny kostnad aktiveras av implementationen.
+
+BoIS-ägd Simply-stagingrun `36414148818` (**success**) kördes från `main` `1a29eb5ddb229144f255fe92a837d20953617832` med pinnad P8-kodref `818c262af23431be972986b9c79f70f319da90e2`. Mock/testmode, signerad webhook och idempotent P4/P5, P7 gate samt avstängd mailtransport verifierades live. `stripe_ready_for_test=false`, `production_launch_ready=false`, inga riktiga Stripe-anrop, betalningar, produktionstrafik eller nya externa kostnader. BoIS-repot äger kod, CI och deployment; ersatta Work Capture-workflows är pensionerade.
 
 Se även:
 - `docs/P8-PRODUCTION-READINESS.md`

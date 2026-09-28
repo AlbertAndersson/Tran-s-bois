@@ -10,7 +10,7 @@ Datum: 2026-09-28
 - **P5 – Match kit batching: COMPLETE / LIVE STAGING VERIFIED**
 - **P6 – Payment: COMPLETE / LIVE STAGING VERIFIED**
 - **P7 – 2027 assortment: COMPLETE / LIVE STAGING VERIFIED**
-- **P8 – production readiness: TECHNICALLY COMPLETE / NOT ACTIVATED / BOIS-OWNED STAGING VERIFY PENDING**
+- **P8 – production readiness: TECHNICALLY COMPLETE / NOT ACTIVATED / BOIS-OWNED STAGING VERIFIED**
 
 Betalning: **ISOLERAD MOCK/TESTMODE I STAGING – RIKTIG PROVIDER AVSTÄNGD**  
 Extern mejlsändning: **AVSTÄNGD I STAGING**  
@@ -189,11 +189,11 @@ Senast verifierad P6-hardening-deploy: workflow run `36327128975`, conclusion **
 - new external cost: 0
 
 ## Drift
-BoIS-specifik deployment flyttas nu till detta repo:
+BoIS-specifik deployment ägs nu enbart av detta repo:
 - `.github/workflows/simply-deploy-bois-p8-readiness.yml`
 - `.github/workflows/simply-validate-bois-p8-production.yml`
 
-P8-readiness-workflowen är manuellt skyddad och använder fortsatt mock, tomma Stripe-secrets, avstängd extern payment-mail och stängd production launch-gate. Den första körningen från `Tran-s-bois` återstår att liveverifiera. Work Capture-kopian behålls endast som tillfällig rollback tills dess och pensioneras därefter.
+P8-readiness-workflowen är manuellt skyddad och använder fortsatt mock, tomma Stripe-secrets, avstängd extern payment-mail och stängd production launch-gate. BoIS-ägd run `36414148818` lyckades från `main` `1a29eb5ddb229144f255fe92a837d20953617832`, med pinnad P8-kodref `818c262af23431be972986b9c79f70f319da90e2`. Ersatta Work Capture-deploy/readiness-workflows är pensionerade. Historiska migrations-/purge-/rollbackspår bevaras.
 
 ## Kostnad
 **Ny extern kostnad: 0 kr.**
@@ -251,4 +251,4 @@ Implementerat:
 
 Full P2–P8 CI var grön på P8-PR-head. Inga Stripe credentials, KYC, riktiga betalningar, externa mejl eller nya kostnader aktiverades.
 
-Driftägarskapet flyttas samtidigt från `work-capture` till `Tran-s-bois`. Nästa verifieringsgrind är den manuella workflowen `Simply - deploy Tranås BoIS P8 readiness staging` i detta repo med `DEPLOY_BOIS_P8_READY`. Den ska fortfarande rapportera mock/testmode, Stripe ej aktiverat, production launch false och ny extern kostnad 0.
+BoIS-ägd workflow `Simply - deploy Tranås BoIS P8 readiness staging` kördes med `DEPLOY_BOIS_P8_READY`: run `36414148818`, job `108901126748`, **success**. Source SHA för körningens `main` är `1a29eb5ddb229144f255fe92a837d20953617832`; den pinnade P8-kodrefen är `818c262af23431be972986b9c79f70f319da90e2`. Loggarna visar `phase=P8`, `payment_provider=mock`, `payment_mode=testmode`, `stripe_ready_for_test=false`, `production_launch_ready=false`; P4–P8-migration ready/pass. Syntetisk servercheckout, signerad mock-webhook → PAID, medlem ACTIVE, Nordic ELIGIBLE och dubblett utan ny downstream-effekt passerade. P5 8/168h och P7 admin/preview samt dold/blockerad merch passerade. Betalningsmejl är disabled, icke-BoIS-tabeller oförändrade, `REAL_PAYMENT_PROVIDER=no`, `REAL_STRIPE_CALLS=no`, `PRODUCTION_TRAFFIC=no`, `NEW_EXTERNAL_COST=0`. Stripe/KYC/credentials/Swish och skarp trafik är fortsatt blockerade. P8A–D är **TECHNICALLY COMPLETE / NOT ACTIVATED**; P9 eller annan utveckling kan fortsätta medan externa beslut inväntas.

@@ -4,7 +4,7 @@ Datum: 2026-09-28
 
 ## Status
 
-**TECHNICALLY READY / NOT ACTIVATED**
+**TECHNICALLY COMPLETE / NOT ACTIVATED / STAGING VERIFIED**
 
 P8 ska göra webshoppen produktionsredo utan att aktivera någon extern kostnad eller skarp betalning innan Albert/Erik har lämnat de uppgifter och godkännanden som saknas.
 
@@ -19,7 +19,7 @@ Canonical workflows:
 - `.github/workflows/simply-deploy-bois-p8-readiness.yml`
 - `.github/workflows/simply-validate-bois-p8-production.yml`
 
-Staging-workflowen är manuellt skyddad och ska verifieras från `Tran-s-bois` innan de äldre BoIS-workflowsen i Work Capture pensioneras. Flytten ändrar inte runtimeprincipen: staging är fortsatt mock, Stripe-secrets är tomma och production launch är stängd.
+Staging-workflowen är manuellt skyddad. BoIS-ägd run `36414148818` (**success**) från `main` `1a29eb5ddb229144f255fe92a837d20953617832`, pinnad P8-kodref `818c262af23431be972986b9c79f70f319da90e2`, verifierade mock/testmode, falsk Stripe-test-/produktionsreadiness, P4–P7 regression, ingen extern payment-mail, inga främmande tabeller, inga riktiga Stripe-anrop eller produktionstrafik och kostnad 0. Ersatta Work Capture-workflows är pensionerade. Staging har fortsatt tomma Stripe-secrets, Swish av och production launch stängd.
 
 ## P8A – Stripe foundation
 
