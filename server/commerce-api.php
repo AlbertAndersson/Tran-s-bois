@@ -99,6 +99,7 @@ try {
             'mode'=>$config['mode'],
             'storage_driver'=>'mysql',
             'payment_enabled'=>bois_p6_payment_enabled($config),
+            'checkout_enabled'=>$provider==='stripe'?bois_p8_stripe_checkout_allowed($config):bois_p6_payment_enabled($config),
             'payment_provider'=>$provider,
             'payment_mode'=>$provider==='mock'?'testmode':($provider==='stripe'?bois_p8_stripe_mode($config):'disabled'),
             'payment_methods'=>bois_p8_payment_methods($config),
@@ -120,7 +121,7 @@ try {
         if(!bois_p9_tracking_enabled($config)){
             commerce_respond(['ok'=>true,'sales'=>['accepted'=>false,'disabled'=>true]],202);
         }
-        commerce_respond(['ok'=>true,'sales'=>bois_p9_capture_event($pdo,commerce_body())],202);
+        commerce_respond(['ok'=>true,'sales'=>bois_p9_capture_event($pdo,commerce_body(),$config)],202);
     }
 
     if($action==='sales_recommendations'&&$method==='POST'){
@@ -190,7 +191,9 @@ try {
         $input=commerce_body();
         $order=bois_p3_create_order($pdo,$input);
         bois_p4_register_order($pdo,(string)$order['public_id']);
-        bois_p9_link_order($pdo,(string)$order['public_id'],$input);
+        if(bois_p9_tracking_enabled($config)){
+            bois_p9_link_order($pdo,(string)$order['public_id'],$input,$config);
+        }
         commerce_respond(['ok'=>true,'order'=>$order],201);
     }
 
