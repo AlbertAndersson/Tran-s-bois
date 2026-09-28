@@ -9,12 +9,17 @@
   let consentRevision=0;
   const eventControllers=new Set();
   async function consentChoice(){
+    let timer;
     try{
-      const response=await fetch(cfg.apiBase+'?action=consent',{headers:{Accept:'application/json'},cache:'no-store',credentials:'same-origin'});
+      const controller=new AbortController();
+      const deadline=new Promise(resolve=>{timer=setTimeout(()=>{controller.abort();resolve(null);},1500);});
+      const request=fetch(cfg.apiBase+'?action=consent',{headers:{Accept:'application/json'},cache:'no-store',credentials:'same-origin',signal:controller.signal}).catch(()=>null);
+      const response=await Promise.race([request,deadline]);
+      if(!response)return null;
       if(!response.ok)return null;
       const result=await response.json();
       return result.ok===true?result.choice:null;
-    }catch{return null;}
+    }catch{return null;}finally{clearTimeout(timer);}
   }
 
   // No analytics storage access before a positive server decision. Share only an

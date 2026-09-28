@@ -26,7 +26,12 @@ function browser(options={}){
     fetch:async(url,init={})=>{
       const action=new URL(url,'https://example.test').searchParams.get('action');
       requests.push({action,body:init.body?JSON.parse(init.body):null});
-      if(action==='consent')return {ok:true,json:async()=>({ok:true,choice:{decided:true,statistics:state.consent}})};
+      if(action==='consent'){
+        if(options.consentFailure==='network')throw Error('Consent offline');
+        if(options.consentFailure==='timeout')return new Promise(()=>{});
+        if(options.consentFailure==='http')return {ok:false};
+        return {ok:true,json:async()=>({ok:true,choice:{decided:true,statistics:state.consent}})};
+      }
       if(action==='health'){
         if(options.failure==='network')throw new Error('offline');
         if(options.failure==='timeout')return new Promise(()=>{});
@@ -141,6 +146,14 @@ test('No statistics decision leaves optional storage and attribution empty',asyn
   await b.app.createOrder(payload());
   assert.equal(b.storageAccess.length,0);
   assert.equal(b.requests.filter(r=>r.action==='sales_event').length,0);
+  assert.equal('sales_session_id' in orderRequest(b).body,false);
+});
+
+for(const failure of ['network','http','timeout'])test('Consent '+failure+' fails closed without blocking purchase',async()=>{
+  const b=browser({consent:true,consentFailure:failure,health:{ok:true,mode:'staging',sales_tracking_enabled:true}});
+  await sleep(30);
+  assert.equal((await b.app.createOrder(payload())).public_id,'TEST-ORDER');
+  assert.equal(b.store.has('boisSalesSession'),false);
   assert.equal('sales_session_id' in orderRequest(b).body,false);
 });
 
