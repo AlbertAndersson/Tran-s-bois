@@ -72,11 +72,24 @@ const key=()=>Math.random().toString(36).slice(2,12);
       assert.equal(await page.evaluate(()=>sessionStorage.getItem('boisSalesSession')),null);
       await page.getByRole('link',{name:/Gå till testbetalning/}).click();
       await page.locator('#orderSummary').getByText('Betalstatus').waitFor();
-      const [checkoutResponse]=await Promise.all([
-        page.waitForResponse(response=>response.url().includes('action=checkout')&&response.request().method()==='POST'),
-        page.locator('#cardBtn').click()
-      ]);
-      refundSession=(await checkoutResponse.json()).checkout;
+      const apiResponses=[];
+      page.on('response',response=>{
+        if(response.url().includes('commerce-api.php')){
+          const action=new URL(response.url()).searchParams.get('action');
+          apiResponses.push({action,method:response.request().method(),status:response.status()});
+        }
+      });
+      const checkoutResponse=page.waitForResponse(response=>new URL(response.url()).searchParams.get('action')==='checkout')
+        .catch(async error=>{
+          console.log('CHECKOUT_DIAGNOSTIC: '+JSON.stringify({
+            apiResponses,errorText:await page.locator('#error').innerText(),
+            providerVisible:await page.locator('#providerStep').isVisible()
+          }));
+          throw error;
+        });
+      await page.locator('#cardBtn').click();
+      refundSession=(await (await checkoutResponse).json()).checkout;
+      await page.locator('#providerStep').waitFor({state:'visible'});
       await page.locator('#payBtn').click();
       await page.getByText('Signerad testwebhook verifierad.').waitFor();
       await page.locator('#orderLink').click();
