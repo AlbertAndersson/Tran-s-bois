@@ -8,6 +8,27 @@
     return document.querySelector('input[name="membership"]:checked')?.value || null;
   }
 
+  let recommendationRun=0;
+
+  async function refreshRecommendation(){
+    const run=++recommendationRun;
+    const existing=$('existingMember').checked;
+    const skus=[];
+    if(!existing && selectedMembership()) skus.push(selectedMembership());
+    if($('addGym').checked) skus.push('NW-GYM-ANNUAL');
+    try{
+      const recs=await c.recommendations({skus,existing_member:existing});
+      if(run!==recommendationRun) return;
+      const box=$('salesRecommendation');
+      if(!recs.length){box.hidden=true;box.textContent='';return;}
+      const rec=recs[0];
+      box.innerHTML='<b>'+rec.title+'</b><br><span class="small">'+rec.message+'</span>';
+      box.hidden=false;
+    }catch{
+      $('salesRecommendation').hidden=true;
+    }
+  }
+
   function refresh() {
     const existing = $('existingMember').checked;
     $('membershipOptions').style.display = existing ? 'none' : 'block';
@@ -29,6 +50,7 @@
     }
     $('membershipSummary').innerHTML = lines.join('') || '<div class="small">Välj minst en produkt.</div>';
     $('total').textContent = c.money(total);
+    refreshRecommendation();
   }
 
   $('existingMember').addEventListener('change', refresh);
