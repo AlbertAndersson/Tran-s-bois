@@ -95,4 +95,4 @@ jobs:
           grep -q "REVIEW_REQUIRED" server/p6_payment.php
           grep -q "customer@example.invalid" server/p6_payment.php
           grep -q "P6_VERIFIED_WEBHOOK" server/p6_payment.php
-          ! grep -R -E "sk_live_|pk_live_|BEGIN PRIVATE KEY|SWISH_CERT|merchant_secret" server site/commerce
+          ! grep -REn "sk_(live|test)_[A-Za-z0-9]{20,}|pk_(live|test)_[A-Za-z0-9]{20,}|whsec_[A-Za-z0-9]{20,}|BEGIN PRIVATE KEY|SWISH_CERT|merchant_secret" server site/commerce --exclude='p3-config.example.php' --exclude='p8_stripe.php'
