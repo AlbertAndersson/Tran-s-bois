@@ -173,11 +173,16 @@ if(!$privacy['first_party_only'] ||
     throw new RuntimeException('P9 privacy invariant failed.');
 }
 
+// Read by position: information_schema column-label casing differs by driver.
 $columns=$pdo->query(
-    "SELECT table_name,column_name FROM information_schema.columns
-     WHERE table_schema=DATABASE() AND table_name LIKE 'bois_sales_%'"
-)->fetchAll();
-$columnNames=array_map(fn($r)=>strtolower((string)$r['column_name']),$columns);
+    "SELECT COLUMN_NAME FROM information_schema.columns
+     WHERE TABLE_SCHEMA=DATABASE()
+       AND TABLE_NAME IN ('bois_sales_sessions','bois_sales_events','bois_sales_order_links')"
+)->fetchAll(PDO::FETCH_COLUMN);
+$columnNames=array_map('strtolower',$columns);
+if(!$columnNames || !in_array('session_id',$columnNames,true) || !in_array('order_id',$columnNames,true)){
+    throw new RuntimeException('Sales schema inspection returned incomplete metadata.');
+}
 foreach(['name','email','phone','ip','ip_address','user_agent'] as $forbidden){
     if(in_array($forbidden,$columnNames,true)) throw new RuntimeException('Forbidden sales PII column: '.$forbidden);
 }
