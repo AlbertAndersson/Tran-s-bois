@@ -28,6 +28,7 @@ return [
     'stripe_fees_approved' => false,
     'refund_policy_approved' => false,
     'production_launch_enabled' => false,
+    'sales_tracking_enabled' => false,
     'membership_validity_days' => 365,
     'db' => [
         'host' => '127.0.0.1',
