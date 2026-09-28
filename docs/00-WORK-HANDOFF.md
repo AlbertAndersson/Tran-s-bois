@@ -26,7 +26,8 @@ Verifiera alltid aktuell HEAD innan du ändrar något.
 7. `docs/P6-PAYMENT.md`
 8. `docs/P7-2027-ASSORTMENT.md`
 9. `docs/P8-PAYMENT-STRIPE.md`
-10. `docs/NEXT-THREAD-PROMPT.md`
+10. `docs/P9-SALES-ENGINE.md`
+11. `docs/NEXT-THREAD-PROMPT.md`
 
 ## Aktiv deployment
 
@@ -71,7 +72,7 @@ Staging får endast innehålla testuppgifter.
 - P6 – Payment: **COMPLETE / LIVE STAGING VERIFIED**
 - P7 – 2027 assortment: **COMPLETE / LIVE STAGING VERIFIED**
 - P8 – production readiness: **TECHNICALLY COMPLETE / NOT ACTIVATED / BOIS-OWNED STAGING VERIFIED**
-- P9 – sales engine: **NOT STARTED**
+- P9 – sales engine: **IMPLEMENTED / COST-FREE STAGING VERIFY PENDING**
 
 P6-betalning kör isolerad `mock`/testmode i staging. Riktig payment provider är avstängd. Extern mejlsändning är avstängd i staging. Ny extern driftkostnad hittills: **0 kr**.
 
@@ -320,3 +321,24 @@ P2–P7 CI inklusive MySQL 8.4 är grön. En statisk lista över framtida produk
 **Kommersiella blockerare:** Albert/Erik behöver leverantörsofferter, verifierade kostnader/MOQ/ledtider/SKU, bildrättigheter, slutpriser och godkännande innan någon P7-produkt kan öppnas. Servergaten hindrar försäljning även efter datumet tills varje produkt är verifierad och godkänd.
 
 **P8-avgränsning:** Stripe-valet är dokumenterat för P8. Ingen Stripe-kod, konto, credential, riktig betalning eller ny kostnad ingår i P7.
+
+
+## P9 – Sales Engine v1
+
+P9 är byggd som kostnadsfri first-party stagingfunktion utan externa marketingtjänster.
+
+Implementerat:
+- UTM/referral-attribution,
+- pseudonym session → order → PAID-koppling,
+- first-party funnel,
+- admin sales dashboard,
+- campaign link builder,
+- attribuerad produktmix,
+- zero-discount recommendations.
+
+Sales-tabeller lagrar inte direkta kundidentifierare, IP eller user-agent. Sessionen kan länkas till order internt och behandlas därför som pseudonym data. Production-default är `sales_tracking_enabled=false`; tracking får inte aktiveras skarpt innan integritets-/rättslig grund är verifierad.
+
+P9 stagingworkflow:
+`.github/workflows/simply-deploy-bois-p9-staging.yml`
+
+Den ska fortsatt använda mockbetalning, syntetiska testuppgifter, avstängd extern e-post och 0 kr ny extern kostnad.

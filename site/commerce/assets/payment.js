@@ -43,6 +43,7 @@
 
   async function start(method){
     clear();setBusy(true);
+    c.trackSales('checkout_started').catch(()=>{});
     try{
       const body=await c.api('checkout',{
         method:'POST',

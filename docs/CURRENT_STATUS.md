@@ -11,6 +11,7 @@ Datum: 2026-09-28
 - **P6 – Payment: COMPLETE / LIVE STAGING VERIFIED**
 - **P7 – 2027 assortment: COMPLETE / LIVE STAGING VERIFIED**
 - **P8 – production readiness: TECHNICALLY COMPLETE / NOT ACTIVATED / BOIS-OWNED STAGING VERIFIED**
+- **P9 – sales engine: IMPLEMENTED / COST-FREE STAGING VERIFY PENDING**
 
 Betalning: **ISOLERAD MOCK/TESTMODE I STAGING – RIKTIG PROVIDER AVSTÄNGD**  
 Extern mejlsändning: **AVSTÄNGD I STAGING**  
@@ -252,3 +253,30 @@ Implementerat:
 Full P2–P8 CI var grön på P8-PR-head. Inga Stripe credentials, KYC, riktiga betalningar, externa mejl eller nya kostnader aktiverades.
 
 BoIS-ägd workflow `Simply - deploy Tranås BoIS P8 readiness staging` kördes med `DEPLOY_BOIS_P8_READY`: run `36414148818`, job `108901126748`, **success**. Source SHA för körningens `main` är `1a29eb5ddb229144f255fe92a837d20953617832`; den pinnade P8-kodrefen är `818c262af23431be972986b9c79f70f319da90e2`. Loggarna visar `phase=P8`, `payment_provider=mock`, `payment_mode=testmode`, `stripe_ready_for_test=false`, `production_launch_ready=false`; P4–P8-migration ready/pass. Syntetisk servercheckout, signerad mock-webhook → PAID, medlem ACTIVE, Nordic ELIGIBLE och dubblett utan ny downstream-effekt passerade. P5 8/168h och P7 admin/preview samt dold/blockerad merch passerade. Betalningsmejl är disabled, icke-BoIS-tabeller oförändrade, `REAL_PAYMENT_PROVIDER=no`, `REAL_STRIPE_CALLS=no`, `PRODUCTION_TRAFFIC=no`, `NEW_EXTERNAL_COST=0`. Stripe/KYC/credentials/Swish och skarp trafik är fortsatt blockerade. P8A–D är **TECHNICALLY COMPLETE / NOT ACTIVATED**; P9 eller annan utveckling kan fortsätta medan externa beslut inväntas.
+
+
+## P9 – Sales Engine v1 – 2026-09-28
+
+P9 är implementerad och CI-verifierad men inväntar BoIS-ägd liveverifiering i kostnadsfri staging.
+
+Scope:
+- first-party pseudonym sessionspårning med UTM/ref-attribution,
+- funnel: page → product → checkout → order → PAID,
+- orderkoppling utan direkta kundidentifierare i sales-tabellerna,
+- admin-KPI för sessioner, konvertering, testvärde, kampanjer och produktmix,
+- lokal kampanjlänksbyggare,
+- serverstyrda zero-discount recommendations,
+- event-idempotens och per-session eventtak.
+
+Säkerhets-/kostnadsgräns:
+- ingen extern analytics,
+- inga annonser,
+- inga marketing-mail/SMS,
+- Stripe fortsatt ej aktiverat,
+- extern e-post fortsatt disabled i staging,
+- P7 launch gate oförändrad,
+- `sales_tracking_enabled=false` är production-default,
+- P9-staging använder endast syntetisk data,
+- ny extern kostnad: 0 kr.
+
+Canonical dokument: `docs/P9-SALES-ENGINE.md`.

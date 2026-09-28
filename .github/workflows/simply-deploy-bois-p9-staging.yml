@@ -1,0 +1,337 @@
+name: Simply - deploy Tranås BoIS P9 sales engine staging
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Skriv DEPLOY_BOIS_P9_READY'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: simply-tranas-bois-p9-staging
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.event.inputs.confirm == 'DEPLOY_BOIS_P9_READY'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      BOIS_SOURCE_REF: 761bb6a6cc950b6f1055b6a7646363a4e9d74330
+      BOIS_PUBLIC_PATH: bois-shop-p3
+      BOIS_BASE_URL: https://alberiq.se/bois-shop-p3
+      SIMPLY_HOST: ssh.simply.com
+      EXPECTED_FINGERPRINT: ${{ vars.SIMPLY_HOST_FINGERPRINT }}
+      SIMPLY_SSH_USER: ${{ secrets.SIMPLY_SSH_USER }}
+      SIMPLY_SSH_PRIVATE_KEY: ${{ secrets.SIMPLY_SSH_PRIVATE_KEY }}
+      DB_HOST: ${{ secrets.BOIS_DB_HOST }}
+      DB_PORT: ${{ vars.BOIS_DB_PORT }}
+      DB_NAME: ${{ secrets.BOIS_DB_NAME }}
+      DB_USER: ${{ secrets.BOIS_DB_USER }}
+      DB_PASSWORD: ${{ secrets.BOIS_DB_PASSWORD }}
+
+    steps:
+      - name: Checkout verified BoIS source
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ env.BOIS_SOURCE_REF }}
+          path: bois-src
+
+      - name: Validate source
+        shell: bash
+        run: |
+          set -euo pipefail
+          php -l bois-src/server/p3_db.php
+          php -l bois-src/server/p5_batch.php
+          php -l bois-src/server/p4_membership.php
+          php -l bois-src/server/p6_payment.php
+          php -l bois-src/server/p6-migrate.php
+          php -l bois-src/server/p7_assortment.php
+          php -l bois-src/server/p7-migrate.php
+          php -l bois-src/server/p8_stripe.php
+          php -l bois-src/server/p8-migrate.php
+          php -l bois-src/server/p9_sales.php
+          php -l bois-src/server/p9-migrate.php
+          php -l bois-src/server/commerce-api.php
+          node --check bois-src/site/commerce/assets/admin.js
+          node --check bois-src/site/commerce/assets/order.js
+          node --check bois-src/site/commerce/assets/payment.js
+          node --check bois-src/site/commerce/assets/membership.js
+          node --check bois-src/site/commerce/assets/matchkit.js
+          node --check bois-src/site/commerce/assets/assortment-preview.js
+          test -f bois-src/docs/P4-MEMBERSHIP-NORDIC.md
+          test -f bois-src/docs/P5-MATCHKIT-BATCHING.md
+          test -f bois-src/docs/P6-PAYMENT.md
+          test -f bois-src/docs/P7-2027-ASSORTMENT.md
+          test -f bois-src/docs/P8-PAYMENT-STRIPE.md
+          test -f bois-src/docs/P8-PRODUCTION-READINESS.md
+          test -f bois-src/docs/P8-CUTOVER-RUNBOOK.md
+          test -f bois-src/docs/P9-SALES-ENGINE.md
+          python3 -m json.tool bois-src/data/p7-assortment.json >/dev/null
+          python3 -m json.tool bois-src/data/p8-readiness.json >/dev/null
+
+      - name: Prepare settings and strict SSH
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          [[ -n "$DB_HOST" && -n "$DB_NAME" && -n "$DB_USER" && -n "$DB_PASSWORD" ]] || { echo "::error::BOIS_DB_* secrets are incomplete"; exit 1; }
+          if [[ -z "${DB_PORT:-}" ]]; then DB_PORT=3306; fi
+          echo "DB_PORT=$DB_PORT" >> "$GITHUB_ENV"
+          [[ "$EXPECTED_FINGERPRINT" =~ ^SHA256:[A-Za-z0-9+/]{43}$ ]] || exit 1
+
+          SSH_DIR="$(mktemp -d "$RUNNER_TEMP/bois-p6-ssh.XXXXXX")"
+          export SSH_DIR
+          echo "SSH_DIR=$SSH_DIR" >> "$GITHUB_ENV"
+          printf '%s\n' "$SIMPLY_SSH_PRIVATE_KEY" | tr -d '\r' > "$SSH_DIR/identity"
+          chmod 600 "$SSH_DIR/identity"
+          ssh-keygen -y -P '' -f "$SSH_DIR/identity" >/dev/null 2>&1
+          timeout 40s ssh-keyscan -4 -T 8 -p 22 -t ed25519,ecdsa,rsa "$SIMPLY_HOST" > "$SSH_DIR/scan" 2>/dev/null
+
+          python3 - <<'PY'
+          import base64,hashlib,os
+          from pathlib import Path
+          expected=os.environ["EXPECTED_FINGERPRINT"].strip()
+          root=Path(os.environ["SSH_DIR"])
+          selected=None
+          for line in (root/"scan").read_text(encoding="ascii").splitlines():
+              parts=line.split()
+              if len(parts)!=3: continue
+              host,kind,encoded=parts
+              fp="SHA256:"+base64.b64encode(hashlib.sha256(base64.b64decode(encoded)).digest()).decode().rstrip("=")
+              if fp==expected:
+                  selected=f"{host} {kind} {encoded}\n"; break
+          if selected is None: raise SystemExit("host key mismatch")
+          (root/"known_hosts").write_text(selected,encoding="ascii")
+          PY
+
+      - name: Build P9 staging payload and private config
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          out="$RUNNER_TEMP/bois-p9-public"
+          mkdir -p "$out/assets"
+
+          for f in index.html membership.html match-kit.html order.html admin.html payment.html assortment-preview.html; do cp "bois-src/site/commerce/$f" "$out/$f"; done
+          for f in common.js membership.js matchkit.js order.js admin.js payment.js assortment-preview.js commerce.css p5.css; do cp "bois-src/site/commerce/assets/$f" "$out/assets/$f"; done
+          for f in commerce-api.php p3_db.php p5_batch.php p5-migrate.php p5-worker.php p4_membership.php p4-migrate.php p6_payment.php p6-migrate.php p7_assortment.php p7-migrate.php p8_stripe.php p8-migrate.php p9_sales.php p9-migrate.php; do cp "bois-src/server/$f" "$out/$f"; done
+
+          cat > "$out/config.js" <<'JS'
+          window.BOIS_COMMERCE_CONFIG = Object.freeze({
+            apiBase: './commerce-api.php',
+            environmentLabel: 'P9 STAGING',
+            paymentEnabled: true,
+            paymentProvider: 'mock',
+            paymentMethods: ['card','swish']
+          });
+          JS
+
+          cat > "$out/.htaccess" <<'HT'
+          Options -Indexes
+          <FilesMatch "^(p3_db|p5_batch|p5-migrate|p5-worker|p4_membership|p4-migrate|p6_payment|p6-migrate|p7_assortment|p7-migrate|p8_stripe|p8-migrate|p9_sales|p9-migrate)\.php$">
+            Require all denied
+          </FilesMatch>
+          HT
+
+          admin_token="$(openssl rand -hex 24)"
+          payment_webhook_secret="$(openssl rand -hex 32)"
+          echo "::add-mask::$admin_token"
+          echo "::add-mask::$payment_webhook_secret"
+          echo "BOIS_ADMIN_TOKEN=$admin_token" >> "$GITHUB_ENV"
+          echo "::notice::BOIS_P9_ADMIN_TOKEN=$admin_token"
+
+          enc(){ printf '%s' "$1" | base64 -w0; }
+          cat > "$RUNNER_TEMP/config.php" <<PHP
+          <?php
+          declare(strict_types=1);
+          return [
+            'mode' => 'staging',
+            'admin_token' => base64_decode('$(enc "$admin_token")'),
+            'allowed_origins' => ['https://alberiq.se'],
+            'mail_transport' => 'disabled',
+            'payment_provider' => 'mock',
+            'payment_webhook_secret' => base64_decode('$(enc "$payment_webhook_secret")'),
+            'payment_mail_transport' => 'disabled',
+            'stripe_mode' => 'test',
+            'stripe_secret_key' => '',
+            'stripe_webhook_secret' => '',
+            'stripe_swish_enabled' => false,
+            'public_base_url' => 'https://alberiq.se/bois-shop-p3',
+            'seller_legal_name' => '',
+            'seller_org_number' => '',
+            'support_email' => '',
+            'terms_url' => '',
+            'privacy_url' => '',
+            'merchant_verified' => false,
+            'stripe_fees_approved' => false,
+            'refund_policy_approved' => false,
+            'production_launch_enabled' => false,
+            'sales_tracking_enabled' => true,
+            'membership_validity_days' => 365,
+            'db' => [
+              'host' => base64_decode('$(enc "$DB_HOST")'),
+              'port' => $DB_PORT,
+              'database' => base64_decode('$(enc "$DB_NAME")'),
+              'user' => base64_decode('$(enc "$DB_USER")'),
+              'password' => base64_decode('$(enc "$DB_PASSWORD")'),
+            ],
+          ];
+          PHP
+          chmod 600 "$RUNNER_TEMP/config.php"
+
+          cat > "$RUNNER_TEMP/db-snapshot.php" <<'PHP'
+          <?php
+          $c=require $argv[1];$d=$c['db'];
+          $pdo=new PDO('mysql:host='.$d['host'].';port='.(int)$d['port'].';dbname='.$d['database'].';charset=utf8mb4',$d['user'],$d['password'],[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);
+          $q=$pdo->prepare("SELECT table_name FROM information_schema.tables WHERE table_schema=? AND table_name NOT LIKE 'bois\\_%' ESCAPE '\\\\' ORDER BY table_name");
+          $q->execute([$d['database']]);$n=$q->fetchAll(PDO::FETCH_COLUMN);
+          echo hash('sha256',implode("\n",$n))."\n".count($n)."\n";
+          PHP
+
+      - name: Install private runtime and snapshot database
+        shell: bash
+        run: |
+          set -euo pipefail
+          SSH_OPTS=(-4 -F /dev/null -T -p 22 -i "$SSH_DIR/identity" -o BatchMode=yes -o IdentitiesOnly=yes -o IdentityAgent=none -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$SSH_DIR/known_hosts" -o GlobalKnownHostsFile=/dev/null -o UpdateHostKeys=no -o PasswordAuthentication=no -o KbdInteractiveAuthentication=no -o ForwardAgent=no -o ClearAllForwardings=yes -o ConnectTimeout=12 -o ConnectionAttempts=1 -o LogLevel=ERROR)
+          ssh "${SSH_OPTS[@]}" -l "$SIMPLY_SSH_USER" "$SIMPLY_HOST" 'mkdir -p "$HOME/.bois-p3"; chmod 700 "$HOME/.bois-p3"'
+          cat "$RUNNER_TEMP/config.php" | ssh "${SSH_OPTS[@]}" -l "$SIMPLY_SSH_USER" "$SIMPLY_HOST" 'umask 077; cat > "$HOME/.bois-p3/config.php"; chmod 600 "$HOME/.bois-p3/config.php"'
+          cat bois-src/data/p7-assortment.json | ssh "${SSH_OPTS[@]}" -l "$SIMPLY_SSH_USER" "$SIMPLY_HOST" 'umask 077; cat > "$HOME/.bois-p3/p7-assortment.json"; chmod 600 "$HOME/.bois-p3/p7-assortment.json"'
+          cat "$RUNNER_TEMP/db-snapshot.php" | ssh "${SSH_OPTS[@]}" -l "$SIMPLY_SSH_USER" "$SIMPLY_HOST" 'umask 077; cat > "$HOME/.bois-p3/db-snapshot.php"; chmod 600 "$HOME/.bois-p3/db-snapshot.php"'
+          ssh "${SSH_OPTS[@]}" -l "$SIMPLY_SSH_USER" "$SIMPLY_HOST" 'php "$HOME/.bois-p3/db-snapshot.php" "$HOME/.bois-p3/config.php"' > "$RUNNER_TEMP/before.txt"
+          echo "NON_BOIS_HASH=$(head -n1 "$RUNNER_TEMP/before.txt")" >> "$GITHUB_ENV"
+          echo "NON_BOIS_COUNT=$(tail -n1 "$RUNNER_TEMP/before.txt")" >> "$GITHUB_ENV"
+
+      - name: Deploy and migrate P9 staging
+        shell: bash
+        run: |
+          set -euo pipefail
+          SSH_OPTS=(-4 -F /dev/null -T -p 22 -i "$SSH_DIR/identity" -o BatchMode=yes -o IdentitiesOnly=yes -o IdentityAgent=none -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$SSH_DIR/known_hosts" -o GlobalKnownHostsFile=/dev/null -o UpdateHostKeys=no -o PasswordAuthentication=no -o KbdInteractiveAuthentication=no -o ForwardAgent=no -o ClearAllForwardings=yes -o ConnectTimeout=12 -o ConnectionAttempts=1 -o LogLevel=ERROR)
+          TARGET_REL="public_html/$BOIS_PUBLIC_PATH"
+          ssh "${SSH_OPTS[@]}" -l "$SIMPLY_SSH_USER" "$SIMPLY_HOST" 'sh -s' -- "$TARGET_REL" <<'REMOTE'
+          set -eu
+          target="$1"
+          [ "$target" = "public_html/bois-shop-p3" ] || exit 61
+          rm -rf -- "$HOME/$target"; mkdir -p "$HOME/$target"; chmod 755 "$HOME/$target"
+          REMOTE
+          tar -C "$RUNNER_TEMP/bois-p9-public" -czf - . | ssh "${SSH_OPTS[@]}" -l "$SIMPLY_SSH_USER" "$SIMPLY_HOST"             "set -eu; tar -xzf - -C \"\$HOME/$TARGET_REL\"; find \"\$HOME/$TARGET_REL\" -type d -exec chmod 755 {} +; find \"\$HOME/$TARGET_REL\" -type f -exec chmod 644 {} +"
+          ssh "${SSH_OPTS[@]}" -l "$SIMPLY_SSH_USER" "$SIMPLY_HOST" 'export BOIS_P3_CONFIG_PATH="$HOME/.bois-p3/config.php"; php "$HOME/public_html/bois-shop-p3/p5-migrate.php"; php "$HOME/public_html/bois-shop-p3/p4-migrate.php"; php "$HOME/public_html/bois-shop-p3/p6-migrate.php"; export BOIS_P7_ASSORTMENT_PATH="$HOME/.bois-p3/p7-assortment.json"; php "$HOME/public_html/bois-shop-p3/p7-migrate.php"; php "$HOME/public_html/bois-shop-p3/p8-migrate.php"; php "$HOME/public_html/bois-shop-p3/p9-migrate.php"'
+          ssh "${SSH_OPTS[@]}" -l "$SIMPLY_SSH_USER" "$SIMPLY_HOST" 'php "$HOME/.bois-p3/db-snapshot.php" "$HOME/.bois-p3/config.php"' > "$RUNNER_TEMP/after.txt"
+          [[ "$(head -n1 "$RUNNER_TEMP/after.txt")" = "$NON_BOIS_HASH" ]]
+          [[ "$(tail -n1 "$RUNNER_TEMP/after.txt")" = "$NON_BOIS_COUNT" ]]
+
+      - name: Verify P4–P9 zero-cost staging end-to-end
+        shell: bash
+        run: |
+          set -euo pipefail
+          UA="AlberIQ-BoIS-P9-Check/1.0"
+          API="$BOIS_BASE_URL/commerce-api.php"
+
+          curl --fail --silent --show-error -A "$UA" "$API?action=health" -o "$RUNNER_TEMP/health.json"
+          grep -q '"phase":"P9"' "$RUNNER_TEMP/health.json"
+          grep -q '"payment_enabled":true' "$RUNNER_TEMP/health.json"
+          grep -q '"payment_provider":"mock"' "$RUNNER_TEMP/health.json"
+          grep -q '"payment_mode":"testmode"' "$RUNNER_TEMP/health.json"
+          grep -q '"stripe_ready_for_test":false' "$RUNNER_TEMP/health.json"
+          grep -q '"production_launch_ready":false' "$RUNNER_TEMP/health.json"
+          grep -q '"sales_engine":"first_party"' "$RUNNER_TEMP/health.json"
+          grep -q '"sales_tracking_enabled":true' "$RUNNER_TEMP/health.json"
+          grep -q '"external_analytics":false' "$RUNNER_TEMP/health.json"
+          grep -q '"mail_transport":"disabled"' "$RUNNER_TEMP/health.json"
+          grep -q '"batch_threshold_qty":8' "$RUNNER_TEMP/health.json"
+
+          sales_session="$(python3 - <<'PY'
+          import uuid
+          print(uuid.uuid4())
+          PY
+          )"
+          curl --fail --silent --show-error -A "$UA" -X POST "$API?action=sales_event"             -H "Origin: https://alberiq.se" -H "Content-Type: application/json"             --data "{\"session_id\":\"$sales_session\",\"event_key\":\"gh-$GITHUB_RUN_ID-page\",\"event_type\":\"page_view\",\"page_path\":\"/bois-shop-p3/\",\"attribution\":{\"source\":\"github\",\"medium\":\"staging\",\"campaign\":\"p9-readiness\",\"ref\":\"ci\",\"landing_path\":\"/bois-shop-p3/\"}}"             -o "$RUNNER_TEMP/sales-event.json"
+          grep -q '"accepted":true' "$RUNNER_TEMP/sales-event.json"
+
+          curl --fail --silent --show-error -A "$UA" -X POST "$API?action=sales_recommendations"             -H "Origin: https://alberiq.se" -H "Content-Type: application/json"             --data '{"skus":["MEM-ADULT"],"existing_member":false}'             -o "$RUNNER_TEMP/recommendations.json"
+          php -r '$d=json_decode(file_get_contents($argv[1]),true); $r=$d["recommendations"][0]??[]; if(($r["product_key"]??"")!=="nordic-gym" || (int)($r["discount_ore"]??-1)!==0) exit(1);' "$RUNNER_TEMP/recommendations.json"
+
+          new_email="p9-new-$GITHUB_RUN_ID@example.invalid"
+          curl --fail --silent --show-error -A "$UA" -X POST "$API?action=orders"             -H "Origin: https://alberiq.se" -H "Content-Type: application/json"             --data "{\"customer\":{\"name\":\"P9 Syntetisk Medlem\",\"email\":\"$new_email\",\"phone\":\"070-900 00 01\"},\"items\":[{\"sku\":\"MEM-ADULT\",\"quantity\":1,\"metadata\":{\"member_name\":\"P9 Syntetisk Medlem\"}},{\"sku\":\"NW-GYM-ANNUAL\",\"quantity\":1,\"metadata\":{}}],\"existing_member\":false,\"consent\":true,\"website\":\"\",\"idempotency_key\":\"p9-new-$GITHUB_RUN_ID\",\"sales_session_id\":\"$sales_session\",\"sales_attribution\":{\"source\":\"github\",\"medium\":\"staging\",\"campaign\":\"p9-readiness\",\"ref\":\"ci\",\"landing_path\":\"/bois-shop-p3/\"}}"             -o "$RUNNER_TEMP/order.json"
+
+          order_id="$(php -r '$d=json_decode(file_get_contents($argv[1]),true);echo $d["order"]["public_id"]??"";' "$RUNNER_TEMP/order.json")"
+          order_token="$(php -r '$d=json_decode(file_get_contents($argv[1]),true);echo $d["order"]["public_token"]??"";' "$RUNNER_TEMP/order.json")"
+          [[ -n "$order_id" && -n "$order_token" ]]
+
+          curl --fail --silent --show-error -A "$UA" -X POST "$API?action=checkout" -H "Origin: https://alberiq.se" -H "Content-Type: application/json"             --data "{\"public_id\":\"$order_id\",\"public_token\":\"$order_token\",\"method\":\"swish\"}"             -o "$RUNNER_TEMP/checkout.json"
+          grep -q '"provider":"mock"' "$RUNNER_TEMP/checkout.json"
+          grep -q '"method":"swish"' "$RUNNER_TEMP/checkout.json"
+          grep -q '"status":"PENDING"' "$RUNNER_TEMP/checkout.json"
+
+          session_ref="$(php -r '$d=json_decode(file_get_contents($argv[1]),true);echo $d["checkout"]["session_ref"]??"";' "$RUNNER_TEMP/checkout.json")"
+          session_token="$(php -r '$d=json_decode(file_get_contents($argv[1]),true);echo $d["checkout"]["session_token"]??"";' "$RUNNER_TEMP/checkout.json")"
+          [[ -n "$session_ref" && -n "$session_token" ]]
+
+          curl --fail --silent --show-error -A "$UA" -X POST "$API?action=mock_payment_event" -H "Origin: https://alberiq.se" -H "Content-Type: application/json"             --data "{\"session_ref\":\"$session_ref\",\"session_token\":\"$session_token\",\"outcome\":\"paid\"}"             -o "$RUNNER_TEMP/paid.json"
+          grep -q '"status":"PAID"' "$RUNNER_TEMP/paid.json"
+          grep -q '"status":"ELIGIBLE"' "$RUNNER_TEMP/paid.json"
+
+          curl --fail --silent --show-error -A "$UA" -X POST "$API?action=mock_payment_event" -H "Origin: https://alberiq.se" -H "Content-Type: application/json"             --data "{\"session_ref\":\"$session_ref\",\"session_token\":\"$session_token\",\"outcome\":\"paid\"}"             -o "$RUNNER_TEMP/paid-again.json"
+          grep -q '"already_applied":true' "$RUNNER_TEMP/paid-again.json"
+
+          curl --fail --silent --show-error -A "$UA" "$API?action=order&id=$order_id&token=$order_token" -o "$RUNNER_TEMP/public.json"
+          grep -q '"payment_status":"PAID"' "$RUNNER_TEMP/public.json"
+          grep -q '"status":"ACTIVE"' "$RUNNER_TEMP/public.json"
+          grep -q '"status":"ELIGIBLE"' "$RUNNER_TEMP/public.json"
+
+          curl --fail --silent --show-error -A "$UA" "$API?action=admin_sales"             -H "Authorization: Bearer $BOIS_ADMIN_TOKEN" -o "$RUNNER_TEMP/p9-sales.json"
+          php -r '$d=json_decode(file_get_contents($argv[1]),true);$s=$d["sales"]??[];$p=$s["privacy"]??[];$k=$s["kpis"]??[];if(empty($p["first_party_only"])||!empty($p["personal_data_in_sales_tables"])||!empty($p["external_analytics"])||(int)($k["paid_sessions"]??0)<1)exit(1);$ok=false;foreach(($s["campaigns"]??[]) as $r){if(($r["campaign"]??"")==="p9-readiness"&&(int)($r["paid_orders"]??0)>=1){$ok=true;break;}}if(!$ok)exit(2);' "$RUNNER_TEMP/p9-sales.json"
+
+          curl --fail --silent --show-error -A "$UA" "$BOIS_BASE_URL/assortment-preview.html" -o "$RUNNER_TEMP/p7-preview.html"
+          grep -q 'INTERN GRANSKNING' "$RUNNER_TEMP/p7-preview.html"
+          curl --fail --silent --show-error -A "$UA" "$API?action=admin_p7" \
+            -H "Authorization: Bearer $BOIS_ADMIN_TOKEN" -o "$RUNNER_TEMP/p7-admin.json"
+          php -r '$d=json_decode(file_get_contents($argv[1]),true); if(count($d["assortment"]??[])!==3) exit(1); foreach($d["assortment"] as $p){if($p["approved"] || $p["is_public"] || $p["is_orderable"] || !$p["blockers"] || $p["margin_ore"]!==null) exit(2);}' "$RUNNER_TEMP/p7-admin.json"
+          curl --fail --silent --show-error -A "$UA" "$API?action=catalog" -o "$RUNNER_TEMP/p7-catalog.json"
+          php -r '$d=json_decode(file_get_contents($argv[1]),true); foreach($d["products"]??[] as $p){if(in_array($p["product_key"],["bois-1941-hoodie","supporter-tee","bois-beanie"],true)) exit(1);}' "$RUNNER_TEMP/p7-catalog.json"
+          grep -q '"payment_provider":"mock"' "$RUNNER_TEMP/health.json"
+          grep -q '"mail_transport":"disabled"' "$RUNNER_TEMP/health.json"
+
+          curl --fail --silent --show-error -A "$UA" -X POST "$API?action=admin_run_payment_outbox"             -H "Authorization: Bearer $BOIS_ADMIN_TOKEN" -H "Content-Type: application/json" --data '{}'             -o "$RUNNER_TEMP/payment-mail.json"
+          grep -q '"transport":"disabled"' "$RUNNER_TEMP/payment-mail.json"
+          grep -q '"sent":0' "$RUNNER_TEMP/payment-mail.json"
+
+          {
+            echo "## Tranås BoIS P9 sales engine verified"
+            echo "P9_PHASE: pass"
+            echo "P9_FIRST_PARTY_FUNNEL: pass"
+            echo "P9_CAMPAIGN_ATTRIBUTION_TO_PAID: pass"
+            echo "P9_ZERO_DISCOUNT_RECOMMENDATION: pass"
+            echo "P9_DIRECT_CUSTOMER_IDENTIFIERS_IN_SALES_TABLES: no"
+            echo "P9_PSEUDONYMOUS_SESSION_DATA: yes"
+            echo "EXTERNAL_ANALYTICS: no"
+            echo "P8_READINESS_PRESERVED: pass"
+            echo "STRIPE_ACTIVATED: no"
+            echo "PRODUCTION_LAUNCH_READY: no"
+            echo "SERVER_CHECKOUT: pass"
+            echo "MOCK_SWISH: pass"
+            echo "SIGNED_WEBHOOK_PATH: pass"
+            echo "DOWNSTREAM_EFFECT_IDEMPOTENCY: pass"
+            echo "MEMBERSHIP_AFTER_PAID: pass"
+            echo "NORDIC_AFTER_PAID: pass"
+            echo "PAYMENT_MAIL_TRANSPORT_DISABLED: pass"
+            echo "P5_BATCH_CONFIG_PRESERVED: pass"
+            echo "P7_ADMIN_PREVIEW: pass"
+            echo "P7_PRELAUNCH_CATALOG_HIDDEN: pass"
+            echo "NON_BOIS_TABLES_UNCHANGED: pass"
+            echo "REAL_PAYMENT_PROVIDER: no"
+            echo "REAL_STRIPE_CALLS: no"
+            echo "PRODUCTION_TRAFFIC: no"
+            echo "MARKETING_EMAIL_SENT: no"
+            echo "PAID_ADVERTISING: no"
+            echo "NEW_EXTERNAL_COST: 0"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Cleanup runner secrets
+        if: always()
+        shell: bash
+        run: rm -f "$RUNNER_TEMP/config.php" "$RUNNER_TEMP/db-snapshot.php" || true

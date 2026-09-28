@@ -2,17 +2,17 @@
 <html lang="sv">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow">
-  <title>BoIS Shopadmin – P4 + P5</title>
+  <title>BoIS Shopadmin – P9 Sales Engine</title>
   <link rel="stylesheet" href="assets/commerce.css"><link rel="stylesheet" href="assets/p5.css">
   <script src="config.js" defer></script>
   <script src="assets/common.js" defer></script>
   <script src="assets/admin.js" defer></script>
 </head>
-<body>
+<body data-sales-ignore="true">
 <header class="header">
   <div class="nav">
     <a class="brand" href="index.html"><img src="https://cdn06.svenskalag.se/img/clubmarks/6245_w.png?3=" alt="Tranås BoIS"><div>TRANÅS BoIS<small>SHOPADMIN</small></div></a>
-    <span class="env" data-env>P5 DEMO</span>
+    <span class="env" data-env>P9 STAGING</span>
   </div>
 </header>
 
@@ -44,6 +44,52 @@
       <div class="kpi"><strong id="batchesKpi">0</strong><span>Batcher</span></div>
       <div class="kpi"><strong id="outboxKpi">0</strong><span>Outbox</span></div>
     </div>
+
+    <section class="card" style="margin:18px 0">
+      <div class="section-head" style="margin:0 0 14px">
+        <div>
+          <h2 style="font-size:24px">P9 – Sales Engine</h2>
+          <p>First-party funnel och kampanjattribution. Ingen extern analytics eller annonsering. Sales-tabellerna lagrar inga direkta kundidentifierare; session-ID är pseudonymt och kan kopplas till order internt.</p>
+        </div>
+      </div>
+      <div class="p5-progress">
+        <div><strong id="salesSessionsKpi">0</strong><span>sessioner</span></div>
+        <div><strong id="salesPaidKpi">0</strong><span>betalda sessioner</span></div>
+        <div><strong id="salesConversionKpi">0 %</strong><span>session → betald</span></div>
+        <div><strong id="salesNetKpi">0 kr</strong><span>netto testvärde</span></div>
+      </div>
+
+      <h3 style="color:var(--blue);margin-top:22px">Funnel</h3>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Steg</th><th>Unika sessioner</th></tr></thead>
+        <tbody id="salesFunnel"></tbody>
+      </table></div>
+
+      <h3 style="color:var(--blue);margin-top:22px">Kampanjer & referrals</h3>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Källa</th><th>Medium</th><th>Kampanj</th><th>Ref</th><th>Sessioner</th><th>Order</th><th>Betalda</th><th>Netto</th></tr></thead>
+        <tbody id="salesCampaigns"></tbody>
+      </table></div>
+
+      <h3 style="color:var(--blue);margin-top:22px">Produktmix – attribuerade betalda testorder</h3>
+      <div class="table-wrap"><table>
+        <thead><tr><th>SKU</th><th>Produkt</th><th>Antal</th><th>Order</th><th>Bruttovärde</th></tr></thead>
+        <tbody id="salesProducts"></tbody>
+      </table></div>
+
+      <h3 style="color:var(--blue);margin-top:22px">Bygg spårbar kampanjlänk</h3>
+      <p class="small">Länken ger attribution i P9 men ingen rabatt eller extern utskickstjänst.</p>
+      <div class="row">
+        <div class="field"><label for="campaignSource">Källa</label><input id="campaignSource" placeholder="facebook"></div>
+        <div class="field"><label for="campaignMedium">Medium</label><input id="campaignMedium" placeholder="social"></div>
+      </div>
+      <div class="row">
+        <div class="field"><label for="campaignName">Kampanj</label><input id="campaignName" placeholder="hostkampanj-2026"></div>
+        <div class="field"><label for="campaignRef">Ref</label><input id="campaignRef" placeholder="p13"></div>
+      </div>
+      <button class="btn ghost" id="buildCampaignLink" type="button">Skapa länk</button>
+      <div class="field" style="margin-top:10px"><label for="campaignLink">Länk</label><input id="campaignLink" readonly></div>
+    </section>
 
     <section class="card" style="margin:18px 0">
       <div class="section-head" style="margin:0 0 14px">
