@@ -1,0 +1,99 @@
+name: P9 Sales Engine CI
+
+on:
+  push:
+    branches: [main, "chatgpt/**"]
+    paths:
+      - "server/p9_sales.php"
+      - "server/p9-migrate.php"
+      - "server/commerce-api.php"
+      - "site/commerce/assets/common.js"
+      - "site/commerce/assets/membership.js"
+      - "site/commerce/assets/payment.js"
+      - "site/commerce/assets/admin.js"
+      - "site/commerce/membership.html"
+      - "site/commerce/admin.html"
+      - "tests/p9-sales-smoke.php"
+      - "docs/P9-SALES-ENGINE.md"
+      - ".github/workflows/p9-ci.yml"
+      - ".github/workflows/simply-deploy-bois-p9-staging.yml"
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+
+    env:
+      BOIS_P3_TEST_DB_HOST: 127.0.0.1
+      BOIS_P3_TEST_DB_PORT: 3306
+      BOIS_P3_TEST_DB_USER: root
+      BOIS_P3_TEST_DB_PASSWORD: root
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: P9 syntax
+        run: |
+          php -l server/p9_sales.php
+          php -l server/p9-migrate.php
+          php -l server/commerce-api.php
+          php -l tests/p9-sales-smoke.php
+          node --check site/commerce/assets/common.js
+          node --check site/commerce/assets/membership.js
+          node --check site/commerce/assets/payment.js
+          node --check site/commerce/assets/admin.js
+
+      - name: P3-P8 regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          for phase in p3 p4 p5 p6 p7-gate p8-stripe; do
+            export BOIS_P3_TEST_DB_NAME="bois_p9_reg_${phase//-/_}"
+            mysql -h127.0.0.1 -uroot -proot -e "CREATE DATABASE \`$BOIS_P3_TEST_DB_NAME\`"
+            if [[ "$phase" == "p8-stripe" ]]; then
+              php tests/p8-stripe-smoke.php
+            else
+              php "tests/${phase}-smoke.php"
+            fi
+          done
+
+      - name: P9 sales engine on isolated MySQL
+        shell: bash
+        run: |
+          set -euo pipefail
+          export BOIS_P3_TEST_DB_NAME="bois_p9_sales"
+          mysql -h127.0.0.1 -uroot -proot -e "CREATE DATABASE \`$BOIS_P3_TEST_DB_NAME\`"
+          php tests/p9-sales-smoke.php | tee "$RUNNER_TEMP/p9.txt"
+          grep -q "P9_SALES_ENGINE: pass" "$RUNNER_TEMP/p9.txt"
+          grep -q "DIRECT_CUSTOMER_IDENTIFIERS_IN_SALES_TABLES: no" "$RUNNER_TEMP/p9.txt"
+          grep -q "PSEUDONYMOUS_SESSION_DATA: yes" "$RUNNER_TEMP/p9.txt"
+          grep -q "EXTERNAL_ANALYTICS: no" "$RUNNER_TEMP/p9.txt"
+          grep -q "REAL_PAYMENT: no" "$RUNNER_TEMP/p9.txt"
+          grep -q "NEW_EXTERNAL_COST: 0" "$RUNNER_TEMP/p9.txt"
+
+      - name: P9 zero-cost safety
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q "first_party_only" server/p9_sales.php
+          grep -q "external_analytics.*false" server/p9_sales.php
+          grep -q "discount_ore.*0" server/p9_sales.php
+          grep -q "'sales_tracking_enabled' => false" server/p3-config.example.php
+          ! grep -REn "gtag\\(|googletagmanager|google-analytics|connect.facebook.net|plausible.io|posthog|segment.io|mixpanel" site/commerce server
+          ! grep -REn "mailto:|smtp_password" server/p9_sales.php site/commerce/assets/common.js site/commerce/assets/admin.js
