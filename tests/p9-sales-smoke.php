@@ -1,13 +1,13 @@
 <?php
 declare(strict_types=1);
 
-require dirname(__DIR__) . '/server/p3_db.php';
-require dirname(__DIR__) . '/server/p5_batch.php';
-require dirname(__DIR__) . '/server/p4_membership.php';
-require dirname(__DIR__) . '/server/p6_payment.php';
-require dirname(__DIR__) . '/server/p7_assortment.php';
-require dirname(__DIR__) . '/server/p8_stripe.php';
-require dirname(__DIR__) . '/server/p9_sales.php';
+require_once dirname(__DIR__) . '/server/p3_db.php';
+require_once dirname(__DIR__) . '/server/p5_batch.php';
+require_once dirname(__DIR__) . '/server/p4_membership.php';
+require_once dirname(__DIR__) . '/server/p6_payment.php';
+require_once dirname(__DIR__) . '/server/p7_assortment.php';
+require_once dirname(__DIR__) . '/server/p8_stripe.php';
+require_once dirname(__DIR__) . '/server/p9_sales.php';
 
 $config=[
     'mode'=>'test',
