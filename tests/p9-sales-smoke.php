@@ -27,6 +27,7 @@ $config=[
     'stripe_fees_approved'=>false,
     'refund_policy_approved'=>false,
     'production_launch_enabled'=>false,
+    'sales_tracking_enabled'=>true,
     'db'=>[
         'host'=>getenv('BOIS_P3_TEST_DB_HOST') ?: '127.0.0.1',
         'port'=>(int)(getenv('BOIS_P3_TEST_DB_PORT') ?: 3306),
@@ -163,7 +164,9 @@ if(count($eligibility)!==1 || ($eligibility[0]['kind']??'')!=='eligibility'){
 
 $privacy=$dashboard['privacy'];
 if(!$privacy['first_party_only'] ||
-   $privacy['personal_data_in_sales_tables'] ||
+   $privacy['direct_customer_identifiers_stored'] ||
+   !$privacy['pseudonymous_session_identifier'] ||
+   !$privacy['order_link_exists'] ||
    $privacy['ip_stored'] ||
    $privacy['user_agent_stored'] ||
    $privacy['external_analytics']){
@@ -186,7 +189,8 @@ echo "ORDER_LINK: pass\n";
 echo "PAID_CONVERSION: pass\n";
 echo "PRODUCT_MIX: pass\n";
 echo "ZERO_DISCOUNT_RECOMMENDATIONS: pass\n";
-echo "SALES_PII_STORED: no\n";
+echo "DIRECT_CUSTOMER_IDENTIFIERS_IN_SALES_TABLES: no\n";
+echo "PSEUDONYMOUS_SESSION_DATA: yes\n";
 echo "EXTERNAL_ANALYTICS: no\n";
 echo "EXTERNAL_EMAIL: no\n";
 echo "REAL_PAYMENT: no\n";
