@@ -62,7 +62,7 @@ $first=bois_p9_capture_event($pdo,[
     'event_type'=>'page_view',
     'page_path'=>'/bois-shop-p3/',
     'attribution'=>$attr,
-]);
+],$config);
 if(!$first['accepted'] || $first['duplicate']) throw new RuntimeException('Initial P9 event failed.');
 
 $duplicate=bois_p9_capture_event($pdo,[
@@ -71,7 +71,7 @@ $duplicate=bois_p9_capture_event($pdo,[
     'event_type'=>'page_view',
     'page_path'=>'/bois-shop-p3/',
     'attribution'=>$attr,
-]);
+],$config);
 if(!$duplicate['duplicate']) throw new RuntimeException('P9 event dedupe failed.');
 
 bois_p9_capture_event($pdo,[
@@ -81,21 +81,21 @@ bois_p9_capture_event($pdo,[
     'page_path'=>'/bois-shop-p3/membership.html',
     'product_key'=>'membership',
     'attribution'=>$attr,
-]);
+],$config);
 bois_p9_capture_event($pdo,[
     'session_id'=>$session,
     'event_key'=>'evt-p9-checkout-view-0001',
     'event_type'=>'checkout_view',
     'page_path'=>'/bois-shop-p3/payment.html',
     'attribution'=>$attr,
-]);
+],$config);
 bois_p9_capture_event($pdo,[
     'session_id'=>$session,
     'event_key'=>'evt-p9-checkout-started-0001',
     'event_type'=>'checkout_started',
     'page_path'=>'/bois-shop-p3/payment.html',
     'attribution'=>$attr,
-]);
+],$config);
 
 $order=bois_p3_create_order($pdo,[
     'customer'=>[
@@ -116,7 +116,7 @@ bois_p4_register_order($pdo,$order['public_id']);
 bois_p9_link_order($pdo,$order['public_id'],[
     'sales_session_id'=>$session,
     'sales_attribution'=>$attr,
-]);
+],$config);
 
 $checkout=bois_p6_checkout($pdo,$config,$order['public_id'],$order['public_token'],'card');
 $paid=bois_p6_mock_event($pdo,$config,$checkout['session_ref'],$checkout['session_token'],'paid');
@@ -182,6 +182,58 @@ foreach(['name','email','phone','ip','ip_address','user_agent'] as $forbidden){
     if(in_array($forbidden,$columnNames,true)) throw new RuntimeException('Forbidden sales PII column: '.$forbidden);
 }
 
+// OFF means zero writes, including attempts to re-attribute an existing order.
+$snapshot=function() use($pdo): string {
+    $data=[];
+    foreach(['bois_sales_sessions','bois_sales_events','bois_sales_order_links'] as $table){
+        $data[$table]=$pdo->query('SELECT * FROM '.$table.' ORDER BY 1')->fetchAll();
+    }
+    return json_encode($data,JSON_THROW_ON_ERROR);
+};
+$before=$snapshot();
+$forged=[
+    'session_id'=>'123e4567-e89b-42d3-a456-426614174999',
+    'sales_session_id'=>'123e4567-e89b-42d3-a456-426614174999',
+    'event_key'=>'evt-off-must-not-exist',
+    'event_type'=>'page_view',
+    'attribution'=>$attr,
+    'sales_attribution'=>$attr,
+    'sales_tracking_enabled'=>true,
+    'mode'=>'staging',
+    'consent'=>true,
+];
+foreach([
+    [],
+    ['mode'=>'staging'],
+    ['mode'=>'staging','sales_tracking_enabled'=>false],
+    ['mode'=>'staging','sales_tracking_enabled'=>'true'],
+    ['mode'=>'staging','sales_tracking_enabled'=>1],
+    ['mode'=>'production','sales_tracking_enabled'=>true],
+    ['mode'=>'unknown','sales_tracking_enabled'=>true],
+] as $off){
+    if(bois_p9_tracking_enabled($off)) throw new RuntimeException('Unexpected tracking approval.');
+    $result=bois_p9_capture_event($pdo,$forged,$off);
+    if(($result['disabled']??false)!==true) throw new RuntimeException('Event not disabled.');
+    bois_p9_link_order($pdo,$order['public_id'],$forged,$off);
+    if($snapshot()!==$before) throw new RuntimeException('Disabled tracking changed sales data.');
+}
+bois_p9_capture_event($pdo,$forged);
+bois_p9_link_order($pdo,$order['public_id'],$forged);
+if($snapshot()!==$before) throw new RuntimeException('Missing config allowed sales writes.');
+
+$offOrder=bois_p3_create_order($pdo,[
+    'customer'=>['name'=>'No Tracking Test','email'=>'no-tracking@example.invalid'],
+    'items'=>[['sku'=>'MEM-ADULT','quantity'=>1,'metadata'=>['member_name'=>'No Tracking Test']]],
+    'consent'=>true,'website'=>'','idempotency_key'=>'p9-no-tracking-order',
+]+$forged);
+$offConfig=array_replace($config,['sales_tracking_enabled'=>false]);
+bois_p4_register_order($pdo,$offOrder['public_id']);
+bois_p9_link_order($pdo,$offOrder['public_id'],$forged,$offConfig);
+$offCheckout=bois_p6_checkout($pdo,$offConfig,$offOrder['public_id'],$offOrder['public_token'],'card');
+$offPaid=bois_p6_mock_event($pdo,$offConfig,$offCheckout['session_ref'],$offCheckout['session_token'],'paid');
+if(($offPaid['result']['status']??'')!=='PAID') throw new RuntimeException('Order/payment requires tracking.');
+if($snapshot()!==$before) throw new RuntimeException('Untracked order wrote sales data.');
+
 echo "P9_SALES_ENGINE: pass\n";
 echo "FIRST_PARTY_FUNNEL: pass\n";
 echo "CAMPAIGN_ATTRIBUTION: pass\n";
@@ -191,6 +243,9 @@ echo "PRODUCT_MIX: pass\n";
 echo "ZERO_DISCOUNT_RECOMMENDATIONS: pass\n";
 echo "DIRECT_CUSTOMER_IDENTIFIERS_IN_SALES_TABLES: no\n";
 echo "PSEUDONYMOUS_SESSION_DATA: yes\n";
+echo "TRACKING_OFF_ZERO_SALES_WRITES: pass\n";
+echo "PRODUCTION_TRACKING_BLOCKED: pass\n";
+echo "ORDER_AND_MOCK_PAYMENT_WITHOUT_TRACKING: pass\n";
 echo "EXTERNAL_ANALYTICS: no\n";
 echo "EXTERNAL_EMAIL: no\n";
 echo "REAL_PAYMENT: no\n";
