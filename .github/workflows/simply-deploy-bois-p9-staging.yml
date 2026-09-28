@@ -171,6 +171,7 @@ jobs:
             'stripe_fees_approved' => false,
             'refund_policy_approved' => false,
             'production_launch_enabled' => false,
+            'sales_tracking_enabled' => true,
             'membership_validity_days' => 365,
             'db' => [
               'host' => base64_decode('$(enc "$DB_HOST")'),
@@ -238,6 +239,7 @@ jobs:
           grep -q '"stripe_ready_for_test":false' "$RUNNER_TEMP/health.json"
           grep -q '"production_launch_ready":false' "$RUNNER_TEMP/health.json"
           grep -q '"sales_engine":"first_party"' "$RUNNER_TEMP/health.json"
+          grep -q '"sales_tracking_enabled":true' "$RUNNER_TEMP/health.json"
           grep -q '"external_analytics":false' "$RUNNER_TEMP/health.json"
           grep -q '"mail_transport":"disabled"' "$RUNNER_TEMP/health.json"
           grep -q '"batch_threshold_qty":8' "$RUNNER_TEMP/health.json"
