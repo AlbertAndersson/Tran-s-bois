@@ -105,6 +105,7 @@ try {
             'stripe_ready_for_test'=>$readiness['ready_for_stripe_test'],
             'production_launch_ready'=>$readiness['ready_for_production_launch'],
             'sales_engine'=>'first_party',
+            'sales_tracking_enabled'=>bois_p9_tracking_enabled($config),
             'external_analytics'=>false,
             'mail_transport'=>$config['mail_transport'] ?? 'disabled',
             'batch_threshold_qty'=>$waiting['threshold_qty'],
@@ -116,6 +117,9 @@ try {
     }
 
     if($action==='sales_event'&&$method==='POST'){
+        if(!bois_p9_tracking_enabled($config)){
+            commerce_respond(['ok'=>true,'sales'=>['accepted'=>false,'disabled'=>true]],202);
+        }
         commerce_respond(['ok'=>true,'sales'=>bois_p9_capture_event($pdo,commerce_body())],202);
     }
 
