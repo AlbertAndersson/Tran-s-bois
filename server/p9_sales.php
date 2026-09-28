@@ -6,13 +6,15 @@ require_once __DIR__ . '/p3_db.php';
 /**
  * P9 Sales Engine v1.
  *
- * First-party, privacy-minimised sales attribution for staging/production.
- * Public analytics never stores name, email, phone, IP address or user agent.
+ * First-party, privacy-minimised sales attribution for synthetic staging.
+ * No dedicated name, email, phone, IP address or user-agent fields.
+ * Production tracking remains blocked until consent handling is implemented.
  */
 
 function bois_p9_tracking_enabled(array $config): bool
 {
-    return ($config['sales_tracking_enabled'] ?? false)===true;
+    return in_array((string)($config['mode'] ?? ''),['staging','test'],true)
+        && ($config['sales_tracking_enabled'] ?? false)===true;
 }
 
 function bois_p9_apply_schema(PDO $pdo): void
@@ -127,8 +129,10 @@ function bois_p9_upsert_session(PDO $pdo,string $sessionId,array $attribution): 
     ]);
 }
 
-function bois_p9_capture_event(PDO $pdo,array $input): array
+function bois_p9_capture_event(PDO $pdo,array $input,array $config=[]): array
 {
+    // Only trusted server configuration can enable writes. Missing config is OFF.
+    if(!bois_p9_tracking_enabled($config)) return ['accepted'=>false,'disabled'=>true];
     $sessionId=bois_p9_session_id($input['session_id']??'');
     if($sessionId==='') throw new InvalidArgumentException('Ogiltig sales session.');
 
@@ -173,8 +177,10 @@ function bois_p9_capture_event(PDO $pdo,array $input): array
     }
 }
 
-function bois_p9_link_order(PDO $pdo,string $publicId,array $input): void
+function bois_p9_link_order(PDO $pdo,string $publicId,array $input,array $config=[]): void
 {
+    // Do not create sessions, attribution, links or events when tracking is OFF.
+    if(!bois_p9_tracking_enabled($config)) return;
     $sessionId=bois_p9_session_id($input['sales_session_id']??'');
     if($sessionId==='') return;
 
