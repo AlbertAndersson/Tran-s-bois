@@ -11,6 +11,7 @@ Fristående BoIS-webshop med medlemskap, Nordic Wellness-förmån, matchställ o
 - P6 Payment: **COMPLETE / LIVE STAGING VERIFIED**
 - P7 2027 assortment: **COMPLETE / LIVE STAGING VERIFIED**
 - P8 production readiness: **TECHNICALLY COMPLETE / NOT ACTIVATED / BOIS-OWNED STAGING VERIFIED**
+- P9 sales engine: **IMPLEMENTED / COST-FREE STAGING VERIFY PENDING**
 - Betalning: **ISOLERAD MOCK/TESTMODE I STAGING – RIKTIG PROVIDER AVSTÄNGD**
 - Extern mejlsändning: **AVSTÄNGD I STAGING**
 - Ny extern driftkostnad: **0 kr**
@@ -89,9 +90,9 @@ P7 föreslår ett litet första sortiment: BoIS 1941 Hoodie, Supporter-T-shirt o
 P7:s separata `bois_`-tabeller, adminvy och interna preview är live-verifierade i staging. Servern blockerar offentlig katalog och direkta orderanrop före **1 januari 2027**, även om produktflaggor ändras. Efter datumet krävs dessutom uttryckligt godkännande och verifierad kommersiell data. Ingen P7-produkt är godkänd eller orderbar nu. Den publika startsidan visar inga produktnamn från det interna förslaget. P2–P7 CI är grön; Simply-run `36355678030` verifierade slutlig stagingkod.
 
 ## Nästa utvecklingsordning
-1. **P8 readiness är verifierad i staging**: BoIS-ägd Simply-run `36414148818` lyckades från `main` `1a29eb5ddb229144f255fe92a837d20953617832`, med P8-kodref `818c262af23431be972986b9c79f70f319da90e2`. Fortsätt med P9 eller annan utveckling utan att öppna produktionsgrinden.
-2. **P9 – sales engine** kan fortsätta parallellt medan merchant/KYC/bank/domän/villkor för skarp P8 inväntas.
-3. **Kommersiell P7-beredning**: inhämta riktiga offerter och godkänn data inför eventuell merchlansering.
+1. **Verifiera P9 i kostnadsfri staging** via den BoIS-ägda manuella workflowen `Simply - deploy Tranås BoIS P9 sales engine staging`.
+2. När P9-staging är grön kan nästa produktfas fokusera på faktisk pilotdata, CRO-förbättringar och organisk trafik utan betalda tjänster.
+3. **Kommersiell P7-beredning** fortsätter parallellt: riktiga offerter, SKU, marginal och BoIS-godkännande före eventuell merchlansering.
 
 P6:s payment gate är den gemensamma gränsen för medlemskap, Nordic och matchställ. P8:s Stripe-adapter, produktionsgrindar och cutover-underlag är implementerade, men Stripe är **inte aktiverat** och staging fortsätter med mock. BoIS-kod, CI och deployment ägs enbart av detta repo. Ersatta BoIS-deploy/readiness-workflows i Work Capture är pensionerade; historiska migrations-, purge- och rollbackspår finns kvar.
 
