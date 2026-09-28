@@ -7,6 +7,7 @@ require __DIR__ . '/p4_membership.php';
 require __DIR__ . '/p6_payment.php';
 require __DIR__ . '/p7_assortment.php';
 require __DIR__ . '/p9_sales.php';
+require __DIR__ . '/consent.php';
 
 function commerce_respond(array $data, int $status=200): never
 {
@@ -76,6 +77,7 @@ try {
     bois_p7_apply_schema($pdo);
     bois_p8_apply_schema($pdo);
     bois_p9_apply_schema($pdo);
+    bois_consent_schema($pdo);
     commerce_check_origin($config);
 
     if(($_SERVER['REQUEST_METHOD']??'')==='OPTIONS'){
@@ -87,6 +89,15 @@ try {
 
     $action=(string)($_GET['action']??'health');
     $method=(string)($_SERVER['REQUEST_METHOD']??'GET');
+
+    if($action==='consent'&&$method==='GET'){
+        commerce_respond(['ok'=>true,'choice'=>bois_consent_choice($pdo),'policy_version'=>BOIS_CONSENT_POLICY,'validity_days'=>bois_consent_days($config)]);
+    }
+    if($action==='consent'&&$method==='POST'){
+        $input=commerce_body();
+        if(!isset($input['statistics'])||!is_bool($input['statistics'])) throw new InvalidArgumentException('Välj statistik ja eller nej.');
+        commerce_respond(['ok'=>true,'choice'=>bois_consent_save($pdo,$config,$input['statistics'])]);
+    }
 
     if($action==='health'&&$method==='GET'){
         $waiting=bois_p5_waiting_summary($pdo);
@@ -118,10 +129,10 @@ try {
     }
 
     if($action==='sales_event'&&$method==='POST'){
-        if(!bois_p9_tracking_enabled($config)){
+        if(!bois_p9_tracking_enabled($config)||!bois_consent_statistics_allowed($pdo)){
             commerce_respond(['ok'=>true,'sales'=>['accepted'=>false,'disabled'=>true]],202);
         }
-        commerce_respond(['ok'=>true,'sales'=>bois_p9_capture_event($pdo,commerce_body(),$config)],202);
+        commerce_respond(['ok'=>true,'sales'=>bois_p9_capture_event($pdo,commerce_body(),$config+['_consent_verified'=>true])],202);
     }
 
     if($action==='sales_recommendations'&&$method==='POST'){
@@ -191,8 +202,8 @@ try {
         $input=commerce_body();
         $order=bois_p3_create_order($pdo,$input);
         bois_p4_register_order($pdo,(string)$order['public_id']);
-        if(bois_p9_tracking_enabled($config)){
-            bois_p9_link_order($pdo,(string)$order['public_id'],$input,$config);
+        if(bois_p9_tracking_enabled($config)&&bois_consent_statistics_allowed($pdo)){
+            bois_p9_link_order($pdo,(string)$order['public_id'],$input,$config+['_consent_verified'=>true]);
         }
         commerce_respond(['ok'=>true,'order'=>$order],201);
     }

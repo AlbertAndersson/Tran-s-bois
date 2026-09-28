@@ -37,6 +37,7 @@
     <div class="notice blue">
       <b>Staging:</b> Endast signerad mockbetalning är aktiv. Riktiga betalningar och externa utskick är avstängda.
     </div>
+    <nav class="admin-jumps" aria-label="Adminöversikt"><a href="#admin-orders">Order</a><a href="#admin-membership">Medlemskontroll & Nordic</a><a href="#admin-batches">Matchställsbatcher</a><a href="#admin-payments">Betalningar</a><a href="#admin-sales">Försäljning</a></nav>
 
     <div class="kpis">
       <div class="kpi"><strong id="ordersKpi">0</strong><span>Order</span></div>
@@ -45,11 +46,11 @@
       <div class="kpi"><strong id="outboxKpi">0</strong><span>Outbox</span></div>
     </div>
 
-    <section class="card" style="margin:18px 0">
+    <section class="card" id="admin-sales" style="margin:18px 0">
       <div class="section-head" style="margin:0 0 14px">
         <div>
           <h2 style="font-size:24px">P9 – Sales Engine</h2>
-          <p>First-party funnel och kampanjattribution. Ingen extern analytics eller annonsering. Sales-tabellerna lagrar inga direkta kundidentifierare; session-ID är pseudonymt och kan kopplas till order internt.</p>
+          <p>Försäljning och kampanjattribution från besökare som har godkänt statistik. Övriga köp räknas i orderlistan, men inte i denna sessionsöversikt. Ingen extern analytics eller annonsering. Sessions-ID kan kopplas till order internt.</p>
         </div>
       </div>
       <div class="p5-progress">
@@ -91,7 +92,7 @@
       <div class="field" style="margin-top:10px"><label for="campaignLink">Länk</label><input id="campaignLink" readonly></div>
     </section>
 
-    <section class="card" style="margin:18px 0">
+    <section class="card" id="admin-batches" style="margin:18px 0">
       <div class="section-head" style="margin:0 0 14px">
         <div>
           <h2 style="font-size:24px">Matchställsbatch</h2>
@@ -99,7 +100,7 @@
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <button class="btn ghost" id="runWorker">Kontrollera automatik</button>
-          <button class="btn secondary" id="batchNow">Skicka batch nu</button>
+          <button class="btn secondary" id="batchNow">Skapa batch nu</button>
         </div>
       </div>
       <div class="p5-progress">
@@ -113,11 +114,11 @@
     </section>
 
 
-    <section class="card" style="margin:24px 0">
+    <section class="card" id="admin-membership" style="margin:24px 0">
       <div class="section-head" style="margin:0 0 14px">
         <div>
           <h2 style="font-size:24px">Medlemskap & Nordic Wellness</h2>
-          <p>BoIS verifierar medlemskap och styr gymkortet genom eligibility → Nordic → klart att hämta → aktiverat.</p>
+          <p>Väntande medlemskontroll verifieras här. Därefter går gymkortet från berättigat till skickat till Nordic, klart att hämta och aktiverat.</p>
         </div>
         <button class="btn ghost" id="nordicExport">Export Nordic CSV</button>
       </div>
@@ -166,7 +167,7 @@
       </table>
     </div>
 
-    <h3 style="color:var(--blue);margin-top:28px">Senaste order</h3>
+    <h3 id="admin-orders" style="color:var(--blue);margin-top:28px">Senaste order</h3>
     <div class="table-wrap">
       <table>
         <thead><tr><th>Order</th><th>Kund</th><th>Rader</th><th>Summa</th><th>Betalning</th><th>Fulfillment</th><th>Stagingtest</th></tr></thead>
@@ -174,7 +175,8 @@
       </table>
     </div>
 
-    <h3 style="color:var(--blue);margin-top:28px">Betalningar och händelser</h3>
+    <h3 id="admin-payments" style="color:var(--blue);margin-top:28px">Betalningar och händelser</h3>
+    <p class="small">Misslyckad eller avbruten mockbetalning kan prövas igen från kundens orderstatus. Simulerad återbetalning kräver manuell granskning av medlemskap, Nordic och leverantörsflöde.</p>
     <div class="table-wrap"><table>
       <thead><tr><th>Order</th><th>Referens</th><th>Status</th><th>Belopp</th><th>Effekter</th></tr></thead>
       <tbody id="payments"></tbody>

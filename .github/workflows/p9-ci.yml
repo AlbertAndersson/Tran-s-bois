@@ -7,6 +7,7 @@ on:
       - "server/p9_sales.php"
       - "server/p9-migrate.php"
       - "server/commerce-api.php"
+      - "server/consent.php"
       - "site/commerce/assets/common.js"
       - "site/commerce/assets/membership.js"
       - "site/commerce/assets/payment.js"

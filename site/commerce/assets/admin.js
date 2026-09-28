@@ -80,7 +80,7 @@
     $('batchesKpi').textContent=batches.length;
     $('batches').innerHTML=batches.length ? batches.map(b=>{
       const retry=(b.outbox_status==='RETRY'||b.outbox_status==='FAILED') && b.outbox_id
-        ? '<button class="btn ghost p5-retry" data-outbox="'+Number(b.outbox_id)+'">Retry</button>'
+        ? '<button class="btn ghost p5-retry" data-outbox="'+Number(b.outbox_id)+'">Försök igen</button>'
         : '';
       return '<tr>'+
         '<td><b>'+esc(b.public_id)+'</b><div class="small">'+esc(b.supplier_name||'')+'</div></td>'+
@@ -354,8 +354,9 @@
   function showError(message){$('batchError').textContent=message;$('batchError').hidden=false;}
 
   $('loginForm').addEventListener('submit',async e=>{
-    e.preventDefault();token=$('token').value.trim();sessionStorage.setItem('boisP3Admin',token);$('loginError').hidden=true;
-    try{await load();}catch(err){$('loginError').textContent=err.message;$('loginError').hidden=false;}
+    e.preventDefault();token=$('token').value.trim();$('loginError').hidden=true;
+    try{await load();sessionStorage.setItem('boisP3Admin',token);$('token').value='';}
+    catch(err){token='';sessionStorage.removeItem('boisP3Admin');$('loginError').textContent=err.message;$('loginError').hidden=false;}
   });
   $('logout').addEventListener('click',()=>{token='';sessionStorage.removeItem('boisP3Admin');$('dashboard').hidden=true;$('login').hidden=false;});
   $('batchNow').addEventListener('click',createBatchNow);

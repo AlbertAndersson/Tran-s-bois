@@ -28,6 +28,8 @@ $config=[
     'refund_policy_approved'=>false,
     'production_launch_enabled'=>false,
     'sales_tracking_enabled'=>true,
+    // Unit-level fixture; the HTTP path obtains this only after verified consent.
+    '_consent_verified'=>true,
     'db'=>[
         'host'=>getenv('BOIS_P3_TEST_DB_HOST') ?: '127.0.0.1',
         'port'=>(int)(getenv('BOIS_P3_TEST_DB_PORT') ?: 3306),

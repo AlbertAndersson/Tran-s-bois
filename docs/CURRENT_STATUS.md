@@ -2,6 +2,9 @@
 
 Datum: 2026-09-28
 
+## Senaste kontrollpunkt
+Säkerhetsrättningarna från PR #11 publicerades i BoIS staging via run `36463946785` (success), pinnad kodref `fdb1053c69e929fa7430c74b9ea5a4e47cac31eb`. P4–P9-acceptansen passerade i mock/testmode. PR #12 innehåller därefter C1–C4 samtycke, admin- och kundförtydliganden samt syntetisk Chromiumacceptans för 375/390/desktop. **Denna nya kod är ännu inte publicerad på Simply vid denna kontrollpunkt.** Dokumentets äldre P9-run är historisk baseline. Staging saknar verifierat åtkomstskydd för bredare demo; `noindex` räcker inte. Produktion och Stripe förblir av.
+
 ## Övergripande status
 - **P1 – ordermotor: COMPLETE**
 - **P2 – produktionsförberedelse: COMPLETE**

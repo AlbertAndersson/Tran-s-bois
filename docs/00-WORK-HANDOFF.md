@@ -4,6 +4,8 @@
 
 Detta är den primära överlämningen för en ny utvecklingstråd. GitHub är source of truth.
 
+**Nyast:** PR #11:s rättningar nådde staging i run `36463946785` från pinnad `fdb1053c69e929fa7430c74b9ea5a4e47cac31eb`. PR #12 bygger C1–C4 och kvalitetstester; behandla dess kod som CI-verifierad först efter gröna körningar och som publicerad först efter en ny skyddad deploy med ny kodref. Se `docs/CONSENT-INVENTORY-AND-ACCEPTANCE.md` och `docs/SYNTHETIC-DEMO.md`. Nedan äldre P9-körningar är historik för sina respektive kodref.
+
 ## Source of truth
 
 - Repo: `AlbertAndersson/Tran-s-bois`

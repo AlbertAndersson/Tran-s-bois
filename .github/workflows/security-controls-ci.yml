@@ -43,6 +43,7 @@ jobs:
         run: |
           php -l server/p8_stripe.php
           php -l server/p9_sales.php
+          php -l server/consent.php
           php -l server/commerce-api.php
           php -l tests/security-checkout-gate-smoke.php
           php -l tests/security-http-gates-smoke.php
