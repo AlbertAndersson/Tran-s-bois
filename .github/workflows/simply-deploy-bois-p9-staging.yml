@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     env:
-      BOIS_SOURCE_REF: fdb1053c69e929fa7430c74b9ea5a4e47cac31eb
+      BOIS_SOURCE_REF: 2c4af4de0fca41a38e8781e0ccea2eb8ea49993d
       BOIS_PUBLIC_PATH: bois-shop-p3
       BOIS_BASE_URL: https://alberiq.se/bois-shop-p3
       SIMPLY_HOST: ssh.simply.com
