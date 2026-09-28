@@ -34,6 +34,7 @@ Verifiera alltid aktuell HEAD innan du ändrar något.
 Ny canonical BoIS-deployment finns i samma repo:
 - `.github/workflows/simply-deploy-bois-p8-readiness.yml`
 - `.github/workflows/simply-validate-bois-p8-production.yml`
+- `.github/workflows/simply-deploy-bois-p9-staging.yml`
 
 BoIS-ägd P8 readiness-deploy: run `36414148818`, job `108901126748`, **success** från `main` `1a29eb5ddb229144f255fe92a837d20953617832`, pinnad kodref `818c262af23431be972986b9c79f70f319da90e2`. P8 phase, mock/testmode, signerad syntetisk webhook → PAID → ACTIVE/ELIGIBLE, replay-idempotens, P5 8/168h, P7 admin/preview och dold merch passerade. Inga främmande tabeller, extern e-post, riktiga Stripe-anrop eller produktionstrafik; ny kostnad 0 kr. P8A–D: **TECHNICALLY COMPLETE / NOT ACTIVATED**. Work Capture-versionerna har pensionerats; historisk databasmigration, purge och privata rollback-backuper förblir dokumenterade.
 
@@ -58,7 +59,7 @@ P7-workflowen i samma fil är manuellt skyddad (`workflow_dispatch`, `confirm=DE
 - Testbetalning: https://alberiq.se/bois-shop-p3/payment.html
 - API health: https://alberiq.se/bois-shop-p3/commerce-api.php?action=health
 
-**Obs:** URL-sökvägen heter fortfarande `bois-shop-p3`, men miljön kör nu P4 + P5 + P6. Byt inte sökväg innan slutlig produktionsdomän är beslutad.
+**Obs:** URL-sökvägen heter fortfarande `bois-shop-p3`, men miljön kör nu P9 staging med P4–P8 bevarade. Byt inte sökväg innan slutlig produktionsdomän är beslutad.
 
 Staging får endast innehålla testuppgifter.
 
@@ -72,7 +73,7 @@ Staging får endast innehålla testuppgifter.
 - P6 – Payment: **COMPLETE / LIVE STAGING VERIFIED**
 - P7 – 2027 assortment: **COMPLETE / LIVE STAGING VERIFIED**
 - P8 – production readiness: **TECHNICALLY COMPLETE / NOT ACTIVATED / BOIS-OWNED STAGING VERIFIED**
-- P9 – sales engine: **IMPLEMENTED / COST-FREE STAGING VERIFY PENDING**
+- P9 – sales engine: **COMPLETE / LIVE STAGING VERIFIED**
 
 P6-betalning kör isolerad `mock`/testmode i staging. Riktig payment provider är avstängd. Extern mejlsändning är avstängd i staging. Ny extern driftkostnad hittills: **0 kr**.
 
@@ -341,4 +342,4 @@ Sales-tabeller lagrar inte direkta kundidentifierare, IP eller user-agent. Sessi
 P9 stagingworkflow:
 `.github/workflows/simply-deploy-bois-p9-staging.yml`
 
-Den ska fortsatt använda mockbetalning, syntetiska testuppgifter, avstängd extern e-post och 0 kr ny extern kostnad.
+Run `36445454316`, job `109006483514`, **success** från `main` `6aabb41c7f0025cf99749919693d84c391f9ce24`, pinnad P9-kodref `3219dba57fca1eb97b9d50022477131c8db2501b`. P9 first-party funnel och UTM/referral-attribution från pseudonym session till order och signerad mock-PAID, zero-discount recommendation, P4 ACTIVE/Nordic ELIGIBLE, P5 8/168h och P7 blockerad merch/admin/preview passerade. `phase=P9`, mock/testmode, sales tracking true endast i syntetisk staging, extern analytics false, inga direkta kundidentifierare i sales-tabeller, ingen extern payment-mail, inga främmande tabeller, inga riktiga Stripe-anrop, marketing-mail, annonser eller nya kostnader. P8 förblir **TECHNICALLY COMPLETE / NOT ACTIVATED**. Production-default för sales tracking är false.

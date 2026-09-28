@@ -4,7 +4,7 @@ Datum: 2026-09-28
 
 ## Status
 
-**IMPLEMENTED / COST-FREE STAGING VERIFY PENDING**
+**COMPLETE / LIVE STAGING VERIFIED**
 
 P9 bygger ett eget first-party sales engine ovanpå befintlig Commerce Core. Syftet är att förstå vilka kampanjer, referrals och produktvägar som faktiskt leder till testorder och verifierad mock-PAID utan att köpa analytics, annonsering, e-postverktyg eller andra externa tjänster.
 
@@ -119,9 +119,17 @@ Staging fortsätter med:
 - ingen extern analytics
 - ny extern kostnad 0 kr
 
+## Slutlig liveverifiering
+
+BoIS-ägd workflow `Simply - deploy Tranås BoIS P9 sales engine staging`: run `36445454316`, job `109006483514`, **success**. Workflow source `main` `6aabb41c7f0025cf99749919693d84c391f9ce24`; pinnad P9-kodref `3219dba57fca1eb97b9d50022477131c8db2501b`. P2–P9 CI var grön före staging.
+
+Health: `phase=P9`, `payment_provider=mock`, `payment_mode=testmode`, `sales_engine=first_party`, `sales_tracking_enabled=true`, `external_analytics=false`, Stripe-testreadiness false och production launch readiness false. Syntetisk UTM/referral-session → order → signerad mock-PAID gav kampanjkonvertering till PAID, medlemskap ACTIVE och Nordic ELIGIBLE. Dubblettmock-event gav ingen ny downstream-effekt. Zero-discount recommendation, pseudonym sessiondata utan direkta kundidentifierare i sales-tabellerna, P5 8/168h, P7 admin/preview och dold merch samt payment-mail disabled passerade. Snapshot: 0 främmande tabeller före/efter. `REAL_STRIPE_CALLS=no`, `MARKETING_EMAIL_SENT=no`, `PAID_ADVERTISING=no`, `NEW_EXTERNAL_COST=0`.
+
+Tracking är explicit påslagen endast i denna syntetiska stagingmiljö. Production-default förblir false och P8 är **TECHNICALLY COMPLETE / NOT ACTIVATED**.
+
 ## Exit criteria för P9 v1
 
-P9 kan markeras `COMPLETE / LIVE STAGING VERIFIED` när:
+P9 markerades `COMPLETE / LIVE STAGING VERIFIED` efter att:
 1. P3–P8 regressioner är gröna
 2. P9 MySQL-smoke är grön
 3. funnel-event dedupe verifieras

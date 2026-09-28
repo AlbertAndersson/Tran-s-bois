@@ -17,7 +17,7 @@ Ta över **Tranås BoIS – Webbshop** från `AlbertAndersson/Tran-s-bois`. GitH
 
 ## Verifierat nuläge
 
-P1–P7 är kompletta. P8A–D är **TECHNICALLY COMPLETE / NOT ACTIVATED**.
+P1–P7 är kompletta. P8A–D är **TECHNICALLY COMPLETE / NOT ACTIVATED**. P9 Sales Engine är **COMPLETE / LIVE STAGING VERIFIED**.
 
 BoIS-ägd P8 readiness staging:
 - workflow: `Simply - deploy Tranås BoIS P8 readiness staging`
@@ -63,9 +63,9 @@ Vänta på Albert/Erik för:
 
 Aktivera inget av detta utan uttryckligt godkännande.
 
-## P9 – aktuell utvecklingsfas
+## P9 – verifierad kostnadsfri staging
 
-P9 är **Sales Engine v1** och ska hållas kostnadsfri i staging.
+BoIS-ägd deployrun `36445454316`, job `109006483514`, **success** från `main` `6aabb41c7f0025cf99749919693d84c391f9ce24`, pinnad kodref `3219dba57fca1eb97b9d50022477131c8db2501b`. P9 är **COMPLETE / LIVE STAGING VERIFIED**. Health visade P9, mock/testmode, first-party sales engine, staging tracking true, extern analytics false och stängd Stripe-/produktionsgrind. Syntetisk UTM/referral-session → order → signerad mock-PAID och kampanjattribution, zero-discount recommendation, pseudonym sessiondata utan direkta identifierare, P4 ACTIVE/Nordic ELIGIBLE, P5 8/168h, P7 dold merch och avstängd payment-mail passerade. Inga riktiga Stripe-anrop, marketing-mail, annonser eller nya kostnader. Production-default för tracking förblir false.
 
 Scope:
 - first-party funnel

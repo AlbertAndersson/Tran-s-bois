@@ -11,7 +11,7 @@ Datum: 2026-09-28
 - **P6 – Payment: COMPLETE / LIVE STAGING VERIFIED**
 - **P7 – 2027 assortment: COMPLETE / LIVE STAGING VERIFIED**
 - **P8 – production readiness: TECHNICALLY COMPLETE / NOT ACTIVATED / BOIS-OWNED STAGING VERIFIED**
-- **P9 – sales engine: IMPLEMENTED / COST-FREE STAGING VERIFY PENDING**
+- **P9 – sales engine: COMPLETE / LIVE STAGING VERIFIED**
 
 Betalning: **ISOLERAD MOCK/TESTMODE I STAGING – RIKTIG PROVIDER AVSTÄNGD**  
 Extern mejlsändning: **AVSTÄNGD I STAGING**  
@@ -257,7 +257,7 @@ BoIS-ägd workflow `Simply - deploy Tranås BoIS P8 readiness staging` kördes m
 
 ## P9 – Sales Engine v1 – 2026-09-28
 
-P9 är implementerad och CI-verifierad men inväntar BoIS-ägd liveverifiering i kostnadsfri staging.
+P9 är implementerad, CI-verifierad och liveverifierad i kostnadsfri BoIS-ägd staging. Run `36445454316`, job `109006483514`: **success** från `main` `6aabb41c7f0025cf99749919693d84c391f9ce24`, pinnad P9-kodref `3219dba57fca1eb97b9d50022477131c8db2501b`.
 
 Scope:
 - first-party pseudonym sessionspårning med UTM/ref-attribution,
@@ -279,4 +279,4 @@ Säkerhets-/kostnadsgräns:
 - P9-staging använder endast syntetisk data,
 - ny extern kostnad: 0 kr.
 
-Canonical dokument: `docs/P9-SALES-ENGINE.md`.
+Liveacceptans: `phase=P9`, `payment_provider=mock`, `payment_mode=testmode`, `sales_engine=first_party`, `sales_tracking_enabled=true` endast i staging, `external_analytics=false`, `stripe_ready_for_test=false`, `production_launch_ready=false`. Syntetisk UTM/referral-session → order → signerad mock-PAID passerade. Kampanjattribution till PAID, zero-discount recommendation, pseudonym sessiondata utan direkta kundidentifierare i sales-tabellerna, P4 medlemskap ACTIVE/Nordic ELIGIBLE, replay-idempotens, P5 8/168h, P7 dold/blockerad merch och admin/preview passerade. Betalningsmejl disabled, icke-BoIS-tabeller oförändrade (0 i dedikerad stagingdatabas), `REAL_STRIPE_CALLS=no`, `MARKETING_EMAIL_SENT=no`, `PAID_ADVERTISING=no`, `NEW_EXTERNAL_COST=0`. P8 förblir **TECHNICALLY COMPLETE / NOT ACTIVATED**. Canonical dokument: `docs/P9-SALES-ENGINE.md`.

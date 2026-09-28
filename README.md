@@ -11,7 +11,7 @@ Fristående BoIS-webshop med medlemskap, Nordic Wellness-förmån, matchställ o
 - P6 Payment: **COMPLETE / LIVE STAGING VERIFIED**
 - P7 2027 assortment: **COMPLETE / LIVE STAGING VERIFIED**
 - P8 production readiness: **TECHNICALLY COMPLETE / NOT ACTIVATED / BOIS-OWNED STAGING VERIFIED**
-- P9 sales engine: **IMPLEMENTED / COST-FREE STAGING VERIFY PENDING**
+- P9 sales engine: **COMPLETE / LIVE STAGING VERIFIED**
 - Betalning: **ISOLERAD MOCK/TESTMODE I STAGING – RIKTIG PROVIDER AVSTÄNGD**
 - Extern mejlsändning: **AVSTÄNGD I STAGING**
 - Ny extern driftkostnad: **0 kr**
@@ -90,11 +90,14 @@ P7 föreslår ett litet första sortiment: BoIS 1941 Hoodie, Supporter-T-shirt o
 P7:s separata `bois_`-tabeller, adminvy och interna preview är live-verifierade i staging. Servern blockerar offentlig katalog och direkta orderanrop före **1 januari 2027**, även om produktflaggor ändras. Efter datumet krävs dessutom uttryckligt godkännande och verifierad kommersiell data. Ingen P7-produkt är godkänd eller orderbar nu. Den publika startsidan visar inga produktnamn från det interna förslaget. P2–P7 CI är grön; Simply-run `36355678030` verifierade slutlig stagingkod.
 
 ## Nästa utvecklingsordning
-1. **Verifiera P9 i kostnadsfri staging** via den BoIS-ägda manuella workflowen `Simply - deploy Tranås BoIS P9 sales engine staging`.
-2. När P9-staging är grön kan nästa produktfas fokusera på faktisk pilotdata, CRO-förbättringar och organisk trafik utan betalda tjänster.
+1. **P9 är liveverifierad i kostnadsfri staging**: BoIS-ägd run `36445454316` lyckades från `main` `6aabb41c7f0025cf99749919693d84c391f9ce24`, med pinnad P9-kodref `3219dba57fca1eb97b9d50022477131c8db2501b`.
+2. Nästa produktfas kan fokusera på pilotdata, CRO-förbättringar och organisk trafik utan betalda tjänster.
 3. **Kommersiell P7-beredning** fortsätter parallellt: riktiga offerter, SKU, marginal och BoIS-godkännande före eventuell merchlansering.
 
 P6:s payment gate är den gemensamma gränsen för medlemskap, Nordic och matchställ. P8:s Stripe-adapter, produktionsgrindar och cutover-underlag är implementerade, men Stripe är **inte aktiverat** och staging fortsätter med mock. BoIS-kod, CI och deployment ägs enbart av detta repo. Ersatta BoIS-deploy/readiness-workflows i Work Capture är pensionerade; historiska migrations-, purge- och rollbackspår finns kvar.
+
+## P9 – Sales Engine
+First-party UTM/referral → pseudonym session → order → verifierad mock-PAID och adminens funnel/kampanj/produktmix är liveverifierade. Serverstyrd rekommendation ger ingen rabatt. `sales_tracking_enabled=true` gäller endast syntetisk staging; production-default är false. Inga direkta kundidentifierare, IP eller user-agent lagras i sales-tabellerna. P4–P8-grindar passerade i samma körning; extern analytics, annonsering, marketing-mail/SMS, extern e-post och riktig Stripe-betalning är avstängda. Se `docs/P9-SALES-ENGINE.md`.
 
 ## Kostnadsprincip
 Inga nya betaltjänster, abonnemang eller externa kostnader aktiveras utan uttryckligt godkännande.
