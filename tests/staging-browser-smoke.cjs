@@ -32,7 +32,10 @@ const key=()=>Math.random().toString(36).slice(2,12);
       assert.equal(await page.evaluate(()=>sessionStorage.getItem('boisSalesAttribution')),null);
       assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2),true,'horizontal overflow on shop '+width);
       await page.screenshot({path:path.join(output,'shop-'+width+'.png')});
-      await page.getByRole('button',{name:'Avvisa statistik'}).click();
+      if(width!==375){
+        await page.getByRole('button',{name:'Avvisa statistik'}).click();
+        await page.locator('#bois-consent').waitFor({state:'hidden'});
+      }
       await page.goto(base+'/membership.html');
       await page.locator('#membershipForm').waitFor();
       assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2),true,'horizontal overflow on membership '+width);
@@ -116,6 +119,7 @@ const key=()=>Math.random().toString(36).slice(2,12);
       await page.locator('#payment').getByText('PAID').waitFor();
       await page.getByRole('link',{name:'Kakinställningar'}).first().click();
       await page.getByRole('button',{name:'Avvisa statistik'}).click();
+      await page.locator('#bois-consent').waitFor({state:'hidden'});
       assert.equal(await page.evaluate(()=>sessionStorage.getItem('boisSalesSession')),null);
       assert.equal(await page.evaluate(()=>sessionStorage.getItem('boisSalesAttribution')),null);
       await page.screenshot({path:path.join(output,'match-kit-375.png')});
