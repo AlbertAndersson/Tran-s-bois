@@ -19,6 +19,7 @@ const key=()=>Math.random().toString(36).slice(2,12);
       const page=await context.newPage();
       await page.goto(base+'/');
       await page.locator('#bois-consent').waitFor({state:'visible'});
+      assert.equal(await page.evaluate(()=>document.activeElement?.textContent),'Avvisa statistik');
       const inventory=await page.evaluate(()=>({
         sessionKeys:Object.keys(sessionStorage),localKeys:Object.keys(localStorage),
         resourceOrigins:[...new Set(performance.getEntriesByType('resource').map(entry=>new URL(entry.name).origin))]
