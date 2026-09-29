@@ -6,7 +6,7 @@ Datum: 2026-09-28
 
 **COMPLETE / LIVE STAGING VERIFIED**
 
-Detta avser historiska P9-refen. PR #11:s säkerhetsrättning publicerades separat i run `36463946785`, pinnad `fdb1053c69e929fa7430c74b9ea5a4e47cac31eb`. PR #12 inför nödvändigt C1–C4-samtycke för valfri syntetisk P9-statistik. Den versionen är ännu inte publicerad; äldre automatiska P9-eventtest har ersatts av explicita samtyckessteg i den nya stagingworkflowen. Production tracking är fortsatt globalt blockerad. Se `docs/CONSENT-INVENTORY-AND-ACCEPTANCE.md`.
+P9:s historiska grundverifiering var run `36445454316`; PR #11:s säkerhetsrättning publicerades i run `36463946785`. C1–C4 är nu implementerat, CI-verifierat och liveverifierat i slutlig run `36516255044`, pinnad kodref `b83cd40926c511b5b873a6fb652c43d5bb221053`. Explicita samtyckessteg ersätter tidigare automatisk P9-spårning. Produktionens mätning är fortsatt globalt blockerad. Se `docs/CONSENT-INVENTORY-AND-ACCEPTANCE.md`.
 
 P9 bygger ett eget first-party sales engine ovanpå befintlig Commerce Core. Syftet är att förstå vilka kampanjer, referrals och produktvägar som faktiskt leder till testorder och verifierad mock-PAID utan att köpa analytics, annonsering, e-postverktyg eller andra externa tjänster.
 
@@ -121,7 +121,7 @@ Staging fortsätter med:
 - ingen extern analytics
 - ny extern kostnad 0 kr
 
-## Slutlig liveverifiering
+## Historisk P9-baslinje (före C1–C4)
 
 BoIS-ägd workflow `Simply - deploy Tranås BoIS P9 sales engine staging`: run `36445454316`, job `109006483514`, **success**. Workflow source `main` `6aabb41c7f0025cf99749919693d84c391f9ce24`; pinnad P9-kodref `3219dba57fca1eb97b9d50022477131c8db2501b`. P2–P9 CI var grön före staging.
 

@@ -1,7 +1,7 @@
 # Kontrollpunkter efter P9 – betalningsstart och spårningsstopp
 
 Datum: 2026-09-28
-Status: **MERGED / CI VERIFIED / STAGING VERIFIED** för PR #11. Deploy run `36463946785` publicerade pinnad `fdb1053c69e929fa7430c74b9ea5a4e47cac31eb` och passerade P4–P9-acceptans. Avsnittet "Separat stagingverifiering – återstår" nedan är historisk plan från före denna körning. Samtycke i PR #12 har en separat, ännu väntande staginggrind.
+Status: **MERGED / CI VERIFIED / STAGING VERIFIED**. PR #11 publicerades först i run `36463946785`, pinnad `fdb1053c69e929fa7430c74b9ea5a4e47cac31eb`. Slutlig kodref `b83cd40926c511b5b873a6fb652c43d5bb221053` publicerades och liveverifierades i Simply-run `36516255044` (success; job `109239084358`). Workflow på `main` `26910660686402251f542caa9cc7263218ea6303` var manuellt skyddad och pinnad till denna kod. P2–P9 + Security controls CI passerade för mobilrättningen (PR #17); de fem berörda workflowarna passerade även för sista browser-testjusteringen (PR #18, Security `36516093807`, P9 `36516093893`). Chromium headless testade 375, 390 och 1280 px, 10 skärmbilder i Actions-artifact `bois-p9-synthetic-browser-36516255044` (7 dagars retention). P8 är TECHNICALLY COMPLETE / NOT ACTIVATED. Ingen Stripe, riktig betalning, extern mejlsändning, extern analytics eller produktionsaktivering; ny extern kostnad 0 kr. Staging är publikt nåbar utan verifierat inloggningsskydd och får inte delas brett.
 
 Utgångspunkt: `main` vid P9-closeout `3983c5e65726390cd59fcf65fe3d69000376030f`. Tidigare P9-stagingverifiering är run `36445454316`, med kodref `3219dba57fca1eb97b9d50022477131c8db2501b`. Den körningen verifierar inte automatiskt senare rättningar.
 
@@ -38,7 +38,7 @@ Rättning:
 - Webbläsaren kontrollerar health innan P9:s lagring läses/skrivs, events skickas eller attribution bifogas en order.
 - Endast en pågående health-kontroll delas; godkännandet cachas inte mellan senare interaktioner.
 - Saknat/ogiltigt svar eller timeout ger avstängd statistik. Blockerad webbläsarlagring får inte förhindra en vanlig order.
-- Produktion är tills vidare hårt blockerad för spårning, även med flaggan true. Explicit syntetisk staging/test fungerar fortsatt. Framtida produktionssamtycke är separat, ännu inte implementerat.
+- Produktion är tills vidare hårt blockerad för spårning, även med flaggan true. Explicit syntetisk staging/test fungerar fortsatt. C1–C4 är nu implementerat i staging; produktionsmätning är fortsatt globalt blockerad till separat beslut.
 
 ## Testning
 
@@ -56,7 +56,7 @@ Testerna använder syntetiska fixtures. Externa cURL-anrop och mail är avstäng
 
 Kontrollen av sales-tabellernas kolumnnamn rättades även till en skiftlägesoberoende läsning med PDO::FETCH_COLUMN. Ett tomt eller ofullständigt metadataresultat underkänner testet i stället för att ge en falskt godkänd kolumnkontroll. Den slutliga säkerhetsloggen passerade utan de tidigare PHP-varningarna.
 
-## Separat stagingverifiering – återstår
+## Historisk plan för separat stagingverifiering – genomförd
 
 Den befintliga manuella workflowen `.github/workflows/simply-deploy-bois-p9-staging.yml` är förberedd i commit `6a3807cac566161e78052f8f82ce95a310dde438` och pinnad till rättningskoden `fdb1053c69e929fa7430c74b9ea5a4e47cac31eb`. Den har INTE startats i detta uppdrag.
 
@@ -64,12 +64,12 @@ Kör från `AlbertAndersson/Tran-s-bois`, branch `main`, med confirmation `DEPLO
 
 Behåll mock, tomma Stripe-secrets, avstängd extern e-post och stängd production launch. Syntetisk staging-spårning ska fortsatt kunna användas. Workflowen kontrollerar även `checkout_enabled=true` för MOCK och strikta nuvarande privacy-fält i sales-svaret; frånvaro av ett fält ska inte ge falskt godkänt resultat.
 
-Följ P4–P9-stagingacceptansen och dokumentera nytt run-ID/kodref först efter success. Kontrollera att den publicerade `common.js` innehåller spårningsspärren. De negativa produktionsfallen är verifierade i isolerad CI; lägg inte in riktiga Stripe-nycklar eller öppna produktion för att testa dem på Simply. Tills en ny stagingkörning är verifierad står run `36445454316` kvar som senaste livebaselinje, inte som bevis för rättningarna.
+Följ P4–P9-stagingacceptansen och dokumentera nytt run-ID/kodref först efter success. Kontrollera att den publicerade `common.js` innehåller spårningsspärren. De negativa produktionsfallen är verifierade i isolerad CI; lägg inte in riktiga Stripe-nycklar eller öppna produktion för att testa dem på Simply. Run `36516255044` verifierar den nya samtyckesversionen och publicerade filhashar; `36445454316` är historisk äldre P9-kod.
 
-## Planen efter rättningen
+## Samtycke efter rättningen – genomfört i staging
 
-Se `docs/COOKIES-AND-CONSENT-PLAN.md`. Kakor, sessionStorage/localStorage, återkallelse, information och kontroll på serversidan ska implementeras innan valfri mätning används för riktiga besökare. Kak-/samtyckeskomponenten är **PLANNED / NOT IMPLEMENTED**.
+Se `docs/COOKIES-AND-CONSENT-PLAN.md`. Kakor, sessionStorage/localStorage, återkallelse, information och serverkontroll är implementerade och testade för syntetisk staging; användning för riktiga besökare kräver slutligt produktionsbeslut. Kak-/samtyckeskomponenten är **IMPLEMENTED / CI VERIFIED / LIVE STAGING VERIFIED**. Produktionens godkännande och aktivering återstår.
 
-De tre godkända kvalitetsrundorna (mobil kundresa, Eriks adminarbete och syntetiskt demoflöde) ligger kvar och är inte automatiskt slutförda av dessa kontrolltester.
+De tre kvalitetsrundorna har nu separat syntetisk Chromiumacceptans i run `36516255044`; 375/390/1280 px och adminflöden passerade. Detta är inte fysisk iPhone- eller Safari-verifiering.
 
 P8 förblir **TECHNICALLY COMPLETE / NOT ACTIVATED**. Personliga adminkonton/MFA, slutlig drift-/säkerhetsgranskning och juridiskt underlag är kvarvarande lanseringskrav, inte levererade av denna avgränsade rättning.
