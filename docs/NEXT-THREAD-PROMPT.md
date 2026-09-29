@@ -2,7 +2,7 @@
 
 Ta över **Tranås BoIS – Webbshop** från `AlbertAndersson/Tran-s-bois`. GitHub är source of truth och BoIS äger kod, CI, secrets och deployment. Verifiera aktuell `main` HEAD; utgå inte från ett gammalt handoff-SHA.
 
-**Aktuell arbetsgrind:** Rättningsdeploy `36463946785` lyckades med pinnad kodref `fdb1053c69e929fa7430c74b9ea5a4e47cac31eb`. PR #12 inför C1–C4 och syntetiskt browsertest, men ny kod är ännu inte driftsatt. Kontrollera grön P2–P9 och Security controls CI på slutlig PR-head, mergea, uppdatera workflowens source-ref, kör manuellt skyddad stagingdeploy och läs Chromiumbevis innan C1–C4 eller kvalitetsrundor markeras liveverifierade. Bredare demo blockeras tills faktiskt åtkomstskydd har verifierats. Senare stycken om att rättningsdeploy och samtycke återstår beskriver det äldre överlämningsläget.
+**Aktuell arbetsgrind:** Slutlig kodref `b83cd40926c511b5b873a6fb652c43d5bb221053` publicerades och liveverifierades i Simply-run `36516255044` (success; job `109239084358`). Workflow på `main` `26910660686402251f542caa9cc7263218ea6303` var manuellt skyddad och pinnad till denna kod. P2–P9 + Security controls CI passerade för mobilrättningen (PR #17); de fem berörda workflowarna passerade även för sista browser-testjusteringen (PR #18, Security `36516093807`, P9 `36516093893`). Chromium headless testade 375, 390 och 1280 px, 10 skärmbilder i Actions-artifact `bois-p9-synthetic-browser-36516255044` (7 dagars retention). P8 är TECHNICALLY COMPLETE / NOT ACTIVATED. Ingen Stripe, riktig betalning, extern mejlsändning, extern analytics eller produktionsaktivering; ny extern kostnad 0 kr. Staging är publikt nåbar utan verifierat inloggningsskydd och får inte delas brett. Nästa steg är åtkomstskydd för bredare demo och separata produktionsbeslut. Texten nedan om att rättningsdeploy, C1–C4 eller kvalitetstester återstår är historisk och ersätts av detta läge.
 
 ## Läs först
 
@@ -33,8 +33,8 @@ Albert har godkänt att kontrollpunkterna rättas först och att kakor/samtycke 
 
 1. **Kontrollrättningarna:** kräv lanseringsgodkännande i den faktiska Stripe-checkoutvägen, inte bara i en informationskontroll. Spårning av ska betyda noll sales-skrivningar via både events och order, och ingen åtkomst till P9-lagring i browsern. Se `docs/SECURITY-CONTROL-POINTS.md` för exakt kod/test/deploystatus.
 2. **Stagingacceptans av rättad kod:** kontrollera CI, rätt source-ref och manuellt skyddad BoIS-deploy. Fortsatt endast mock och syntetiska data. Registrera nytt run-ID först efter success.
-3. **Kakor och samtycke:** implementera C1–C4 enligt `docs/COOKIES-AND-CONSENT-PLAN.md` innan någon valfri mätning används för riktiga besökare. Ingen cookie-/samtyckeskomponent ska betraktas som levererad enbart för att avstängningsspärren rättats.
-4. **De tre godkända kvalitetsrundorna:** mobil kundresa, Eriks administrativa arbete och ett sammanhållet syntetiskt demo-/acceptanspaket. De är ännu inte rapporterat genomförda. Bevara dem i planen, men rapportera endast faktiskt testade resultat.
+3. **Kakor och samtycke:** C1–C4 är implementerat och syntetiskt stagingverifierat enligt `docs/COOKIES-AND-CONSENT-PLAN.md` innan någon valfri mätning används för riktiga besökare. Produktionens information, retention och separat aktivering kräver fortfarande beslut.
+4. **De tre godkända kvalitetsrundorna:** mobil kundresa, Eriks administrativa arbete och ett sammanhållet syntetiskt demo-/acceptanspaket. De är genomförda i headless Chromium med skärmbilder och syntetiskt manus; fysisk iPhone/Safari är inte testad.
 
 Personliga adminkonton, roller och MFA är ett separat kvarvarande krav före riktiga kunduppgifter. En delad stagingnyckel ska inte beskrivas som en färdig produktionsinloggning.
 
@@ -43,7 +43,7 @@ Personliga adminkonton, roller och MFA är ett separat kvarvarande krav före ri
 - Ingen Stripe-aktivering, KYC, riktig betalning eller extern Stripe-API-körning.
 - Inga externa mejl/SMS, annonser eller analystjänster och ingen ny kostnad utan separat godkännande.
 - Produktionsgrinden förblir stängd. Staging har tomma Stripe-nycklar och mockbetalning.
-- Production tracking är hårt blockerad tills separat samtyckeshantering är implementerad och verifierad. En frontendflagga eller orderns godkännandefält får inte aktivera statistik.
+- Production tracking är fortsatt hårt blockerad trots implementerat samtycke; skarp aktivering kräver separat beslut. En frontendflagga eller orderns godkännandefält får inte aktivera statistik.
 - Explicit syntetisk staging/test kan använda P9. Staging är inte en miljö för riktiga kunder; verifiera åtkomstskydd före bredare demo.
 - Bevara P4–P9-regressionerna och P7:s serverstyrda lanseringsspärr.
 - Stängning för nya checkouts får inte stoppa verifierade försenade händelser för redan påbörjade betalningar.
