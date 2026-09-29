@@ -4,6 +4,8 @@
 
 Detta är den primära överlämningen för en ny utvecklingstråd. GitHub är source of truth.
 
+**Pågående staginggrind:** PR #22 förbereder webbserverns katalogomfattande demoåtkomst. `docs/STAGING-DEMO-ACCESS.md` beskriver val och verifieringskrav. Publicerad ref och faktisk åtkomststatus förblir nedanstående äldre öppna staging tills ny source-ref, privat demohemlighet, manuell deploy och obehörig/behörig verifiering är färdiga. Bredare delning är fortsatt blockerad.
+
 **Nyast:** Slutlig kodref `e4ac4ce385fcf751460b4af208756d74e562d54b` publicerades och liveverifierades i Simply-run `36517329717` (success; job `109242442693`). Workflow på `main` `0933351896cf608a121d4cdeda7ce7e0c13b0052` var manuellt skyddad och pinnad till denna kod. P2–P9 + Security controls CI passerade för mobilrättningen (PR #17); de fem berörda workflowarna passerade även för sista browser-testjusteringen (PR #18, Security `36516093807`, P9 `36516093893`). Chromium headless testade 375, 390 och 1280 px, 10 skärmbilder i Actions-artifact `bois-p9-synthetic-browser-36517329717` (7 dagars retention). P8 är TECHNICALLY COMPLETE / NOT ACTIVATED. Ingen Stripe, riktig betalning, extern mejlsändning, extern analytics eller produktionsaktivering; ny extern kostnad 0 kr. Staging är publikt nåbar utan verifierat inloggningsskydd och får inte delas brett. Historisk P9-run `36445454316` avser äldre kod. Första rättningsdeployen var `36463946785` med `fdb1053c69e929fa7430c74b9ea5a4e47cac31eb`.
 
 ## Source of truth
