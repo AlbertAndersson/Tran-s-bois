@@ -5,7 +5,7 @@
   const esc=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
   async function load(){
     if(!c.cfg.apiBase) throw new Error('Preview kräver inloggad staging.');
-    const body=await c.api('admin_p7',{headers:{Authorization:'Bearer '+token}});
+    const body=await c.api('admin_p7',{headers:{'X-Bois-Admin-Token':token}});
     const groups=new Map();
     for(const p of body.assortment||[]){
       const name=p.preview_group||'Övrigt';

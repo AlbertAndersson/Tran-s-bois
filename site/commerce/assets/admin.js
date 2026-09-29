@@ -5,7 +5,7 @@
   let token=sessionStorage.getItem('boisP3Admin')||'';
   let orders=[];
 
-  function auth(){return {Authorization:'Bearer '+token};}
+  function auth(){return {'X-Bois-Admin-Token':token};}
 
   async function api(action, options={}) {
     if(!c.cfg.apiBase) return demo(action,options);

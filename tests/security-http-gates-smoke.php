@@ -23,11 +23,11 @@ fclose($socket);
 $base='http://'.$address.'/commerce-api.php';
 $process=null;
 
-function security_http_request(string $base,string $action,?array $data=null,string $cookie=''): array
+function security_http_request(string $base,string $action,?array $data=null,string $cookie='',string $adminToken=''): array
 {
     $context=stream_context_create(['http'=>[
         'method'=>$data===null?'GET':'POST',
-        'header'=>"Content-Type: application/json\r\nAccept: application/json\r\n".($cookie!==''?"Cookie: boisConsent=$cookie\r\n":''),
+        'header'=>"Content-Type: application/json\r\nAccept: application/json\r\n".($cookie!==''?"Cookie: boisConsent=$cookie\r\n":'').($adminToken!==''?"X-Bois-Admin-Token: $adminToken\r\n":''),
         'content'=>$data===null?'':json_encode($data,JSON_THROW_ON_ERROR),
         'ignore_errors'=>true,'timeout'=>5,
     ]]);
@@ -91,6 +91,12 @@ try{
 
     // Restore synthetic staging permission and prove the API still passes server config.
     $writeConfig(array_replace($config,['mode'=>'staging','sales_tracking_enabled'=>true]));
+    [$status]=security_http_request($base,'admin_sales');
+    if($status!==401)throw new RuntimeException('Admin API accepted missing token.');
+    [$status]=security_http_request($base,'admin_sales',null,'','wrong-demo-token');
+    if($status!==401)throw new RuntimeException('Admin API accepted wrong separate header.');
+    [$status,$body]=security_http_request($base,'admin_sales',null,'',(string)$config['admin_token']);
+    if($status!==200||!isset($body['sales']))throw new RuntimeException('Admin API separate header failed.');
     [$status,$body]=security_http_request($base,'sales_event',$forged);
     if($status!==202 || ($body['sales']['disabled']??false)!==true) throw new RuntimeException('No-choice direct event was accepted.');
     $noChoiceBefore=$snapshot();
@@ -147,6 +153,7 @@ try{
     echo "HTTP_ORDER_WITHOUT_TRACKING: pass\n";
     echo "HTTP_CHECKOUT_CLOSED_NO_PAYMENT_MUTATION: pass\n";
     echo "HTTP_SYNTHETIC_TRACKING_ON: pass\n";
+    echo "HTTP_ADMIN_SEPARATE_TOKEN_HEADER: pass\n";
     echo "EXTERNAL_NETWORK_TRANSPORTS_DISABLED: yes\n";
 }finally{
     if(is_resource($process)){proc_terminate($process);proc_close($process);}

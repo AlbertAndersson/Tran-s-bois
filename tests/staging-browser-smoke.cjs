@@ -6,7 +6,8 @@ const fs=require('node:fs');
 const path=require('node:path');
 const base=process.env.BOIS_BASE_URL;
 const adminToken=process.env.BOIS_ADMIN_TOKEN;
-if(!base||!adminToken)throw Error('Synthetic staging URL and private admin token required.');
+const demoPassword=process.env.DEMO_PASSWORD;
+if(!base||!adminToken||!demoPassword)throw Error('Synthetic staging URL and private credentials required.');
 const output=process.env.RUNNER_TEMP?path.join(process.env.RUNNER_TEMP,'bois-browser-evidence'):path.join('/tmp','bois-browser-evidence');
 fs.mkdirSync(output,{recursive:true});
 const key=()=>Math.random().toString(36).slice(2,12);
@@ -16,7 +17,7 @@ const key=()=>Math.random().toString(36).slice(2,12);
   let existingOrderId='',matchOrderId='',refundOrderId='',refundSession=null;
   try{
     for(const width of [375,390,1280]){
-      const context=await browser.newContext({viewport:{width,height:850},deviceScaleFactor:1});
+      const context=await browser.newContext({viewport:{width,height:850},deviceScaleFactor:1,httpCredentials:{username:'bois-demo',password:demoPassword}});
       const page=await context.newPage();
       await page.goto(base+'/');
       await page.locator('#bois-consent').waitFor({state:'visible'});
@@ -129,7 +130,7 @@ const key=()=>Math.random().toString(36).slice(2,12);
       await context.close();
     }
 
-    const context=await browser.newContext({viewport:{width:1280,height:850}});
+    const context=await browser.newContext({viewport:{width:1280,height:850},httpCredentials:{username:'bois-demo',password:demoPassword}});
     const admin=await context.newPage();
     await admin.goto(base+'/admin.html');
     await admin.locator('#token').fill(adminToken);
