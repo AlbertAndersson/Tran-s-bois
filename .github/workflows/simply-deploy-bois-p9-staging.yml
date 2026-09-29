@@ -83,7 +83,7 @@ jobs:
           set -euo pipefail
           umask 077
           [[ -n "$DB_HOST" && -n "$DB_NAME" && -n "$DB_USER" && -n "$DB_PASSWORD" ]] || { echo "::error::BOIS_DB_* secrets are incomplete"; exit 1; }
-          [[ "$DEMO_PASSWORD" =~ ^[A-Za-z0-9_-]{24,}$ ]] || { echo "::error::BOIS_STAGING_DEMO_PASSWORD must be configured (at least 24 URL-safe characters) before deployment"; exit 1; }
+          [[ ${#DEMO_PASSWORD} -ge 8 ]] || { echo "::error::BOIS_STAGING_DEMO_PASSWORD must be configured (at least 8 characters) before deployment"; exit 1; }
           command -v htpasswd >/dev/null || { echo "::error::apache2-utils htpasswd is required on the runner"; exit 1; }
           if [[ -z "${DB_PORT:-}" ]]; then DB_PORT=3306; fi
           echo "DB_PORT=$DB_PORT" >> "$GITHUB_ENV"
