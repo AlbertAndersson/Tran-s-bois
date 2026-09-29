@@ -4,7 +4,7 @@
 
 Detta är den primära överlämningen för en ny utvecklingstråd. GitHub är source of truth.
 
-**Nyast:** Slutlig kodref `b83cd40926c511b5b873a6fb652c43d5bb221053` publicerades och liveverifierades i Simply-run `36516255044` (success; job `109239084358`). Workflow på `main` `26910660686402251f542caa9cc7263218ea6303` var manuellt skyddad och pinnad till denna kod. P2–P9 + Security controls CI passerade för mobilrättningen (PR #17); de fem berörda workflowarna passerade även för sista browser-testjusteringen (PR #18, Security `36516093807`, P9 `36516093893`). Chromium headless testade 375, 390 och 1280 px, 10 skärmbilder i Actions-artifact `bois-p9-synthetic-browser-36516255044` (7 dagars retention). P8 är TECHNICALLY COMPLETE / NOT ACTIVATED. Ingen Stripe, riktig betalning, extern mejlsändning, extern analytics eller produktionsaktivering; ny extern kostnad 0 kr. Staging är publikt nåbar utan verifierat inloggningsskydd och får inte delas brett. Historisk P9-run `36445454316` avser äldre kod. Första rättningsdeployen var `36463946785` med `fdb1053c69e929fa7430c74b9ea5a4e47cac31eb`.
+**Nyast:** Slutlig kodref `e4ac4ce385fcf751460b4af208756d74e562d54b` publicerades och liveverifierades i Simply-run `36517329717` (success; job `109242442693`). Workflow på `main` `0933351896cf608a121d4cdeda7ce7e0c13b0052` var manuellt skyddad och pinnad till denna kod. P2–P9 + Security controls CI passerade för mobilrättningen (PR #17); de fem berörda workflowarna passerade även för sista browser-testjusteringen (PR #18, Security `36516093807`, P9 `36516093893`). Chromium headless testade 375, 390 och 1280 px, 10 skärmbilder i Actions-artifact `bois-p9-synthetic-browser-36517329717` (7 dagars retention). P8 är TECHNICALLY COMPLETE / NOT ACTIVATED. Ingen Stripe, riktig betalning, extern mejlsändning, extern analytics eller produktionsaktivering; ny extern kostnad 0 kr. Staging är publikt nåbar utan verifierat inloggningsskydd och får inte delas brett. Historisk P9-run `36445454316` avser äldre kod. Första rättningsdeployen var `36463946785` med `fdb1053c69e929fa7430c74b9ea5a4e47cac31eb`.
 
 ## Source of truth
 
@@ -15,7 +15,7 @@ Detta är den primära överlämningen för en ny utvecklingstråd. GitHub är s
 - Verifiera alltid aktuell `main` HEAD innan ändring
 - Deployment/source/secrets: `AlbertAndersson/Tran-s-bois` är ensam canonical source för BoIS kod, CI och deployment; Work Capture BoIS-deploy/readiness-workflows är pensionerade efter verifierad BoIS-ägd körning.
 
-Verifiera alltid aktuell HEAD innan du ändrar något. Senast verifierad main HEAD före denna dokumentations-PR: `26910660686402251f542caa9cc7263218ea6303`.
+Verifiera alltid aktuell HEAD innan du ändrar något. Senast verifierad main HEAD före denna dokumentations-PR: `0933351896cf608a121d4cdeda7ce7e0c13b0052`.
 
 ## Läsordning för ny tråd
 
