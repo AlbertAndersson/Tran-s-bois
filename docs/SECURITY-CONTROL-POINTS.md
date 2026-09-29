@@ -56,7 +56,7 @@ Testerna använder syntetiska fixtures. Externa cURL-anrop och mail är avstäng
 
 Kontrollen av sales-tabellernas kolumnnamn rättades även till en skiftlägesoberoende läsning med PDO::FETCH_COLUMN. Ett tomt eller ofullständigt metadataresultat underkänner testet i stället för att ge en falskt godkänd kolumnkontroll. Den slutliga säkerhetsloggen passerade utan de tidigare PHP-varningarna.
 
-## Separat stagingverifiering – återstår
+## Historisk plan för separat stagingverifiering – genomförd
 
 Den befintliga manuella workflowen `.github/workflows/simply-deploy-bois-p9-staging.yml` är förberedd i commit `6a3807cac566161e78052f8f82ce95a310dde438` och pinnad till rättningskoden `fdb1053c69e929fa7430c74b9ea5a4e47cac31eb`. Den har INTE startats i detta uppdrag.
 
@@ -66,9 +66,9 @@ Behåll mock, tomma Stripe-secrets, avstängd extern e-post och stängd producti
 
 Följ P4–P9-stagingacceptansen och dokumentera nytt run-ID/kodref först efter success. Kontrollera att den publicerade `common.js` innehåller spårningsspärren. De negativa produktionsfallen är verifierade i isolerad CI; lägg inte in riktiga Stripe-nycklar eller öppna produktion för att testa dem på Simply. Run `36516255044` verifierar den nya samtyckesversionen och publicerade filhashar; `36445454316` är historisk äldre P9-kod.
 
-## Planen efter rättningen
+## Samtycke efter rättningen – genomfört i staging
 
-Se `docs/COOKIES-AND-CONSENT-PLAN.md`. Kakor, sessionStorage/localStorage, återkallelse, information och kontroll på serversidan ska implementeras innan valfri mätning används för riktiga besökare. Kak-/samtyckeskomponenten är **IMPLEMENTED / CI VERIFIED / LIVE STAGING VERIFIED**. Produktionens godkännande och aktivering återstår.
+Se `docs/COOKIES-AND-CONSENT-PLAN.md`. Kakor, sessionStorage/localStorage, återkallelse, information och serverkontroll är implementerade och testade för syntetisk staging; användning för riktiga besökare kräver slutligt produktionsbeslut. Kak-/samtyckeskomponenten är **IMPLEMENTED / CI VERIFIED / LIVE STAGING VERIFIED**. Produktionens godkännande och aktivering återstår.
 
 De tre kvalitetsrundorna har nu separat syntetisk Chromiumacceptans i run `36516255044`; 375/390/1280 px och adminflöden passerade. Detta är inte fysisk iPhone- eller Safari-verifiering.
 
