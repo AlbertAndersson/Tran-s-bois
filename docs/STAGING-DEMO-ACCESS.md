@@ -1,15 +1,38 @@
 # Stagingåtkomst för begränsad syntetisk demo
 
-Status: implementation under verifiering. Den äldre run `36517329717` saknade åtkomstskydd. Bredare delning får ske först när en ny manuell deploy och direktåtkomsttest är gröna.
+Status: **IMPLEMENTED / DEPLOYED / LIVE VERIFIED**.
 
-BoIS-katalogen `/bois-shop-p3/` skyddas vid webbservern med HTTP Basic Auth över HTTPS. En enda `.htaccess` i katalogens rot omfattar shop, medlemskap/Nordic, matchställ, payment, orderstatus, admin, consent, assets och `commerce-api.php`, även med query strings och direkta URL:er. Befintliga PHP-interna filer fortsätter att ge `Require all denied` även efter demoautentisering. Detta använder Simply-hostingens befintliga stöd för `.htaccess`, utan extern tjänst eller ny kostnad. Skyddet gäller endast staging och ersätter inte framtida personliga adminkonton, roller och MFA.
+Den tidigare blockeraren är löst genom run [36623915463](https://github.com/AlbertAndersson/Tran-s-bois/actions/runs/36623915463), job `109595921802`, **success**, 2026-09-29. Workflow/main: `4918cef10bcc213ef9c756d407ca88d4990971fa`. Publicerad applikationsref: `c49ebcd9af9f7081e1764d28419d92dd05b4fd48`. Jobbsteg, logg och artifactmetadata är efterkontrollerade. Äldre run `36517329717` saknade inloggningsskydd och är historik, inte aktuellt åtkomstläge.
 
-Simply beskriver katalogens `.htaccess` som gällande även undermappar: https://www.simply.com/dk/support/faq/php/27-aendring-af-php-indstillinger-med-htaccess/. Den absoluta värdsökvägen hämtas via SSH vid varje deploy; den antas inte från repo.
+## Skydd och behörighet
 
-`BOIS_STAGING_DEMO_PASSWORD` ska vara ett starkt, privat Actions-secret med minst 24 tecken ur `A–Z`, `a–z`, `0–9`, `_`, `-`. Deployment avbryts innan publicering om det saknas. Workflowen genererar bcrypt-hash med `htpasswd` på runnern och installerar enbart hashfilen utanför `public_html` på Simply; lösenordet finns inte i repo, payload, skärmbilder eller sammanfattning. Användarnamnet är `bois-demo`. Dela lösenordet enbart genom en godkänd privat kanal med ett litet antal behöriga granskare; rotera secret och gör en ny manuell deploy när åtkomst ska dras tillbaka. Basic Auth skickar credentials per HTTPS-anrop. Kontrollera att åtkomst till den privata hashfilen fungerar på värden före delning.
+BoIS-katalogen `/bois-shop-p3/` skyddas vid webbservern med HTTP Basic Auth över HTTPS. Rotens `.htaccess` omfattar shop, medlemskap/Nordic, matchställ, payment, orderstatus, admin, consent, assets och `commerce-api.php`, även med query strings och direkta URL:er. Interna PHP-filer har fortsatt `Require all denied`. Detta använder Simply-hostingens befintliga stöd utan extern tjänst eller ny kostnad.
 
-Den befintliga adminnyckeln är separat från demoåtkomsten. Webbservern använder HTTP `Authorization: Basic`, medan BoIS admin-API tar `X-Bois-Admin-Token` och fortsätter att kontrollera samma privata runtime-token. Äldre Bearer-anrop behålls för isolerade testkontrakt. Adminnyckeln ska aldrig delas som allmän demoinloggning.
+Skyddet är för begränsad stagingdemo, inte produktionsinloggning. Det ersätter inte framtida personliga adminkonton, roller eller MFA.
 
-Manuell deploygrind och pinnad applikationsref består. Workflowen verifierar publicerad `.htaccess` och applikationsfilers SHA-256, kräver `401` utan credentials för direkt HTML-, JS- och API-åtkomst, kräver `401` med fel demohemlighet och kör därefter P4–P9 samt Chromium bakom Basic Auth. Dessutom ska en oberoende webbläsarkontroll utan inloggning och med korrekt behörighet göras efter deploy. Om `401` uteblir eller värden inte kan läsa `AuthUserFile`, stoppa delning och rätta den specifika värdkonfigurationen. `noindex` är endast en indexeringssignal.
+Användarnamn: `bois-demo`. Lösenordet hanteras endast i Actions-secret `BOIS_STAGING_DEMO_PASSWORD` och genom godkänd privat kanal till ett litet antal behöriga granskare. Skriv inte lösenord, hash, ordertoken eller adminnyckel i GitHub, Drive eller skärmbilder.
 
-Inga riktiga namn eller e-postadresser används i testet. Mock/testmode, avstängd extern mail/analytics och P8 `TECHNICALLY COMPLETE / NOT ACTIVATED` kvarstår. Fysisk iPhone/Safari är inte verifierad och är en separat manuell granskning.
+Aktuell workflowgräns efter PR #24 är **minst 8 tecken**, inte dokumentets tidigare 24-teckenskrav. Ett längre unikt lösenord kan användas. Den verifierade körningen accepterade secretet; dess värde har inte lästs ut eller dokumenterats i denna closeout.
+
+## Installation och separata nycklar
+
+Workflowen genererar bcrypt-hash via `htpasswd` och lägger hashfilen utanför `public_html`. Den absoluta sökvägen hämtas via SSH. I den verifierade körningen användes katalogrättighet 755 och hashfilrättighet 644 så att webbservern kan läsa filen. Det är **inte** en hashfil med rättighet 600; runtime-konfigurationen ligger separat med rättighet 600. Inga rättigheter ändras av dokumentationscloseouten.
+
+Webbservern använder `Authorization: Basic`. BoIS admin-API använder separat privat runtime-token via `X-Bois-Admin-Token`. Bearer-kompatibilitet finns för isolerade testkontrakt. Demoåtkomst är inte adminbehörighet, och adminnyckeln ska aldrig delas som allmän demoinloggning.
+
+För att dra tillbaka åtkomst: rotera demo-secretet och kör en ny uttryckligt godkänd manuell deploy med verifierad appref. Rotation blir inte verksam på Simply enbart genom ändring i GitHub Secrets. Behåll inloggningsskyddet vid senare publicering.
+
+## Verifierat i run 36623915463
+
+- Publicerade `.htaccess` och relevanta applikationsfiler matchade payloadens SHA-256.
+- Samtliga testade direkta HTML-, JS- och API-GET-anrop utan credentials gav **401**. Shop, admin, order, payment, consent och query strings ingick.
+- POST mot `orders`, `checkout`, `mock_payment_event`, `consent` och `sales_event` utan credentials gav **401**.
+- Fel demohemlighet gav **401**.
+- Behörig P4–P9 API- och Chromiumdemo passerade bakom samma Basic Auth.
+- Chromium headless testade 375, 390 och 1280 px med 10 sparade PNG. Bevis: `bois-p9-synthetic-browser-36623915463`, artifact ID `11059388459`, till 2026-10-06 20:08:02 UTC.
+
+Verifieringsmetoden var direkta HTTP-kontroller och behörig automatiserad Chromiumkörning. En ny oberoende manuell webbläsargranskning har inte gjorts i dokumentationscloseouten. Gör en vanlig inloggningskontroll när Erik/BoIS-demot inleds. Fysisk iPhone/Safari är inte verifierad.
+
+Vid framtida uteblivet 401 eller läsfel för AuthUserFile: stoppa delning och rätta värdkonfigurationen. `noindex` är endast en indexeringssignal. Dela nu endast till behöriga granskare, inte öppet till allmänheten.
+
+Mock/testmode och syntetiska uppgifter kvarstår. Stripe/riktiga betalningar, externa mejl/analytics och produktion är inte aktiverade. P8: **TECHNICALLY COMPLETE / NOT ACTIVATED**. Nästa steg är verksamhetsdemo enligt `SYNTHETIC-DEMO.md`; ingen ny teknisk utvecklingsfas startas genom denna verifiering.

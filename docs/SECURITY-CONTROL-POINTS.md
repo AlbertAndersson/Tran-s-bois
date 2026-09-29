@@ -1,21 +1,23 @@
 # Kontrollpunkter efter P9 – betalningsstart och spårningsstopp
 
-Stagingens föreslagna katalogskydd i PR #22 dokumenteras i `docs/STAGING-DEMO-ACCESS.md`. Det är ännu inte publicerat eller verifierat; befintliga betalnings- och samtyckesgrindar nedan gäller oförändrat.
+Datum: 2026-09-29
+Status: **MERGED / CI VERIFIED / PROTECTED STAGING VERIFIED**.
 
-Datum: 2026-09-28
-Status: **MERGED / CI VERIFIED / STAGING VERIFIED**. PR #11 publicerades först i run `36463946785`, pinnad `fdb1053c69e929fa7430c74b9ea5a4e47cac31eb`. Slutlig kodref `e4ac4ce385fcf751460b4af208756d74e562d54b` publicerades och liveverifierades i Simply-run `36517329717` (success; job `109242442693`). Workflow på `main` `0933351896cf608a121d4cdeda7ce7e0c13b0052` var manuellt skyddad och pinnad till denna kod. P2–P9 + Security controls CI passerade för mobilrättningen (PR #17); de fem berörda workflowarna passerade även för sista browser-testjusteringen (PR #18, Security `36516093807`, P9 `36516093893`). Chromium headless testade 375, 390 och 1280 px, 10 skärmbilder i Actions-artifact `bois-p9-synthetic-browser-36517329717` (7 dagars retention). P8 är TECHNICALLY COMPLETE / NOT ACTIVATED. Ingen Stripe, riktig betalning, extern mejlsändning, extern analytics eller produktionsaktivering; ny extern kostnad 0 kr. Staging är publikt nåbar utan verifierat inloggningsskydd och får inte delas brett.
+Skyddad staging är nu verifierad i run **36623915463**, job `109595921802`, success, med publicerad appref `c49ebcd9af9f7081e1764d28419d92dd05b4fd48` och workflow/main `4918cef10bcc213ef9c756d407ca88d4990971fa`. Det katalogomfattande Basic Auth-skyddet från PR #22 är installerat och obehöriga direkta URL:er/POST-anrop samt fel demoinloggning nekades med 401. Behöriga P4–P9- och Chromiumflöden passerade. Se `STAGING-DEMO-ACCESS.md` för faktiskt verifierad omfattning och hemlighetshantering.
 
-Utgångspunkt: `main` vid P9-closeout `3983c5e65726390cd59fcf65fe3d69000376030f`. Tidigare P9-stagingverifiering är run `36445454316`, med kodref `3219dba57fca1eb97b9d50022477131c8db2501b`. Den körningen verifierar inte automatiskt senare rättningar.
+PR #11:s kontrollrättningar publicerades först i run `36463946785` med `fdb1053c69e929fa7430c74b9ea5a4e47cac31eb`. C1–C4/browserversionen före åtkomstskydd verifierades i `36517329717`, appref `e4ac4ce385fcf751460b4af208756d74e562d54b`. Dessa är historiska referenser; tidigare instruktioner om att PR #11 eller Basic Auth ännu inte publicerats är avslutade.
 
-## Verifierad leverans
+P8 förblir **TECHNICALLY COMPLETE / NOT ACTIVATED**. Ingen riktig Stripe, betalning, extern mejlsändning/analytics eller produktion har aktiverats. Ny extern kostnad i leveransen är 0 kr. Dokumentationscloseouten ändrar inte kod, runtime, databas eller hemligheter.
 
-- PR #11 är mergead som `fdb1053c69e929fa7430c74b9ea5a4e47cac31eb`.
-- Slutlig PR-head var `8f15c2c4fd21fe392b33de15a82edf9c1198a02b`; samtliga P2–P9-körningar samt den nya Security controls CI lyckades.
-- Security controls CI: run `36460272204`, job `109056802128`, **success**. Jobbsteg och logg är lästa.
-- Webbläsarkodens isolerade tester: **16 godkända, 0 underkända**. Detta är automatiserade JavaScript-/lagringstester, inte den ännu väntande visuella mobilgranskningen.
-- P9 Sales Engine CI: `36460272250`, success.
-- Övriga gröna körningar: P2 `36460272332`, P3 `36460272430`, P4 `36460272248`, P5 `36460272195`, P6 `36460272189`, P7 `36460272188`, P8 `36460272236`.
-- Ingen Simply-deploy eller ändring av serverns runtime/secrets genomfördes i rättningsuppdraget. Ingen riktig betalning, extern mejlsändning eller ny betaltjänst aktiverades.
+## Ursprunglig kontrollleverans och CI-bevis
+
+Utgångspunkt var P9-closeout `3983c5e65726390cd59fcf65fe3d69000376030f`; äldre P9-run `36445454316` verifierade appref `3219dba57fca1eb97b9d50022477131c8db2501b`, inte automatiskt senare rättningar.
+
+- PR #11 merge: `fdb1053c69e929fa7430c74b9ea5a4e47cac31eb`.
+- Slutlig PR-head: `8f15c2c4fd21fe392b33de15a82edf9c1198a02b`; P2–P9 och Security controls CI success.
+- Security controls CI: `36460272204`, job `109056802128`, success. 16 isolerade JavaScript-/lagringstester, PHP-kontroller och loopback-HTTP/MySQL. Dessa var inte visuella fysiska mobiltester.
+- P9: `36460272250`. Övriga gröna körningar: P2 `36460272332`, P3 `36460272430`, P4 `36460272248`, P5 `36460272195`, P6 `36460272189`, P7 `36460272188`, P8 `36460272236`.
+- Det ursprungliga kodrättningsuppdraget ändrade inte Simply-runtime; publicering och senare samtyckes-/åtkomstverifieringar gjordes därefter i de separat dokumenterade körningarna.
 
 ## Kontrollpunkt 1 – faktiskt stopp för nya Stripe-checkouts
 
@@ -24,10 +26,10 @@ Tidigare kontrollerade betalningsvägen konfigurerade Stripe-nycklar men inte de
 Rättning:
 - `bois_p8_stripe_checkout_allowed` skiljer behörighet att STARTA en betalning från providerberedskap att ta emot redan påbörjade betalningar.
 - Produktion kräver `stripe_mode=live`, strikt boolean `production_launch_enabled=true`, giltig runtime och samtliga befintliga `ready_for_production_launch`-kontroller.
-- Staging/test kan endast skapa Stripe TEST-checkouts med testnycklar; okänd miljö nekas. Den befintliga Simply-stagingen använder fortfarande mock och tomma Stripe-nycklar.
+- Staging/test kan endast skapa Stripe TEST-checkouts med testnycklar; okänd miljö nekas. Simply-staging använder fortfarande mock och tomma Stripe-nycklar.
 - Spärren körs i `bois_p8_stripe_checkout` före databasåtkomst samt i transportfunktionen före skapande av en Checkout Session.
 - `checkout_enabled` i health visar om nya checkouts får startas. `payment_enabled` behåller sin providerbetydelse för att inte stoppa försenad betalningsbehandling.
-- Signaturkontroll och behandling av redan påbörjade betalningar/återbetalningar kopplas inte till spärren för NYA köp. Stängning av shoppen får inte tappa giltiga försenade betalhändelser.
+- Signaturkontroll och behandling av redan påbörjade betalningar/återbetalningar kopplas inte till spärren för NYA köp. Stängning för nya köp får inte tappa giltiga försenade betalhändelser.
 
 ## Kontrollpunkt 2 – spårning av betyder inga nya sales-skrivningar
 
@@ -36,42 +38,28 @@ Tidigare var event-endpointen spärrad men orderkopplingen och webbläsarens ses
 Rättning:
 - `bois_p9_capture_event` och `bois_p9_link_order` kräver separat, betrodd serverkonfiguration. Utelämnad konfiguration betyder av.
 - Order-API:t skickar serverkonfigurationen och hoppar över attribution när den är avstängd. Klientfält kan inte öppna spärren.
-- Alla tre sales-tabeller lämnas oförändrade när spårning är av; redan existerande länkar omattribueras inte heller i det läget.
-- Webbläsaren kontrollerar health innan P9:s lagring läses/skrivs, events skickas eller attribution bifogas en order.
-- Endast en pågående health-kontroll delas; godkännandet cachas inte mellan senare interaktioner.
+- Alla tre sales-tabeller lämnas oförändrade när spårning är av; befintliga länkar omattribueras inte heller då.
 - Saknat/ogiltigt svar eller timeout ger avstängd statistik. Blockerad webbläsarlagring får inte förhindra en vanlig order.
-- Produktion är tills vidare hårt blockerad för spårning, även med flaggan true. Explicit syntetisk staging/test fungerar fortsatt. C1–C4 är nu implementerat i staging; produktionsmätning är fortsatt globalt blockerad till separat beslut.
+- Produktionsspårning är fortsatt hårt blockerad. Efter C1–C4 kräver även syntetisk staging både teknisk tillåtelse och giltigt serververifierat statistikval. Webbläsaren kontrollerar detta innan P9-lagring, events eller orderattribution. Se `CONSENT-INVENTORY-AND-ACCEPTANCE.md` för nuvarande samtyckesflöde, giltighet och revokering.
 
 ## Testning
 
-`Security controls CI` verifierade:
-- nekad checkout före databas och providertransport,
-- saknat/icke-boolean lanseringsgodkännande och fel miljö,
-- bevarad signaturverifiering för befintliga betalningar,
-- isolerade webbläsarkodtester av avstängd lagring, events och orderattribution,
-- nät-/JSON-/HTTP-/timeout-fel samt blockerad lagring,
-- MySQL-regression för P9 inklusive vanlig mockbetalning utan spårning,
-- verkliga loopback-HTTP-anrop till API:t med avstängd, saknad och felaktig spårningskonfiguration,
-- oförändrade betalposter vid blockerad HTTP-checkout.
+Security controls CI verifierade nekad checkout före databas/providertransport, saknat/icke-boolean lanseringsgodkännande och fel miljö, bevarad signaturverifiering för befintliga betalningar, avstängd lagring/events/orderattribution, nät-/JSON-/HTTP-/timeout-fel och blockerad lagring samt P9/MySQL med vanlig mockbetalning utan statistik. Loopback-HTTP verifierade avstängd/saknad/felkonfigurerad spårning och oförändrade betalposter vid blockerad checkout.
 
-Testerna använder syntetiska fixtures. Externa cURL-anrop och mail är avstängda i säkerhetstestprocesserna. CI använder isolerad MySQL, inte Simply-databasen. Ingen schemaändring eller ny extern tjänst behövs.
+Tester använder syntetiska fixtures och isolerad MySQL, inte Simply-databasen. Externa cURL-anrop och mail var avstängda i säkerhetstestprocesserna. Kontrollrättningen krävde ingen schemaändring; den senare samtyckesfunktionen lade separat till `bois_consent_choices`.
 
-Kontrollen av sales-tabellernas kolumnnamn rättades även till en skiftlägesoberoende läsning med PDO::FETCH_COLUMN. Ett tomt eller ofullständigt metadataresultat underkänner testet i stället för att ge en falskt godkänd kolumnkontroll. Den slutliga säkerhetsloggen passerade utan de tidigare PHP-varningarna.
+Sales-kolumnkontrollen rättades till skiftlägesoberoende läsning med PDO::FETCH_COLUMN. Tomt/ofullständigt metadataresultat underkänner testet. Den slutliga ursprungliga säkerhetsloggen passerade utan tidigare PHP-varningar.
 
-## Historisk plan för separat stagingverifiering – genomförd
+## Genomförd staging- och browserverifiering
 
-Den befintliga manuella workflowen `.github/workflows/simply-deploy-bois-p9-staging.yml` är förberedd i commit `6a3807cac566161e78052f8f82ce95a310dde438` och pinnad till rättningskoden `fdb1053c69e929fa7430c74b9ea5a4e47cac31eb`. Den har INTE startats i detta uppdrag.
+Den manuellt skyddade BoIS-workflowen har senare åter verifierat rättningarna, C1–C4 och P4–P9. Senaste skyddade run **36623915463** verifierade relevanta publicerade filhashar, direktåtkomstskydd och syntetisk API-/browseracceptans. Negativa produktions-/Stripefall har inte testats genom att öppna produktion eller installera riktiga nycklar på Simply; de behåller sina isolerade CI-bevis.
 
-Kör från `AlbertAndersson/Tran-s-bois`, branch `main`, med confirmation `DEPLOY_BOIS_P9_READY`. Kontrollera först att aktuell workflow fortfarande pekar på rättad kod. Bevara den manuella deploygrinden; bygg inte om den till automatisk push-deploy för att kringgå åtkomsten till workflow_dispatch.
+Chromium headless på Linux testade **375/390/1280 px**. 10 PNG i `bois-p9-synthetic-browser-36623915463`, artifact ID `11059388459`, till 2026-10-06 20:08:02 UTC. Detta är inte fysisk iPhone-/Safari-verifiering eller ett faktiskt godkännande av Erik/BoIS.
 
-Behåll mock, tomma Stripe-secrets, avstängd extern e-post och stängd production launch. Syntetisk staging-spårning ska fortsatt kunna användas. Workflowen kontrollerar även `checkout_enabled=true` för MOCK och strikta nuvarande privacy-fält i sales-svaret; frånvaro av ett fält ska inte ge falskt godkänt resultat.
+Spara manualgrinden och korrekt appref vid eventuella framtida ändringar. En dokumentationscommit kräver ingen ny stagingdeploy. Kör inte om äldre pin på `fdb1053c...` som om den innehöll den senare samtyckes-/Basic Auth-versionen.
 
-Följ P4–P9-stagingacceptansen och dokumentera nytt run-ID/kodref först efter success. Kontrollera att den publicerade `common.js` innehåller spårningsspärren. De negativa produktionsfallen är verifierade i isolerad CI; lägg inte in riktiga Stripe-nycklar eller öppna produktion för att testa dem på Simply. Run `36517329717` verifierar den nya samtyckesversionen och publicerade filhashar; `36445454316` är historisk äldre P9-kod.
+## Nästa steg och kvarvarande lanseringskrav
 
-## Samtycke efter rättningen – genomfört i staging
+Kontrollrättningar, samtyckesimplementation och skyddad syntetisk demo är tekniskt verifierade. Nästa steg är Eriks/BoIS faktiska genomgång enligt `SYNTHETIC-DEMO.md` och en prioritering utifrån konkret feedback, inte ny generell utveckling.
 
-Se `docs/COOKIES-AND-CONSENT-PLAN.md`. Kakor, sessionStorage/localStorage, återkallelse, information och serverkontroll är implementerade och testade för syntetisk staging; användning för riktiga besökare kräver slutligt produktionsbeslut. Kak-/samtyckeskomponenten är **IMPLEMENTED / CI VERIFIED / LIVE STAGING VERIFIED**. Produktionens godkännande och aktivering återstår.
-
-De tre kvalitetsrundorna har nu separat syntetisk Chromiumacceptans i run `36517329717`; 375/390/1280 px och adminflöden passerade. Detta är inte fysisk iPhone- eller Safari-verifiering.
-
-P8 förblir **TECHNICALLY COMPLETE / NOT ACTIVATED**. Personliga adminkonton/MFA, slutlig drift-/säkerhetsgranskning och juridiskt underlag är kvarvarande lanseringskrav, inte levererade av denna avgränsade rättning.
+Produktionens godkännande och aktivering återstår. Personliga adminkonton/roller/MFA, missbruksskydd, backup/återställningsprov, slutlig säkerhetsgranskning och juridiskt/driftmässigt underlag är separata lanseringskrav. Basic Auth för demo ersätter dem inte. P8 förblir **TECHNICALLY COMPLETE / NOT ACTIVATED**.
