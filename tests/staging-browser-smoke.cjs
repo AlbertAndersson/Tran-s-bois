@@ -100,6 +100,7 @@ const key=()=>Math.random().toString(36).slice(2,12);
       await page.screenshot({path:path.join(output,'paid-without-statistics-375.png')});
       await page.getByRole('link',{name:'Kakinställningar'}).first().click();
       await page.getByRole('button',{name:'Acceptera statistik'}).click();
+      await page.locator('#bois-consent').waitFor({state:'hidden'});
       await page.goto(base+'/match-kit.html?utm_source=browser&utm_campaign=synthetic');
       await page.locator('#kitForm').waitFor();
       await page.locator('#player').fill('Cia Test');
