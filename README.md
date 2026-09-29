@@ -2,7 +2,7 @@
 
 Fristående BoIS-webshop med medlemskap, Nordic Wellness-förmån, matchställ och förberett supporter-/merchsortiment.
 
-**Aktuell ändring:** PR #12 bygger C1–C4 för valfri statistik med serververifierat, återkalleligt samtycke. P2–P9 och Security controls CI ska vara gröna på slutlig PR-head före merge. Den nya samtyckesversionen är inte liveverifierad förrän den manuella stagingworkflowen har körts med ny source-ref. Se `docs/CONSENT-INVENTORY-AND-ACCEPTANCE.md` och `docs/SYNTHETIC-DEMO.md`. Rättningsdeployen före samtycket lyckades som run `36463946785` med kodref `fdb1053c69e929fa7430c74b9ea5a4e47cac31eb`.
+**Aktuellt:** Slutlig kodref `b83cd40926c511b5b873a6fb652c43d5bb221053` publicerades och liveverifierades i Simply-run `36516255044` (success; job `109239084358`). Workflow på `main` `26910660686402251f542caa9cc7263218ea6303` var manuellt skyddad och pinnad till denna kod. P2–P9 + Security controls CI passerade för mobilrättningen (PR #17); de fem berörda workflowarna passerade även för sista browser-testjusteringen (PR #18, Security `36516093807`, P9 `36516093893`). Chromium headless testade 375, 390 och 1280 px, 10 skärmbilder i Actions-artifact `bois-p9-synthetic-browser-36516255044` (7 dagars retention). P8 är TECHNICALLY COMPLETE / NOT ACTIVATED. Ingen Stripe, riktig betalning, extern mejlsändning, extern analytics eller produktionsaktivering; ny extern kostnad 0 kr. Staging är publikt nåbar utan verifierat inloggningsskydd och får inte delas brett. Se `docs/CONSENT-INVENTORY-AND-ACCEPTANCE.md` och `docs/SYNTHETIC-DEMO.md`.
 
 ## Status
 - P1 ordermotor: **COMPLETE**
@@ -91,7 +91,7 @@ P7 föreslår ett litet första sortiment: BoIS 1941 Hoodie, Supporter-T-shirt o
 
 P7:s separata `bois_`-tabeller, adminvy och interna preview är live-verifierade i staging. Servern blockerar offentlig katalog och direkta orderanrop före **1 januari 2027**, även om produktflaggor ändras. Efter datumet krävs dessutom uttryckligt godkännande och verifierad kommersiell data. Ingen P7-produkt är godkänd eller orderbar nu. Den publika startsidan visar inga produktnamn från det interna förslaget. P2–P7 CI är grön; Simply-run `36355678030` verifierade slutlig stagingkod.
 
-## Nästa utvecklingsordning
+## Historisk utvecklingsordning (före C1–C4)
 1. **P9 är liveverifierad i kostnadsfri staging**: BoIS-ägd run `36445454316` lyckades från `main` `6aabb41c7f0025cf99749919693d84c391f9ce24`, med pinnad P9-kodref `3219dba57fca1eb97b9d50022477131c8db2501b`.
 2. Nästa produktfas kan fokusera på pilotdata, CRO-förbättringar och organisk trafik utan betalda tjänster.
 3. **Kommersiell P7-beredning** fortsätter parallellt: riktiga offerter, SKU, marginal och BoIS-godkännande före eventuell merchlansering.
