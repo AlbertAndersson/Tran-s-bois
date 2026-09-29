@@ -6,7 +6,7 @@ Datum: 2026-09-28
 
 **COMPLETE / LIVE STAGING VERIFIED**
 
-P9:s historiska grundverifiering var run `36445454316`; PR #11:s säkerhetsrättning publicerades i run `36463946785`. C1–C4 är nu implementerat, CI-verifierat och liveverifierat i slutlig run `36516255044`, pinnad kodref `b83cd40926c511b5b873a6fb652c43d5bb221053`. Explicita samtyckessteg ersätter tidigare automatisk P9-spårning. Produktionens mätning är fortsatt globalt blockerad. Se `docs/CONSENT-INVENTORY-AND-ACCEPTANCE.md`.
+P9:s historiska grundverifiering var run `36445454316`; PR #11:s säkerhetsrättning publicerades i run `36463946785`. C1–C4 är nu implementerat, CI-verifierat och liveverifierat i slutlig run `36517329717`, pinnad kodref `e4ac4ce385fcf751460b4af208756d74e562d54b`. Explicita samtyckessteg ersätter tidigare automatisk P9-spårning. Produktionens mätning är fortsatt globalt blockerad. Se `docs/CONSENT-INVENTORY-AND-ACCEPTANCE.md`.
 
 P9 bygger ett eget first-party sales engine ovanpå befintlig Commerce Core. Syftet är att förstå vilka kampanjer, referrals och produktvägar som faktiskt leder till testorder och verifierad mock-PAID utan att köpa analytics, annonsering, e-postverktyg eller andra externa tjänster.
 
