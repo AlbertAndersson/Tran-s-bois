@@ -1,11 +1,11 @@
 # Kakor, webbläsarlagring och samtycke – plan inför lansering
 
 Datum: 2026-09-28
-Status: **IMPLEMENTED IN PR #12 / STAGING VERIFICATION PENDING / PRODUCTION ANALYTICS BLOCKED**. Nedan ursprunglig plan och historisk ordning bevaras. Aktuellt genomförande och inventering finns i `docs/CONSENT-INVENTORY-AND-ACCEPTANCE.md`; syntetiskt manus i `docs/SYNTHETIC-DEMO.md`. Endast grön CI och senare manuell stagingdeploy med ny source-ref får uppgradera status till liveverifierad.
+Status: **IMPLEMENTED / CI VERIFIED / LIVE STAGING VERIFIED / PRODUCTION ANALYTICS BLOCKED**. Slutlig kodref `b83cd40926c511b5b873a6fb652c43d5bb221053` publicerades och liveverifierades i Simply-run `36516255044` (success; job `109239084358`). Workflow på `main` `26910660686402251f542caa9cc7263218ea6303` var manuellt skyddad och pinnad till denna kod. P2–P9 + Security controls CI passerade för mobilrättningen (PR #17); de fem berörda workflowarna passerade även för sista browser-testjusteringen (PR #18, Security `36516093807`, P9 `36516093893`). Chromium headless testade 375, 390 och 1280 px, 10 skärmbilder i Actions-artifact `bois-p9-synthetic-browser-36516255044` (7 dagars retention). P8 är TECHNICALLY COMPLETE / NOT ACTIVATED. Ingen Stripe, riktig betalning, extern mejlsändning, extern analytics eller produktionsaktivering; ny extern kostnad 0 kr. Staging är publikt nåbar utan verifierat inloggningsskydd och får inte delas brett. Ursprunglig plan nedan bevaras som historisk kravbild; aktuellt genomförande och inventering finns i `docs/CONSENT-INVENTORY-AND-ACCEPTANCE.md`.
 
 ## Beslut och avgränsning
 
-Albert har bett att kakhantering läggs in i planen, men att identifierade säkerhetskontroller rättas först. Ingen samtyckesbanner eller produktionsspårning aktiveras i denna rättning. Inget CMP-abonnemang, annonsering eller extern analystjänst köps.
+Albert har bett att kakhantering läggs in i planen, men att identifierade säkerhetskontroller rättas först. Den ursprungliga säkerhetsrättningen föregick C1–C4. Samtyckeskomponenten är nu publicerad i syntetisk staging; produktionsspårning är inte aktiverad. Inget CMP-abonnemang, annonsering eller extern analystjänst köps.
 
 Ordningen är:
 1. Rätta och testa produktionsspärren för nya Stripe-checkouts samt spårningsspärren i server och webbläsare. Se `docs/SECURITY-CONTROL-POINTS.md`.
@@ -28,7 +28,7 @@ Bekräftat i `site/commerce/assets/common.js`:
 - `boisSalesSession`: pseudonymt sessions-ID i sessionStorage för P9-mätning; valfri statistik.
 - `boisSalesAttribution`: UTM/referral/landningssida i sessionStorage; valfri statistik.
 
-Fullständig lista återstår. Inventera även admininloggning, eventuellt demosparande, server-/webbhotellskakor, kundens order-/betalningsflöde, externa bildresurser och den framtida faktiska Stripe Checkout-konfigurationen. Anta inte att alla Stripe- eller tredjepartskakor är nödvändiga. Dokumentera för varje post: namn, teknik, domän/ansvarig, exakt ändamål, data, livslängd, åtkomst, kategori och bedömning. Inspektera Set-Cookie och lagring före val, efter ja, efter nej och efter återkallelse i riktiga webbläsare.
+Inventeringen finns i acceptansprotokollet. Stripe Checkout och leverantörers faktiska lagring kvarstår före produktionsaktivering. Anta inte att alla Stripe- eller tredjepartskakor är nödvändiga. Dokumentera för varje post: namn, teknik, domän/ansvarig, exakt ändamål, data, livslängd, åtkomst, kategori och bedömning. Inspektera Set-Cookie och lagring före val, efter ja, efter nej och efter återkallelse i riktiga webbläsare.
 
 Sessionsdata är pseudonym och kan internt länkas till order; beskriv den inte som anonym. Separera webbläsarens lagringstid från retention i sales-tabeller och från webbserverns driftloggar.
 
