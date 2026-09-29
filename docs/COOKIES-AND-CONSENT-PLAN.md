@@ -54,7 +54,7 @@ Servern måste kontrollera sitt eget samtyckesunderlag även på direkta API-anr
 
 Vid återkallelse: stoppa nya events, avbryt eventuell väntande statistik, rensa valfria P9-nycklar och stoppa nya orderkopplingar. Hantering av redan insamlade statistikdata och retention ska vara dokumenterad. Radera inte order-/betalningshistorik automatiskt bara för att statistikmedgivandet återkallas; den behandlingen har ett annat ändamål.
 
-Under tiden är produktionsspårning hårt spärrad i koden, även om `sales_tracking_enabled=true` skulle sättas av misstag. Syntetisk staging/test kan använda P9 med explicit flagga. Detta är INTE färdig samtyckeshantering och gör inte en öppet åtkomlig stagingmiljö lämplig för riktiga kunder. Begränsa användningen till behöriga testare och syntetiska uppgifter; kontrollera faktiskt åtkomstskydd inför bredare demo.
+Under tiden är produktionsspårning hårt spärrad i koden, även om `sales_tracking_enabled=true` skulle sättas av misstag. Syntetisk staging/test kan använda P9 med explicit flagga. Samtyckeshanteringen är nu tekniskt färdig i syntetisk staging, men en öppet åtkomlig stagingmiljö är inte lämplig för riktiga kunder. Begränsa användningen till behöriga testare och syntetiska uppgifter; inför och verifiera faktiskt åtkomstskydd inför bredare demo.
 
 ## C4 – acceptanskrav före aktivering
 
