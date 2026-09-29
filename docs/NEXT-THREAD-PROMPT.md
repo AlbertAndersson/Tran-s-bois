@@ -2,7 +2,7 @@
 
 Ta över **Tranås BoIS – Webbshop** från `AlbertAndersson/Tran-s-bois`. GitHub är source of truth och BoIS äger kod, CI, secrets och deployment. Verifiera aktuell `main` HEAD; utgå inte från ett gammalt handoff-SHA.
 
-**Aktuell arbetsgrind:** Slutlig kodref `b83cd40926c511b5b873a6fb652c43d5bb221053` publicerades och liveverifierades i Simply-run `36516255044` (success; job `109239084358`). Workflow på `main` `26910660686402251f542caa9cc7263218ea6303` var manuellt skyddad och pinnad till denna kod. P2–P9 + Security controls CI passerade för mobilrättningen (PR #17); de fem berörda workflowarna passerade även för sista browser-testjusteringen (PR #18, Security `36516093807`, P9 `36516093893`). Chromium headless testade 375, 390 och 1280 px, 10 skärmbilder i Actions-artifact `bois-p9-synthetic-browser-36516255044` (7 dagars retention). P8 är TECHNICALLY COMPLETE / NOT ACTIVATED. Ingen Stripe, riktig betalning, extern mejlsändning, extern analytics eller produktionsaktivering; ny extern kostnad 0 kr. Staging är publikt nåbar utan verifierat inloggningsskydd och får inte delas brett. Nästa steg är åtkomstskydd för bredare demo och separata produktionsbeslut. Texten nedan om att rättningsdeploy, C1–C4 eller kvalitetstester återstår är historisk och ersätts av detta läge.
+**Aktuell arbetsgrind:** Slutlig kodref `e4ac4ce385fcf751460b4af208756d74e562d54b` publicerades och liveverifierades i Simply-run `36517329717` (success; job `109242442693`). Workflow på `main` `0933351896cf608a121d4cdeda7ce7e0c13b0052` var manuellt skyddad och pinnad till denna kod. P2–P9 + Security controls CI passerade för mobilrättningen (PR #17); de fem berörda workflowarna passerade även för sista browser-testjusteringen (PR #18, Security `36516093807`, P9 `36516093893`). Chromium headless testade 375, 390 och 1280 px, 10 skärmbilder i Actions-artifact `bois-p9-synthetic-browser-36517329717` (7 dagars retention). P8 är TECHNICALLY COMPLETE / NOT ACTIVATED. Ingen Stripe, riktig betalning, extern mejlsändning, extern analytics eller produktionsaktivering; ny extern kostnad 0 kr. Staging är publikt nåbar utan verifierat inloggningsskydd och får inte delas brett. Nästa steg är åtkomstskydd för bredare demo och separata produktionsbeslut. Texten nedan om att rättningsdeploy, C1–C4 eller kvalitetstester återstår är historisk och ersätts av detta läge.
 
 ## Läs först
 
@@ -17,7 +17,7 @@ Ta över **Tranås BoIS – Webbshop** från `AlbertAndersson/Tran-s-bois`. GitH
 
 ## Historiska verifieringar och aktuell staging
 
-P1–P7 är tekniskt levererade. P8A–D är **TECHNICALLY COMPLETE / NOT ACTIVATED**. P9 och C1–C4 är liveverifierade på den nya kodrefen `b83cd40926c511b5b873a6fb652c43d5bb221053`; följande äldre körningar bevaras som historik.
+P1–P7 är tekniskt levererade. P8A–D är **TECHNICALLY COMPLETE / NOT ACTIVATED**. P9 och C1–C4 är liveverifierade på den nya kodrefen `e4ac4ce385fcf751460b4af208756d74e562d54b`; följande äldre körningar bevaras som historik.
 
 P9: BoIS-ägd run `36445454316`, job `109006483514`, success. Workflow-main `6aabb41c7f0025cf99749919693d84c391f9ce24`, pinnad kodref `3219dba57fca1eb97b9d50022477131c8db2501b`. Closeout-main `3983c5e65726390cd59fcf65fe3d69000376030f`.
 
