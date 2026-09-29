@@ -1,144 +1,59 @@
 # P9 – Sales Engine v1
 
-Datum: 2026-09-28
+Datum: 2026-09-29
 
 ## Status
 
-**COMPLETE / LIVE STAGING VERIFIED**
+**COMPLETE / LIVE VERIFIED IN PROTECTED SYNTHETIC STAGING**
 
-P9:s historiska grundverifiering var run `36445454316`; PR #11:s säkerhetsrättning publicerades i run `36463946785`. C1–C4 är nu implementerat, CI-verifierat och liveverifierat i slutlig run `36517329717`, pinnad kodref `e4ac4ce385fcf751460b4af208756d74e562d54b`. Explicita samtyckessteg ersätter tidigare automatisk P9-spårning. Produktionens mätning är fortsatt globalt blockerad. Se `docs/CONSENT-INVENTORY-AND-ACCEPTANCE.md`.
+Senaste skyddade stagingverifiering: run `36623915463`, job `109595921802`, success. Workflow/main `4918cef10bcc213ef9c756d407ca88d4990971fa`; publicerad appref `c49ebcd9af9f7081e1764d28419d92dd05b4fd48`. P9, C1–C4 och P4–P8-regressioner passerade bakom Basic Auth. Obehöriga direkta URL:er och POST-anrop nekades. Produktionsmätning är fortsatt globalt blockerad. Se `CONSENT-INVENTORY-AND-ACCEPTANCE.md` och `STAGING-DEMO-ACCESS.md`.
 
-P9 bygger ett eget first-party sales engine ovanpå befintlig Commerce Core. Syftet är att förstå vilka kampanjer, referrals och produktvägar som faktiskt leder till testorder och verifierad mock-PAID utan att köpa analytics, annonsering, e-postverktyg eller andra externa tjänster.
+Historisk grundverifiering var `36445454316`; PR #11:s kontrollrättning publicerades i `36463946785`. C1–C4-versionen före åtkomstskydd verifierades i `36517329717` med appref `e4ac4ce385fcf751460b4af208756d74e562d54b`. Explicita samtyckessteg ersätter den tidiga automatiska P9-spårningen. Dessa äldre körningar bevaras som historik, inte som nuvarande åtkomststatus.
 
-P9 ändrar inte P4–P8:s ekonomiska eller juridiska gränser.
+P9 bygger first-party mätning ovanpå Commerce Core för kampanjer, referrals och produktvägar till syntetisk order och verifierad mock-PAID. Ingen extern analytics, annonsering, e-posttjänst eller ny kostnad används. P4–P8:s ekonomiska och juridiska gränser ändras inte.
 
 ## P9A – First-party attribution
 
-Nya tabeller:
-- `bois_sales_sessions`
-- `bois_sales_events`
-- `bois_sales_order_links`
+Tabeller: `bois_sales_sessions`, `bois_sales_events`, `bois_sales_order_links`.
 
-Attribution:
-- `utm_source`
-- `utm_medium`
-- `utm_campaign`
-- `ref`
-- landing path
+Attribution: `utm_source`, `utm_medium`, `utm_campaign`, `ref` och landningssökväg. Sessions-ID skapas i sessionStorage först när statistik är tillåten. Det är pseudonymt och kan kopplas till order internt. Inga särskilda sales-fält för namn, e-post, telefon, personnummer, IP eller user-agent. Event har idempotent `event_key`.
 
-Principer:
-- session-id skapas i browserns `sessionStorage`
-- sessionspåret är pseudonymt och kan internt kopplas till en order
-- inga tredjepartscookies
-- ingen extern analytics
-- ingen IP-adress lagras
-- ingen user-agent lagras
-- inga direkta kundidentifierare som namn/e-post/telefon lagras i sales-tabellerna
-- events har eget idempotent `event_key`
-- `sales_tracking_enabled=false` är production-default; P9-staging sätter flaggan explicit till true för syntetisk testdata
+`sales_tracking_enabled=false` är production-default och produktionsmätning är globalt blockerad. Att flaggan är true i syntetisk staging räcker inte: giltigt serververifierat statistikmedgivande krävs dessutom. No-choice/nej/återkallelse ska fortfarande ge vanlig beställning utan mätning.
 
 ## P9B – Funnel
 
-Stödda events:
-- `page_view`
-- `product_view`
-- `checkout_view`
-- `checkout_started`
-- `order_created`
+Stödda events: `page_view`, `product_view`, `checkout_view`, `checkout_started`, `order_created`. Betald konvertering räknas från order-/betalstatus, inte klientens påstående om betalning.
 
-Betald konvertering räknas från den verkliga order-/payment-state-maskinen och inte från frontend-event.
+Admin visar stegen besök, produktvisning, betalningssida, betalning startad, order skapad och PAID.
 
-Funnel i admin:
-- besök
-- produktvisning
-- betalningssida
-- betalning startad
-- order skapad
-- PAID
+## P9C – Kampanj-/referralöversikt
 
-## P9C – Campaign/referral dashboard
-
-Admin visar:
-- sessioner
-- sessioner med order
-- betalda sessioner
-- session → PAID %
-- betalda order
-- brutto testvärde
-- netto testvärde efter refund
-- genomsnittligt betalt ordervärde
-- kampanj/referral per source/medium/campaign/ref
-- produktmix för attribuerade betalda order
+Admin visar sessioner, sessioner med order, betalda sessioner, session → PAID %, betalda order, brutto/netto testvärde efter refund, genomsnittligt ordervärde, kampanj/referral per source/medium/campaign/ref samt attribuerad produktmix.
 
 Kampanjlänksbyggaren skapar endast spårbara länkar. Den skickar inget, köper inget och ger ingen rabatt.
 
-## P9D – On-site sales guidance
+## P9D – Rekommendationer i shoppen
 
-Första rekommendationsregler:
-- medlemskap utan gym → visa Nordic Wellness som relevant medlemsförmån
-- gym utan medlemskap och inte befintlig medlem → rekommendera medlemskap eftersom det krävs
+Medlemskap utan gym ger information om Nordic Wellness-förmånen. Gym utan medlemskap och utan bekräftad befintlig medlem ger information om medlemskravet. Rekommendationerna ändrar inte pris, ger ingen rabatt, lägger aldrig automatiskt till en produkt och påverkar inte payment gate; `discount_ore=0`.
 
-Reglerna:
-- ändrar inte pris
-- ger ingen rabatt
-- lägger aldrig automatiskt till en produkt
-- har `discount_ore=0`
-- påverkar inte payment gate
+## Integritet och kostnadsgräns
 
-## Kostnadsgräns
+Sales-data är separerade från kundtabellerna men kan kopplas till order via `bois_sales_order_links.order_id`; de är därför pseudonyma, inte anonyma. Översikten är aggregerad. Produktionsinformation, rättslig bedömning och lagringstider återstår till separat beslut.
 
-P9 v1 får inte:
-- köpa annonser
-- aktivera extern analytics
-- skicka marknadsföringsmejl/SMS
-- skapa extern CRM-/marketing automation-kostnad
-- aktivera Stripe eller riktig betalning
-- öppna P7-merch före servergaten
-- skapa rabatt utan separat affärsbeslut
+Inga annonser, externa analystjänster, marknadsföringsmejl/SMS eller CRM-abonnemang aktiveras. Ingen riktig Stripe-betalning/refund, ingen öppnad P7-merch och inga nya rabatter utan separat beslut. Staging innehåller syntetiska testuppgifter och `payment_provider=mock`; mejltransport är disabled. Ny extern kostnad: 0 kr. P8 är **TECHNICALLY COMPLETE / NOT ACTIVATED**.
 
-## Integritet
+## Senaste acceptans och bevis
 
-Sales-tabellerna är uttryckligen separerade från kundtabellerna. Koppling till order sker endast genom `bois_sales_order_links.order_id`; det gör sessionen indirekt kopplingsbar och därför behandlas den som pseudonym data. Attribution-dashboarden är aggregerad.
+Run `36623915463` verifierade health P9, mock/testmode, first-party sales engine, teknisk stagingflagga true, extern analytics false och Stripe-/produktionsberedskap false. Inget val gav blockerat direkt sales-event; aktivt statistikval gav attribution → order → signerad mock-PAID och P4 ACTIVE/Nordic ELIGIBLE. Återkallelse spärrade även den gamla samtyckeskakan. Dubblettmock gav ingen ny effekt. P5 8/168h, P7 admin/preview och dold merch samt avstängd payment-mail passerade. Listan över främmande tabeller hade oförändrad hash/antal, antal 0.
 
-Före eventuell produktionsaktivering ska integritetsinformationen och rättslig grund/consent-bedömning bekräftas. Tracking är därför fail-closed i produktionskonfigurationen.
+Chromium headless på Linux kördes vid 375/390/1280 px bakom Basic Auth. Kundens inget val/nej/ja/återkallelse, befintlig medlem, nekad/avbruten betalning och nytt försök samt adminmedlemskontroll, matchställ/batch och mockrefund passerade. Artifact `bois-p9-synthetic-browser-36623915463`, ID `11059388459`, innehåller 10 PNG till 2026-10-06 20:08:02 UTC. Detta är inte fysisk iPhone/Safari eller Eriks verksamhetsgodkännande.
 
-Förbjudna direkta sales-fält:
-- namn
-- e-post
-- telefon
-- personnummer
-- IP
-- user agent
+## Historisk P9-baslinje före C1–C4
 
-## Staging
+Run `36445454316`, job `109006483514`, success. Workflow-main `6aabb41c7f0025cf99749919693d84c391f9ce24`; appref `3219dba57fca1eb97b9d50022477131c8db2501b`. P2–P9 CI var grön. Syntetisk attribution, mock-PAID, medlemskap/Nordic, replay, rekommendation utan rabatt, P5 och P7 passerade med 0 främmande tabeller och ingen ny kostnad. Denna tidiga baslinje föregår samtyckes- och Basic Auth-versionen.
 
-Staging fortsätter med:
-- syntetiska testuppgifter
-- `payment_provider=mock`
-- extern e-post disabled
-- Stripe ej aktiverat
-- P7 merch blockerad
-- ingen extern analytics
-- ny extern kostnad 0 kr
+## Exit criteria och nästa steg
 
-## Historisk P9-baslinje (före C1–C4)
+P9:s tekniska kriterier omfattar P3–P8-regression, MySQL-smoke, event-dedupe, attribution till verifierad PAID, aggregerad översikt, rekommendation utan rabatt, inga direkta identifierarfält i sales-tabeller, ingen extern analytics/mail och grön BoIS-staging utan nya kostnader. Nuvarande version kräver dessutom fungerande samtycke och bevarat demoåtkomstskydd.
 
-BoIS-ägd workflow `Simply - deploy Tranås BoIS P9 sales engine staging`: run `36445454316`, job `109006483514`, **success**. Workflow source `main` `6aabb41c7f0025cf99749919693d84c391f9ce24`; pinnad P9-kodref `3219dba57fca1eb97b9d50022477131c8db2501b`. P2–P9 CI var grön före staging.
-
-Health: `phase=P9`, `payment_provider=mock`, `payment_mode=testmode`, `sales_engine=first_party`, `sales_tracking_enabled=true`, `external_analytics=false`, Stripe-testreadiness false och production launch readiness false. Syntetisk UTM/referral-session → order → signerad mock-PAID gav kampanjkonvertering till PAID, medlemskap ACTIVE och Nordic ELIGIBLE. Dubblettmock-event gav ingen ny downstream-effekt. Zero-discount recommendation, pseudonym sessiondata utan direkta kundidentifierare i sales-tabellerna, P5 8/168h, P7 admin/preview och dold merch samt payment-mail disabled passerade. Snapshot: 0 främmande tabeller före/efter. `REAL_STRIPE_CALLS=no`, `MARKETING_EMAIL_SENT=no`, `PAID_ADVERTISING=no`, `NEW_EXTERNAL_COST=0`.
-
-Tracking är explicit påslagen endast i denna syntetiska stagingmiljö. Production-default förblir false och P8 är **TECHNICALLY COMPLETE / NOT ACTIVATED**.
-
-## Exit criteria för P9 v1
-
-P9 markerades `COMPLETE / LIVE STAGING VERIFIED` efter att:
-1. P3–P8 regressioner är gröna
-2. P9 MySQL-smoke är grön
-3. funnel-event dedupe verifieras
-4. campaign/ref attribution följer order till PAID
-5. dashboard visar funnel/kampanj/produktmix
-6. recommendations är zero-discount och serverstyrda
-7. inga sales-PII-fält finns
-8. ingen extern analytics eller mail används
-9. BoIS-ägd stagingdeploy är grön
-10. `NEW_EXTERNAL_COST=0`
+Nästa steg är faktisk Erik/BoIS-demo enligt `SYNTHETIC-DEMO.md` och prioriterad återkoppling. Starta inte generell ny utveckling före konkret behov och beslut. Denna closeout ändrar endast dokumentation och kräver ingen ny appdeploy.
