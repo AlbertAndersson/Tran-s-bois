@@ -1,9 +1,11 @@
 # CURRENT STATUS
 
-Datum: 2026-09-28
+Datum: 2026-09-29
 
 ## Senaste kontrollpunkt
-Säkerhetsrättningarna från PR #11 publicerades i BoIS staging via run `36463946785` (success), pinnad kodref `fdb1053c69e929fa7430c74b9ea5a4e47cac31eb`. P4–P9-acceptansen passerade i mock/testmode. PR #12 innehåller därefter C1–C4 samtycke, admin- och kundförtydliganden samt syntetisk Chromiumacceptans för 375/390/desktop. **Denna nya kod är ännu inte publicerad på Simply vid denna kontrollpunkt.** Dokumentets äldre P9-run är historisk baseline. Staging saknar verifierat åtkomstskydd för bredare demo; `noindex` räcker inte. Produktion och Stripe förblir av.
+Slutlig kodref `b83cd40926c511b5b873a6fb652c43d5bb221053` publicerades och liveverifierades i Simply-run `36516255044` (success; job `109239084358`). Workflow på `main` `26910660686402251f542caa9cc7263218ea6303` var manuellt skyddad och pinnad till denna kod. P2–P9 + Security controls CI passerade för mobilrättningen (PR #17); de fem berörda workflowarna passerade även för sista browser-testjusteringen (PR #18, Security `36516093807`, P9 `36516093893`). Chromium headless testade 375, 390 och 1280 px, 10 skärmbilder i Actions-artifact `bois-p9-synthetic-browser-36516255044` (7 dagars retention). P8 är TECHNICALLY COMPLETE / NOT ACTIVATED. Ingen Stripe, riktig betalning, extern mejlsändning, extern analytics eller produktionsaktivering; ny extern kostnad 0 kr. Staging är publikt nåbar utan verifierat inloggningsskydd och får inte delas brett.
+
+C1–C4 är implementerat, CI-verifierat, publicerat och webbläsarverifierat i syntetisk staging. No-choice-köp → mock-PAID, nej, ja → kampanjattribution → mock-PAID och återkallelse passerade. Eriks adminvy, medlemsverifiering, batch och simulerad återbetalning passerade. Fysisk iPhone/Safari har inte testats. Produktionens informations-, gallrings- och säljarbeslut återstår.
 
 ## Övergripande status
 - **P1 – ordermotor: COMPLETE**
