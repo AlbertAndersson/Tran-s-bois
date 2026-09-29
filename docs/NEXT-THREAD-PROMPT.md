@@ -15,9 +15,9 @@ Ta över **Tranås BoIS – Webbshop** från `AlbertAndersson/Tran-s-bois`. GitH
 7. `docs/P9-SALES-ENGINE.md`
 8. detta dokument
 
-## Verifierad baseline
+## Historiska verifieringar och aktuell staging
 
-P1–P7 är tekniskt levererade. P8A–D är **TECHNICALLY COMPLETE / NOT ACTIVATED**. P9 är **COMPLETE / LIVE STAGING VERIFIED** för nedanstående kodref; detta betyder inte att senare rättningar redan ligger på Simply.
+P1–P7 är tekniskt levererade. P8A–D är **TECHNICALLY COMPLETE / NOT ACTIVATED**. P9 och C1–C4 är liveverifierade på den nya kodrefen `b83cd40926c511b5b873a6fb652c43d5bb221053`; följande äldre körningar bevaras som historik.
 
 P9: BoIS-ägd run `36445454316`, job `109006483514`, success. Workflow-main `6aabb41c7f0025cf99749919693d84c391f9ce24`, pinnad kodref `3219dba57fca1eb97b9d50022477131c8db2501b`. Closeout-main `3983c5e65726390cd59fcf65fe3d69000376030f`.
 
@@ -29,12 +29,10 @@ Work Capture äger inte längre BoIS deployment eller databas. Gör inte om data
 
 ## Aktuell prioritering
 
-Albert har godkänt att kontrollpunkterna rättas först och att kakor/samtycke läggs in i planen framåt.
-
-1. **Kontrollrättningarna:** kräv lanseringsgodkännande i den faktiska Stripe-checkoutvägen, inte bara i en informationskontroll. Spårning av ska betyda noll sales-skrivningar via både events och order, och ingen åtkomst till P9-lagring i browsern. Se `docs/SECURITY-CONTROL-POINTS.md` för exakt kod/test/deploystatus.
-2. **Stagingacceptans av rättad kod:** kontrollera CI, rätt source-ref och manuellt skyddad BoIS-deploy. Fortsatt endast mock och syntetiska data. Registrera nytt run-ID först efter success.
-3. **Kakor och samtycke:** C1–C4 är implementerat och syntetiskt stagingverifierat enligt `docs/COOKIES-AND-CONSENT-PLAN.md` innan någon valfri mätning används för riktiga besökare. Produktionens information, retention och separat aktivering kräver fortfarande beslut.
-4. **De tre godkända kvalitetsrundorna:** mobil kundresa, Eriks administrativa arbete och ett sammanhållet syntetiskt demo-/acceptanspaket. De är genomförda i headless Chromium med skärmbilder och syntetiskt manus; fysisk iPhone/Safari är inte testad.
+1. Inför och verifiera faktiskt inloggningsskydd före bredare delning av den publikt nåbara stagingmiljön. Använd endast syntetiska uppgifter under tiden.
+2. Låt BoIS godkänna slutlig säljar-, integritets- och lagringstidsinformation. Inventera Stripe separat först om en senare aktivering beslutas.
+3. Gör eventuell fysisk mobil/Safari-kontroll och följ upp konkret användarfeedback från Erik. Det genomförda Chromiumtestet på 375/390/1280 px och demomanuset finns i acceptansprotokollet.
+4. Behåll production tracking och Stripe avstängda. Personliga adminkonton, roller och MFA samt P8:s övriga lanseringsgrindar är separata förutsättningar före skarp drift.
 
 Personliga adminkonton, roller och MFA är ett separat kvarvarande krav före riktiga kunduppgifter. En delad stagingnyckel ska inte beskrivas som en färdig produktionsinloggning.
 
