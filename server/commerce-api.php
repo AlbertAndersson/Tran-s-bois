@@ -41,6 +41,11 @@ function commerce_auth_header(): ?string
 
 function commerce_require_admin(array $config): void
 {
+    $separate=$_SERVER['HTTP_X_BOIS_ADMIN_TOKEN']??null;
+    if(is_string($separate)&&$separate!==''){
+        if(!hash_equals((string)$config['admin_token'],$separate)) throw new DomainException('Ej behörig.');
+        return;
+    }
     $header=commerce_auth_header();
     $prefix='Bearer ';
     if(!is_string($header)||!str_starts_with($header,$prefix)) throw new DomainException('Ej behörig.');
@@ -82,7 +87,7 @@ try {
 
     if(($_SERVER['REQUEST_METHOD']??'')==='OPTIONS'){
         header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
-        header('Access-Control-Allow-Headers: Content-Type, Authorization');
+        header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Bois-Admin-Token');
         http_response_code(204);
         exit;
     }

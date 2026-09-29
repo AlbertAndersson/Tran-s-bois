@@ -33,6 +33,7 @@ jobs:
       DB_NAME: ${{ secrets.BOIS_DB_NAME }}
       DB_USER: ${{ secrets.BOIS_DB_USER }}
       DB_PASSWORD: ${{ secrets.BOIS_DB_PASSWORD }}
+      DEMO_PASSWORD: ${{ secrets.BOIS_STAGING_DEMO_PASSWORD }}
 
     steps:
       - name: Checkout verified BoIS source
@@ -82,6 +83,8 @@ jobs:
           set -euo pipefail
           umask 077
           [[ -n "$DB_HOST" && -n "$DB_NAME" && -n "$DB_USER" && -n "$DB_PASSWORD" ]] || { echo "::error::BOIS_DB_* secrets are incomplete"; exit 1; }
+          [[ "$DEMO_PASSWORD" =~ ^[A-Za-z0-9_-]{24,}$ ]] || { echo "::error::BOIS_STAGING_DEMO_PASSWORD must be configured (at least 24 URL-safe characters) before deployment"; exit 1; }
+          command -v htpasswd >/dev/null || { echo "::error::apache2-utils htpasswd is required on the runner"; exit 1; }
           if [[ -z "${DB_PORT:-}" ]]; then DB_PORT=3306; fi
           echo "DB_PORT=$DB_PORT" >> "$GITHUB_ENV"
           [[ "$EXPECTED_FINGERPRINT" =~ ^SHA256:[A-Za-z0-9+/]{43}$ ]] || exit 1
@@ -132,13 +135,6 @@ jobs:
             paymentMethods: ['card','swish']
           });
           JS
-
-          cat > "$out/.htaccess" <<'HT'
-          Options -Indexes
-          <FilesMatch "^(consent|p3_db|p5_batch|p5-migrate|p5-worker|p4_membership|p4-migrate|p6_payment|p6-migrate|p7_assortment|p7-migrate|p8_stripe|p8-migrate|p9_sales|p9-migrate)\.php$">
-            Require all denied
-          </FilesMatch>
-          HT
 
           admin_token="$(openssl rand -hex 24)"
           payment_webhook_secret="$(openssl rand -hex 32)"
@@ -202,6 +198,21 @@ jobs:
           set -euo pipefail
           SSH_OPTS=(-4 -F /dev/null -T -p 22 -i "$SSH_DIR/identity" -o BatchMode=yes -o IdentitiesOnly=yes -o IdentityAgent=none -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$SSH_DIR/known_hosts" -o GlobalKnownHostsFile=/dev/null -o UpdateHostKeys=no -o PasswordAuthentication=no -o KbdInteractiveAuthentication=no -o ForwardAgent=no -o ClearAllForwardings=yes -o ConnectTimeout=12 -o ConnectionAttempts=1 -o LogLevel=ERROR)
           ssh "${SSH_OPTS[@]}" -l "$SIMPLY_SSH_USER" "$SIMPLY_HOST" 'mkdir -p "$HOME/.bois-p3"; chmod 700 "$HOME/.bois-p3"'
+          private_path="$(ssh "${SSH_OPTS[@]}" -l "$SIMPLY_SSH_USER" "$SIMPLY_HOST" 'mkdir -p "$HOME/.bois-demo-auth"; chmod 755 "$HOME/.bois-demo-auth"; cd "$HOME/.bois-demo-auth" && pwd -P')"
+          [[ "$private_path" =~ ^/[A-Za-z0-9_./-]+$ && "$private_path" != *..* ]] || exit 1
+          printf '%s\n' "$DEMO_PASSWORD" | htpasswd -Bni bois-demo > "$RUNNER_TEMP/bois-demo.htpasswd"
+          chmod 600 "$RUNNER_TEMP/bois-demo.htpasswd"
+          cat > "$RUNNER_TEMP/bois-p9-public/.htaccess" <<HT
+          Options -Indexes
+          AuthType Basic
+          AuthName "BoIS staging demo"
+          AuthUserFile $private_path/demo.htpasswd
+          Require valid-user
+          <FilesMatch "^(consent|p3_db|p5_batch|p5-migrate|p5-worker|p4_membership|p4-migrate|p6_payment|p6-migrate|p7_assortment|p7-migrate|p8_stripe|p8-migrate|p9_sales|p9-migrate)\.php$">
+            Require all denied
+          </FilesMatch>
+          HT
+          cat "$RUNNER_TEMP/bois-demo.htpasswd" | ssh "${SSH_OPTS[@]}" -l "$SIMPLY_SSH_USER" "$SIMPLY_HOST" 'umask 077; cat > "$HOME/.bois-demo-auth/demo.htpasswd.next"; chmod 644 "$HOME/.bois-demo-auth/demo.htpasswd.next"; mv "$HOME/.bois-demo-auth/demo.htpasswd.next" "$HOME/.bois-demo-auth/demo.htpasswd"'
           cat "$RUNNER_TEMP/config.php" | ssh "${SSH_OPTS[@]}" -l "$SIMPLY_SSH_USER" "$SIMPLY_HOST" 'umask 077; cat > "$HOME/.bois-p3/config.php"; chmod 600 "$HOME/.bois-p3/config.php"'
           cat bois-src/data/p7-assortment.json | ssh "${SSH_OPTS[@]}" -l "$SIMPLY_SSH_USER" "$SIMPLY_HOST" 'umask 077; cat > "$HOME/.bois-p3/p7-assortment.json"; chmod 600 "$HOME/.bois-p3/p7-assortment.json"'
           cat "$RUNNER_TEMP/db-snapshot.php" | ssh "${SSH_OPTS[@]}" -l "$SIMPLY_SSH_USER" "$SIMPLY_HOST" 'umask 077; cat > "$HOME/.bois-p3/db-snapshot.php"; chmod 600 "$HOME/.bois-p3/db-snapshot.php"'
@@ -215,26 +226,59 @@ jobs:
           set -euo pipefail
           SSH_OPTS=(-4 -F /dev/null -T -p 22 -i "$SSH_DIR/identity" -o BatchMode=yes -o IdentitiesOnly=yes -o IdentityAgent=none -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$SSH_DIR/known_hosts" -o GlobalKnownHostsFile=/dev/null -o UpdateHostKeys=no -o PasswordAuthentication=no -o KbdInteractiveAuthentication=no -o ForwardAgent=no -o ClearAllForwardings=yes -o ConnectTimeout=12 -o ConnectionAttempts=1 -o LogLevel=ERROR)
           TARGET_REL="public_html/$BOIS_PUBLIC_PATH"
-          ssh "${SSH_OPTS[@]}" -l "$SIMPLY_SSH_USER" "$SIMPLY_HOST" 'sh -s' -- "$TARGET_REL" <<'REMOTE'
+          ssh "${SSH_OPTS[@]}" -l "$SIMPLY_SSH_USER" "$SIMPLY_HOST" 'sh -s' -- "$TARGET_REL" "$GITHUB_RUN_ID" <<'REMOTE'
           set -eu
           target="$1"
+          run_id="$2"
           [ "$target" = "public_html/bois-shop-p3" ] || exit 61
-          rm -rf -- "$HOME/$target"; mkdir -p "$HOME/$target"; chmod 755 "$HOME/$target"
+          case "$run_id" in *[!0-9]*|'') exit 62;; esac
+          mkdir -p "$HOME/.bois-p3/release-$run_id"
           REMOTE
-          tar -C "$RUNNER_TEMP/bois-p9-public" -czf - . | ssh "${SSH_OPTS[@]}" -l "$SIMPLY_SSH_USER" "$SIMPLY_HOST"             "set -eu; tar -xzf - -C \"\$HOME/$TARGET_REL\"; find \"\$HOME/$TARGET_REL\" -type d -exec chmod 755 {} +; find \"\$HOME/$TARGET_REL\" -type f -exec chmod 644 {} +"
-          (cd "$RUNNER_TEMP/bois-p9-public" && sha256sum assets/common.js commerce-api.php consent.php cookies.html) > "$RUNNER_TEMP/local-files.sha256"
+          tar -C "$RUNNER_TEMP/bois-p9-public" -czf - . | ssh "${SSH_OPTS[@]}" -l "$SIMPLY_SSH_USER" "$SIMPLY_HOST" \
+            "set -eu; target=\"\$HOME/.bois-p3/release-$GITHUB_RUN_ID\"; tar -xzf - -C \"\$target\"; find \"\$target\" -type d -exec chmod 755 {} +; find \"\$target\" -type f -exec chmod 644 {} +; test -s \"\$target/.htaccess\""
+          ssh "${SSH_OPTS[@]}" -l "$SIMPLY_SSH_USER" "$SIMPLY_HOST" 'sh -s' -- "$TARGET_REL" "$GITHUB_RUN_ID" <<'REMOTE'
+          set -eu
+          target="$HOME/$1"
+          release="$HOME/.bois-p3/release-$2"
+          old="$HOME/.bois-p3/previous-$2"
+          test -s "$release/.htaccess"
+          if [ -e "$target" ]; then mv "$target" "$old"; fi
+          if ! mv "$release" "$target"; then
+            if [ -e "$old" ]; then mv "$old" "$target"; fi
+            exit 1
+          fi
+          rm -rf -- "$old"
+          REMOTE
+          (cd "$RUNNER_TEMP/bois-p9-public" && sha256sum .htaccess assets/common.js commerce-api.php consent.php cookies.html) > "$RUNNER_TEMP/local-files.sha256"
           ssh "${SSH_OPTS[@]}" -l "$SIMPLY_SSH_USER" "$SIMPLY_HOST" \
-            'cd "$HOME/public_html/bois-shop-p3" && sha256sum assets/common.js commerce-api.php consent.php cookies.html' > "$RUNNER_TEMP/deployed-files.sha256"
+            'cd "$HOME/public_html/bois-shop-p3" && sha256sum .htaccess assets/common.js commerce-api.php consent.php cookies.html' > "$RUNNER_TEMP/deployed-files.sha256"
           diff -u "$RUNNER_TEMP/local-files.sha256" "$RUNNER_TEMP/deployed-files.sha256"
           ssh "${SSH_OPTS[@]}" -l "$SIMPLY_SSH_USER" "$SIMPLY_HOST" 'export BOIS_P3_CONFIG_PATH="$HOME/.bois-p3/config.php"; php "$HOME/public_html/bois-shop-p3/p5-migrate.php"; php "$HOME/public_html/bois-shop-p3/p4-migrate.php"; php "$HOME/public_html/bois-shop-p3/p6-migrate.php"; export BOIS_P7_ASSORTMENT_PATH="$HOME/.bois-p3/p7-assortment.json"; php "$HOME/public_html/bois-shop-p3/p7-migrate.php"; php "$HOME/public_html/bois-shop-p3/p8-migrate.php"; php "$HOME/public_html/bois-shop-p3/p9-migrate.php"'
           ssh "${SSH_OPTS[@]}" -l "$SIMPLY_SSH_USER" "$SIMPLY_HOST" 'php "$HOME/.bois-p3/db-snapshot.php" "$HOME/.bois-p3/config.php"' > "$RUNNER_TEMP/after.txt"
           [[ "$(head -n1 "$RUNNER_TEMP/after.txt")" = "$NON_BOIS_HASH" ]]
           [[ "$(tail -n1 "$RUNNER_TEMP/after.txt")" = "$NON_BOIS_COUNT" ]]
 
+      - name: Verify unauthorised direct access is blocked
+        shell: bash
+        run: |
+          set -euo pipefail
+          for path in / /index.html /membership.html /match-kit.html /payment.html /order.html /admin.html /cookies.html /assortment-preview.html /config.js /assets/common.js '/order.html?id=synthetic&token=invalid' '/commerce-api.php?action=health' '/commerce-api.php?action=order&id=synthetic&token=invalid' '/commerce-api.php?action=admin_orders' '/commerce-api.php?action=consent' '/commerce-api.php?action=payment_webhook'; do
+            status="$(command curl --silent --show-error --max-time 20 -A 'BoIS-staging-gate-check/1.0' -o /dev/null -w '%{http_code}' "$BOIS_BASE_URL$path")"
+            [[ "$status" == 401 ]] || { echo "::error::Unauthorised URL returned $status: $path"; exit 1; }
+          done
+          for action in orders checkout mock_payment_event consent sales_event; do
+            status="$(command curl --silent --show-error --max-time 20 -A 'BoIS-staging-gate-check/1.0' -o /dev/null -w '%{http_code}' -X POST -H 'Content-Type: application/json' --data '{}' "$BOIS_BASE_URL/commerce-api.php?action=$action")"
+            [[ "$status" == 401 ]] || { echo "::error::Unauthorised POST returned $status: $action"; exit 1; }
+          done
+          status="$(command curl --silent --show-error --max-time 20 -A 'BoIS-staging-gate-check/1.0' -o /dev/null -w '%{http_code}' --user 'bois-demo:wrong-demo-credential' "$BOIS_BASE_URL/commerce-api.php?action=health")"
+          [[ "$status" == 401 ]]
+          echo 'STAGING_DIRECTORY_AUTH_DIRECT_URLS: pass' >> "$GITHUB_STEP_SUMMARY"
+
       - name: Verify P4–P9 zero-cost staging end-to-end
         shell: bash
         run: |
           set -euo pipefail
+          curl(){ command curl --user "bois-demo:$DEMO_PASSWORD" "$@"; }
           UA="AlberIQ-BoIS-P9-Check/1.0"
           API="$BOIS_BASE_URL/commerce-api.php"
 
@@ -313,20 +357,20 @@ jobs:
             -o "$RUNNER_TEMP/revoked-event.json"
           grep -q '"disabled":true' "$RUNNER_TEMP/revoked-event.json"
 
-          curl --fail --silent --show-error -A "$UA" "$API?action=admin_sales"             -H "Authorization: Bearer $BOIS_ADMIN_TOKEN" -o "$RUNNER_TEMP/p9-sales.json"
+          curl --fail --silent --show-error -A "$UA" "$API?action=admin_sales"             -H "X-Bois-Admin-Token: $BOIS_ADMIN_TOKEN" -o "$RUNNER_TEMP/p9-sales.json"
           php -r '$d=json_decode(file_get_contents($argv[1]),true);$s=$d["sales"]??[];$p=$s["privacy"]??[];$k=$s["kpis"]??[];if(($p["first_party_only"]??null)!==true||($p["direct_customer_identifiers_stored"]??null)!==false||($p["pseudonymous_session_identifier"]??null)!==true||($p["order_link_exists"]??null)!==true||($p["ip_stored"]??null)!==false||($p["user_agent_stored"]??null)!==false||($p["external_analytics"]??null)!==false||(int)($k["paid_sessions"]??0)<1)exit(1);$ok=false;foreach(($s["campaigns"]??[]) as $r){if(($r["campaign"]??"")==="p9-readiness"&&(int)($r["paid_orders"]??0)>=1){$ok=true;break;}}if(!$ok)exit(2);' "$RUNNER_TEMP/p9-sales.json"
 
           curl --fail --silent --show-error -A "$UA" "$BOIS_BASE_URL/assortment-preview.html" -o "$RUNNER_TEMP/p7-preview.html"
           grep -q 'INTERN GRANSKNING' "$RUNNER_TEMP/p7-preview.html"
           curl --fail --silent --show-error -A "$UA" "$API?action=admin_p7" \
-            -H "Authorization: Bearer $BOIS_ADMIN_TOKEN" -o "$RUNNER_TEMP/p7-admin.json"
+            -H "X-Bois-Admin-Token: $BOIS_ADMIN_TOKEN" -o "$RUNNER_TEMP/p7-admin.json"
           php -r '$d=json_decode(file_get_contents($argv[1]),true); if(count($d["assortment"]??[])!==3) exit(1); foreach($d["assortment"] as $p){if($p["approved"] || $p["is_public"] || $p["is_orderable"] || !$p["blockers"] || $p["margin_ore"]!==null) exit(2);}' "$RUNNER_TEMP/p7-admin.json"
           curl --fail --silent --show-error -A "$UA" "$API?action=catalog" -o "$RUNNER_TEMP/p7-catalog.json"
           php -r '$d=json_decode(file_get_contents($argv[1]),true); foreach($d["products"]??[] as $p){if(in_array($p["product_key"],["bois-1941-hoodie","supporter-tee","bois-beanie"],true)) exit(1);}' "$RUNNER_TEMP/p7-catalog.json"
           grep -q '"payment_provider":"mock"' "$RUNNER_TEMP/health.json"
           grep -q '"mail_transport":"disabled"' "$RUNNER_TEMP/health.json"
 
-          curl --fail --silent --show-error -A "$UA" -X POST "$API?action=admin_run_payment_outbox"             -H "Authorization: Bearer $BOIS_ADMIN_TOKEN" -H "Content-Type: application/json" --data '{}'             -o "$RUNNER_TEMP/payment-mail.json"
+          curl --fail --silent --show-error -A "$UA" -X POST "$API?action=admin_run_payment_outbox"             -H "X-Bois-Admin-Token: $BOIS_ADMIN_TOKEN" -H "Content-Type: application/json" --data '{}'             -o "$RUNNER_TEMP/payment-mail.json"
           grep -q '"transport":"disabled"' "$RUNNER_TEMP/payment-mail.json"
           grep -q '"sent":0' "$RUNNER_TEMP/payment-mail.json"
 
@@ -339,6 +383,7 @@ jobs:
             echo "CONSENT_ACCEPTED_SYNTHETIC_ATTRIBUTION: pass"
             echo "CONSENT_WITHDRAWAL_EVENT_BLOCKED: pass"
             echo "DEPLOYED_SOURCE_FILE_HASHES: pass"
+            echo "STAGING_DIRECTORY_AUTH_DIRECT_URLS: pass"
             echo "P9_ZERO_DISCOUNT_RECOMMENDATION: pass"
             echo "P9_DIRECT_CUSTOMER_IDENTIFIERS_IN_SALES_TABLES: no"
             echo "P9_PSEUDONYMOUS_SESSION_DATA: yes"
@@ -386,4 +431,4 @@ jobs:
       - name: Cleanup runner secrets
         if: always()
         shell: bash
-        run: rm -f "$RUNNER_TEMP/config.php" "$RUNNER_TEMP/db-snapshot.php" || true
+        run: rm -f "$RUNNER_TEMP/config.php" "$RUNNER_TEMP/db-snapshot.php" "$RUNNER_TEMP/bois-demo.htpasswd" || true
