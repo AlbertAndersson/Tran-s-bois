@@ -7,10 +7,13 @@ Datum 2026-09-29. Kodgranskning, isolerad CI och syntetisk Chromiumkontroll gjor
 | `boisConsent` | HttpOnly, Secure, SameSite=Lax-kaka, butikens domän; slumpmässigt värde, endast SHA-256-hash i BoIS-databasen | Nödvändigt underlag för valt ja/nej, policyversion och återkallelse | Konfigurerat 180 dagar i staging, kan sättas 1–365; rad spärras vid återkallelse eller policybyte |
 | `boisSalesSession` | sessionStorage, butikens origin | Valfri P9-statistik; pseudonymt UUID som kan kopplas till order | Flikens session; rensas vid återkallelse |
 | `boisSalesAttribution` | sessionStorage, butikens origin | Valfri P9-kampanj/referral och landningssida | Flikens session; rensas vid återkallelse |
+| `sc_clearance` | Kaka från webbhotell/skyddslager på stagingens domän, observerad i Chromium 375 px före val; uteblev i två andra rena kontexter | Teknikdrift/åtkomst; exakt funktion och ansvarig bekräftas med webbhotellet före produktion | Livslängd och inställningar ej verifierade; inventeras före produktion |
 | `boisP3Admin` | sessionStorage, butikens origin, endast admin/intern preview | Tillfällig administrativ åtkomst i staging | Flikens session eller utloggning |
 | Föreningsmärke | Bild från `cdn06.svenskalag.se` | Extern resurs; leverantörens loggar/ev. kakor ännu inte verifierade | Utred före produktion |
 | Webbserver | Simply/driftloggar | Separat driftbehandling, inte webbläsarens valfria lagring | Utred avtals- och gallringstid före produktion |
 | Stripe | Ej aktiverat | Framtida Checkout-inventering, inklusive eventuell tredjepartslagring | Kvarstår före aktivering |
+
+Ingen annan localStorage-nyckel eller demolagring observerades i de rena kundkontexterna före val. Stagingens kundflöde behöver inte lokal demo-persistens.
 
 P9-databasen har `bois_sales_sessions`, `bois_sales_events` och `bois_sales_order_links`. Den sista gör sessions-ID:t orderkopplingsbart. Det är pseudonymt, inte anonymt. Databasens retention är ännu inte samma sak som sessionStorage-varaktigheten. Order- och betalningshistorik raderas inte vid återkallelse. Den slutliga gallringsplanen och ansvarig säljare måste beslutas före produktion. Stagingens 180 dagar valdes för att undvika täta omfrågningar under test, inte som ett generellt lagkrav.
 
