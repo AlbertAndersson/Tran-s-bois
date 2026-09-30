@@ -6,6 +6,10 @@
 
 Använd endast namnen Ada Test, Bo Test, Cia Test och adresser på `example.invalid`. Endast BoIS staging med mock/testmode. Notera order-ID och token privat för just detta demo; visa aldrig adminnyckel eller ordertoken i skärmbild.
 
+## Åtkomst inför demo
+
+Kunddelens katalogskydd använder Basic Auth-användaren `bois-demo` med privat demolösenord. Administrationen kräver dessutom den separata staging-adminnyckeln från `BOIS_STAGING_ADMIN_TOKEN`. Dela båda via privat kanal, men behandla dem som två olika behörigheter. Skriv aldrig värdena i detta dokument eller i skärmbilder. Klicka **Logga ut** i admin efter testet så `boisP3Admin` rensas ur sessionStorage.
+
 0. Endast medlemskap: välj ungdom 200 kr, avmarkera gym, prova obligatoriska fält och skapa syntetisk order. Test-Swish → PAID/ACTIVE; PAID får inte erbjuda nytt betalningsförsök.
 1. Ny medlem + gym: lämna statistikvalet obesvarat, skapa order för Ada Test, betala med Test-Swish och kontrollera `PAID`, medlemskap `ACTIVE`, Nordic `ELIGIBLE`. Ingen sales-session eller attribution får skapas.
 2. Befintlig medlem + gym: avvisa statistik och vänta tills valet sparats, välj befintlig medlem för Bo Test, betala med Test-kort. Kontrollera `PENDING_MEMBER_VERIFICATION`; verifiera manuellt i admin och kontrollera `ELIGIBLE`.
