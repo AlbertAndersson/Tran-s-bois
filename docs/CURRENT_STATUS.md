@@ -58,9 +58,17 @@ BoIS äger ensam kod, CI, secrets och deployment. Den dedikerade stagingdatabase
 
 Demoanvändaren och rotation beskrivs i `STAGING-DEMO-ACCESS.md`. Dela lösenord privat, inte i repo eller Drive-handoff. Adminnyckeln är separat; demonstrationslösenordet är inte adminbehörighet.
 
+## Adminåtkomst inför verksamhetsdemo
+
+Den tidigare deploymodellen skapade en ny slumpmässig adminnyckel vid varje stagingdeploy. Det gjorde automatiserad adminacceptans möjlig men var opraktiskt för Erik/BoIS faktisk demo.
+
+Workflow och admintext är nu ändrade för en stabil, separat stagingnyckel via Repository Secret `BOIS_STAGING_ADMIN_TOKEN`. Den är skild från Basic Auth-lösenordet, får inte exponeras i dokumentation och lagras i privat server-runtime. P9 CI bevakar att stagingworkflowen inte återgår till slumpgenererad adminnyckel.
+
+**Viktigt:** run `36623915463` kör fortfarande med den gamla slumpgenererade nyckeln. Innan Erik provar admin ska det nya secretet läggas in och staging deployas/verifieras en gång till. Kundsidorna och Basic Auth i den nuvarande verifierade miljön påverkas inte av denna väntande adminrotation.
+
 ## Nästa steg – Erik/BoIS demo och återkoppling
 
-Använd `SYNTHETIC-DEMO.md` för en begränsad genomgång med syntetiska uppgifter och `example.invalid`-adresser. Samla konkret återkoppling om kundresan, medlems-/Nordic-hanteringen, matchställskön, samtyckesval och begripligheten i admin.
+När den stabila adminnyckeln är aktiverad genom en verifierad deploy: använd `SYNTHETIC-DEMO.md` för en begränsad genomgång med syntetiska uppgifter och `example.invalid`-adresser. Samla konkret återkoppling om kundresan, medlems-/Nordic-hanteringen, matchställskön, samtyckesval och begripligheten i admin.
 
 Ingen ny generell utvecklingsfas, ombyggnad eller deploy behövs enbart för att denna dokumentation uppdateras. Prioritera eventuella påvisade fel och önskemål efter genomgången och fatta beslut om ett avgränsat nästa uppdrag. Fysisk iPhone/Safari kan provas manuellt vid demot; redovisa då den faktiska enheten och resultatet.
 
