@@ -91,8 +91,8 @@ jobs:
           demo=os.environ.get("DEMO_PASSWORD","")
           if not 16 <= len(token) <= 128:
               raise SystemExit("BOIS_STAGING_ADMIN_TOKEN must be configured (16-128 characters) before deployment")
-          if "\n" in token or "\r" in token:
-              raise SystemExit("BOIS_STAGING_ADMIN_TOKEN must not contain line breaks")
+          if not all(33 <= ord(ch) <= 126 for ch in token):
+              raise SystemExit("BOIS_STAGING_ADMIN_TOKEN must use printable ASCII without spaces")
           if token == demo:
               raise SystemExit("Demo password and admin token must be different")
           PY
