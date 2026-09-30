@@ -26,7 +26,7 @@ För att Erik/BoIS faktiskt ska kunna prova admin används nu ett separat Reposi
 
 Krav i workflowen:
 - 16–128 tecken,
-- inga radbrytningar,
+- endast synliga ASCII-tecken utan blanksteg,
 - får inte vara samma värde som `BOIS_STAGING_DEMO_PASSWORD`,
 - värdet maskeras i Actions och skrivs aldrig till repo, Drive, payloadens `config.js` eller jobbsammanfattningen.
 
