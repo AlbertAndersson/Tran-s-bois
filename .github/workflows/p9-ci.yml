@@ -99,5 +99,5 @@ jobs:
           ! grep -REn "gtag\\(|googletagmanager|google-analytics|connect.facebook.net|plausible.io|posthog|segment.io|mixpanel" site/commerce server
           ! grep -REn "mailto:|smtp_password" server/p9_sales.php site/commerce/assets/common.js site/commerce/assets/admin.js
           grep -q "BOIS_STAGING_ADMIN_TOKEN" .github/workflows/simply-deploy-bois-p9-staging.yml
-          grep -q 'BOIS_ADMIN_TOKEN=$STAGING_ADMIN_TOKEN' .github/workflows/simply-deploy-bois-p9-staging.yml
-          ! grep -q 'admin_token="$(openssl rand' .github/workflows/simply-deploy-bois-p9-staging.yml
+          grep -Fq 'BOIS_ADMIN_TOKEN=$STAGING_ADMIN_TOKEN' .github/workflows/simply-deploy-bois-p9-staging.yml
+          ! grep -Fq 'admin_token="$(openssl rand' .github/workflows/simply-deploy-bois-p9-staging.yml
