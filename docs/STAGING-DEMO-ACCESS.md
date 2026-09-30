@@ -20,6 +20,24 @@ Workflowen genererar bcrypt-hash via `htpasswd` och lägger hashfilen utanför `
 
 Webbservern använder `Authorization: Basic`. BoIS admin-API använder separat privat runtime-token via `X-Bois-Admin-Token`. Bearer-kompatibilitet finns för isolerade testkontrakt. Demoåtkomst är inte adminbehörighet, och adminnyckeln ska aldrig delas som allmän demoinloggning.
 
+## Stabil staging-adminnyckel
+
+För att Erik/BoIS faktiskt ska kunna prova admin används nu ett separat Repository Secret med namnet `BOIS_STAGING_ADMIN_TOKEN`. Deploymentworkflowen ska inte längre slumpa fram en ny adminnyckel vid varje körning.
+
+Krav i workflowen:
+- 16–128 tecken,
+- inga radbrytningar,
+- får inte vara samma värde som `BOIS_STAGING_DEMO_PASSWORD`,
+- värdet maskeras i Actions och skrivs aldrig till repo, Drive, payloadens `config.js` eller jobbsammanfattningen.
+
+Vid deploy injiceras värdet i den privata runtimefilen `$HOME/.bois-p3/config.php`, som har rättighet 600. Browsertestet och API-acceptansen använder samma privata secret och verifierar därmed att nyckeln fungerar mot den publicerade adminmiljön.
+
+Adminanvändaren skriver själv in nyckeln på `admin.html`. Webbläsaren sparar den endast i `sessionStorage` under `boisP3Admin` för den aktuella fliksessionen. Knappen **Logga ut** rensar den. Använd inte admin på en delad/offentlig dator och spara inte nyckeln i testprotokoll eller skärmbilder.
+
+Rotation: ändra `BOIS_STAGING_ADMIN_TOKEN` i GitHub Secrets och kör därefter den manuellt skyddade stagingdeployen igen. En secretändring i GitHub ändrar inte den redan publicerade runtimefilen förrän en ny deploy genomförs.
+
+**Aktiveringsstatus:** lösningen är implementerad i kod/workflow, men den staging som verifierades i run `36623915463` använder fortfarande den då slumpgenererade adminnyckeln. Den stabila nyckeln blir aktiv först efter att `BOIS_STAGING_ADMIN_TOKEN` har skapats och en ny verifierad deploy har lyckats.
+
 För att dra tillbaka åtkomst: rotera demo-secretet och kör en ny uttryckligt godkänd manuell deploy med verifierad appref. Rotation blir inte verksam på Simply enbart genom ändring i GitHub Secrets. Behåll inloggningsskyddet vid senare publicering.
 
 ## Verifierat i run 36623915463

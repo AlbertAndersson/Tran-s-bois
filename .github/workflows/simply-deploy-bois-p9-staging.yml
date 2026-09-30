@@ -34,6 +34,7 @@ jobs:
       DB_USER: ${{ secrets.BOIS_DB_USER }}
       DB_PASSWORD: ${{ secrets.BOIS_DB_PASSWORD }}
       DEMO_PASSWORD: ${{ secrets.BOIS_STAGING_DEMO_PASSWORD }}
+      STAGING_ADMIN_TOKEN: ${{ secrets.BOIS_STAGING_ADMIN_TOKEN }}
 
     steps:
       - name: Checkout verified BoIS source
@@ -84,6 +85,18 @@ jobs:
           umask 077
           [[ -n "$DB_HOST" && -n "$DB_NAME" && -n "$DB_USER" && -n "$DB_PASSWORD" ]] || { echo "::error::BOIS_DB_* secrets are incomplete"; exit 1; }
           [[ ${#DEMO_PASSWORD} -ge 8 ]] || { echo "::error::BOIS_STAGING_DEMO_PASSWORD must be configured (at least 8 characters) before deployment"; exit 1; }
+          python3 - <<'PY'
+          import os
+          token=os.environ.get("STAGING_ADMIN_TOKEN","")
+          demo=os.environ.get("DEMO_PASSWORD","")
+          if not 16 <= len(token) <= 128:
+              raise SystemExit("BOIS_STAGING_ADMIN_TOKEN must be configured (16-128 characters) before deployment")
+          if "\n" in token or "\r" in token:
+              raise SystemExit("BOIS_STAGING_ADMIN_TOKEN must not contain line breaks")
+          if token == demo:
+              raise SystemExit("Demo password and admin token must be different")
+          PY
+          echo "::add-mask::$STAGING_ADMIN_TOKEN"
           command -v htpasswd >/dev/null || { echo "::error::apache2-utils htpasswd is required on the runner"; exit 1; }
           if [[ -z "${DB_PORT:-}" ]]; then DB_PORT=3306; fi
           echo "DB_PORT=$DB_PORT" >> "$GITHUB_ENV"
@@ -136,12 +149,9 @@ jobs:
           });
           JS
 
-          admin_token="$(openssl rand -hex 24)"
           payment_webhook_secret="$(openssl rand -hex 32)"
-          echo "::add-mask::$admin_token"
           echo "::add-mask::$payment_webhook_secret"
-          echo "BOIS_ADMIN_TOKEN=$admin_token" >> "$GITHUB_ENV"
-          echo "::notice::BOIS_P9_ADMIN_TOKEN=$admin_token"
+          echo "BOIS_ADMIN_TOKEN=$STAGING_ADMIN_TOKEN" >> "$GITHUB_ENV"
 
           enc(){ printf '%s' "$1" | base64 -w0; }
           cat > "$RUNNER_TEMP/config.php" <<PHP
@@ -149,7 +159,7 @@ jobs:
           declare(strict_types=1);
           return [
             'mode' => 'staging',
-            'admin_token' => base64_decode('$(enc "$admin_token")'),
+            'admin_token' => base64_decode('$(enc "$STAGING_ADMIN_TOKEN")'),
             'allowed_origins' => ['https://alberiq.se'],
             'mail_transport' => 'disabled',
             'payment_provider' => 'mock',
@@ -384,6 +394,7 @@ jobs:
             echo "CONSENT_WITHDRAWAL_EVENT_BLOCKED: pass"
             echo "DEPLOYED_SOURCE_FILE_HASHES: pass"
             echo "STAGING_DIRECTORY_AUTH_DIRECT_URLS: pass"
+            echo "STABLE_STAGING_ADMIN_TOKEN: configured"
             echo "P9_ZERO_DISCOUNT_RECOMMENDATION: pass"
             echo "P9_DIRECT_CUSTOMER_IDENTIFIERS_IN_SALES_TABLES: no"
             echo "P9_PSEUDONYMOUS_SESSION_DATA: yes"

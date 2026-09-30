@@ -8,7 +8,7 @@ P8 är **TECHNICALLY COMPLETE / NOT ACTIVATED**. Stripe, riktig betalning, exter
 
 ## Nästa steg
 
-**Genomför Eriks/BoIS faktiska demo och samla återkoppling.** Använd det befintliga syntetiska demomanuset och prioritera konkreta observationer innan nästa avgränsade ändring beslutas. Starta inte mer generell teknisk utveckling eller en ny deploy enbart för att slutdokumentationen uppdateras. Automatiserade testpass är inte samma sak som verksamhetens godkännande.
+**Aktivera den stabila staging-adminnyckeln och genomför därefter Eriks/BoIS faktiska demo.** Workflowen är ändrad så `BOIS_STAGING_ADMIN_TOKEN` används i stället för en ny slumpnyckel per deploy. Secretet måste skapas och en ny manuell stagingdeploy verifieras innan Erik testar admin. Använd sedan det syntetiska demomanuset och prioritera konkreta observationer innan nästa avgränsade ändring beslutas. Starta inte mer generell teknisk utveckling eller en ny deploy enbart för att slutdokumentationen uppdateras. Automatiserade testpass är inte samma sak som verksamhetens godkännande.
 
 ## Status
 - P1 ordermotor: **COMPLETE**
