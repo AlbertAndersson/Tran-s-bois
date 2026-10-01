@@ -8,7 +8,7 @@ P8 är **TECHNICALLY COMPLETE / NOT ACTIVATED**. Stripe, riktig betalning, exter
 
 ## Nästa steg
 
-**Aktivera den stabila staging-adminnyckeln och genomför därefter Eriks/BoIS faktiska demo.** Workflowen är ändrad så `BOIS_STAGING_ADMIN_TOKEN` används i stället för en ny slumpnyckel per deploy. Secretet måste skapas och en ny manuell stagingdeploy verifieras innan Erik testar admin. Använd sedan det syntetiska demomanuset och prioritera konkreta observationer innan nästa avgränsade ändring beslutas. Starta inte mer generell teknisk utveckling eller en ny deploy enbart för att slutdokumentationen uppdateras. Automatiserade testpass är inte samma sak som verksamhetens godkännande.
+**Den stabila staging-adminnyckeln är nu liveverifierad.** Run `36906493137` använde `BOIS_STAGING_ADMIN_TOKEN` och browser/admin-acceptansen passerade. Genomför nu Eriks/BoIS faktiska demo. Använd sedan det syntetiska demomanuset och prioritera konkreta observationer innan nästa avgränsade ändring beslutas. Starta inte mer generell teknisk utveckling eller en ny deploy enbart för att slutdokumentationen uppdateras. Automatiserade testpass är inte samma sak som verksamhetens godkännande.
 
 ## Status
 - P1 ordermotor: **COMPLETE**
@@ -110,6 +110,6 @@ Inga nya betaltjänster, abonnemang eller externa kostnader aktiveras utan uttry
 
 ## Bevarad verifieringshistorik
 
-Historisk P6-hardening: adminens stagingknapp använder signerad mockbetalning; order/session/valuta/belopp kontrolleras. P2–P6 CI på `b5b9a157` och run `36327128975` lyckades. Ursprunglig P9-bas var run `36445454316` med appref `3219dba57fca1eb97b9d50022477131c8db2501b`. C1–C4/browserversionen före inloggningsskydd verifierades i run `36517329717` med appref `e4ac4ce385fcf751460b4af208756d74e562d54b`. Den öppna stagingens åtkomstblockerare är nu löst genom **36623915463**.
+Historisk P6-hardening: adminens stagingknapp använder signerad mockbetalning; order/session/valuta/belopp kontrolleras. P2–P6 CI på `b5b9a157` och run `36327128975` lyckades. Ursprunglig P9-bas var run `36445454316` med appref `3219dba57fca1eb97b9d50022477131c8db2501b`. C1–C4/browserversionen före inloggningsskydd verifierades i run `36517329717` med appref `e4ac4ce385fcf751460b4af208756d74e562d54b`. Den öppna stagingens åtkomstblockerare löstes genom **36623915463**; stabil adminåtkomst verifierades därefter i **36906493137**.
 
 Fullständiga tidigare status- och handofftexter har bevarats i `docs/history/`. Historiska instruktioner om att installera demoåtkomst är inte nästa uppdrag. Denna dokumentationscloseout ändrar ingen applikationskod, workflow, hemlighet, databas eller serverinställning.
