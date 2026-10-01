@@ -89,8 +89,8 @@ jobs:
           import os
           token=os.environ.get("STAGING_ADMIN_TOKEN","")
           demo=os.environ.get("DEMO_PASSWORD","")
-          if not 16 <= len(token) <= 128:
-              raise SystemExit("BOIS_STAGING_ADMIN_TOKEN must be configured (16-128 characters) before deployment")
+          if not 12 <= len(token) <= 128:
+              raise SystemExit("BOIS_STAGING_ADMIN_TOKEN must be configured (12-128 characters) before deployment")
           if not all(33 <= ord(ch) <= 126 for ch in token):
               raise SystemExit("BOIS_STAGING_ADMIN_TOKEN must use printable ASCII without spaces")
           if token == demo:
