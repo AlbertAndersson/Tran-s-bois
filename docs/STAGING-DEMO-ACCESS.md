@@ -25,7 +25,7 @@ Webbservern använder `Authorization: Basic`. BoIS admin-API använder separat p
 För att Erik/BoIS faktiskt ska kunna prova admin används nu ett separat Repository Secret med namnet `BOIS_STAGING_ADMIN_TOKEN`. Deploymentworkflowen ska inte längre slumpa fram en ny adminnyckel vid varje körning.
 
 Krav i workflowen:
-- 16–128 tecken,
+- 12–128 tecken,
 - endast synliga ASCII-tecken utan blanksteg,
 - får inte vara samma värde som `BOIS_STAGING_DEMO_PASSWORD`,
 - värdet maskeras i Actions och skrivs aldrig till repo, Drive, payloadens `config.js` eller jobbsammanfattningen.
