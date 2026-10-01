@@ -36,7 +36,7 @@ Adminanvändaren skriver själv in nyckeln på `admin.html`. Webbläsaren sparar
 
 Rotation: ändra `BOIS_STAGING_ADMIN_TOKEN` i GitHub Secrets och kör därefter den manuellt skyddade stagingdeployen igen. En secretändring i GitHub ändrar inte den redan publicerade runtimefilen förrän en ny deploy genomförs.
 
-**Aktiveringsstatus:** lösningen är implementerad i kod/workflow, men den staging som verifierades i run `36623915463` använder fortfarande den då slumpgenererade adminnyckeln. Den stabila nyckeln blir aktiv först efter att `BOIS_STAGING_ADMIN_TOKEN` har skapats och en ny verifierad deploy har lyckats.
+**Aktiveringsstatus: LIVE VERIFIED.** Repository Secret `BOIS_STAGING_ADMIN_TOKEN` aktiverades i run [36906493137](https://github.com/AlbertAndersson/Tran-s-bois/actions/runs/36906493137), job `110518241965`, **success**. Workflow/main var `9922c6362be711b889a032a267685b70f8204f2a` och publicerad applikationsref `e245b5f72e1446656c2bb2f27fddc19180a6f9cd`. Loggen verifierade `STABLE_STAGING_ADMIN_TOKEN: configured`; P4–P9, Basic Auth och Chromium-adminacceptans passerade med samma privata adminnyckel. Värdet exponerades inte.
 
 För att dra tillbaka åtkomst: rotera demo-secretet och kör en ny uttryckligt godkänd manuell deploy med verifierad appref. Rotation blir inte verksam på Simply enbart genom ändring i GitHub Secrets. Behåll inloggningsskyddet vid senare publicering.
 
@@ -54,3 +54,15 @@ Verifieringsmetoden var direkta HTTP-kontroller och behörig automatiserad Chrom
 Vid framtida uteblivet 401 eller läsfel för AuthUserFile: stoppa delning och rätta värdkonfigurationen. `noindex` är endast en indexeringssignal. Dela nu endast till behöriga granskare, inte öppet till allmänheten.
 
 Mock/testmode och syntetiska uppgifter kvarstår. Stripe/riktiga betalningar, externa mejl/analytics och produktion är inte aktiverade. P8: **TECHNICALLY COMPLETE / NOT ACTIVATED**. Nästa steg är verksamhetsdemo enligt `SYNTHETIC-DEMO.md`; ingen ny teknisk utvecklingsfas startas genom denna verifiering.
+
+
+## Senaste stabil-admin-verifiering – run 36906493137
+
+- `Prepare settings and strict SSH`: success – adminsecretet uppfyllde stagingkraven.
+- Privat runtime installerades och P9-migrationen passerade.
+- Obehörig direktåtkomst blockerades fortsatt.
+- P4–P9 end-to-end: success.
+- Browser customer/admin acceptance 375/390/1280: success.
+- `STABLE_STAGING_ADMIN_TOKEN: configured`: verifierat i loggen.
+- Nytt screenshot-artifact: `bois-p9-synthetic-browser-36906493137`, artifact ID `11185300175`, enligt metadata till 2026-10-08 18:25:17 UTC.
+- Ingen Stripe, riktig betalning, extern analytics/mejl, produktion eller ny extern kostnad aktiverades.
