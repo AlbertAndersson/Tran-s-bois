@@ -8,7 +8,7 @@ Ta över **Tranås BoIS – Webbshop** från `AlbertAndersson/Tran-s-bois`. Läs
 
 ## Verifierad utgångspunkt
 
-Run `36623915463`, job `109595921802`: **success**, samtliga jobbsteg passerade. Workflow/main vid körningen var `4918cef10bcc213ef9c756d407ca88d4990971fa`. Publicerad applikationsref är `c49ebcd9af9f7081e1764d28419d92dd05b4fd48`.
+Senaste verifierade staging: run `36906493137`, job `110518241965`: **success**, samtliga jobbsteg passerade. Den stabila adminnyckeln från `BOIS_STAGING_ADMIN_TOKEN` är aktiv och verifierad. Föregående skyddade baseline var run `36623915463`. Workflow/main vid körningen var `4918cef10bcc213ef9c756d407ca88d4990971fa`. Publicerad applikationsref är `c49ebcd9af9f7081e1764d28419d92dd05b4fd48`.
 
 Basic Auth över HTTPS skyddar hela stagingkatalogen. Obehörig direktåtkomst till shop, admin, order, payment, consent, assets och API samt fel credentials gav 401. Behörig P4–P9-demo, mockbetalning, medlemskap/Nordic, matchställ/batch, betalningsfel/nytt försök, mockrefund och samtycke inget val/nej/ja/återkallelse passerade bakom inloggningen.
 
@@ -31,7 +31,7 @@ Skillj alltid mellan faktisk publicerad applikationsref, workflowref och senare 
 
 Använd befintligt demomanus och bara syntetiska uppgifter/`example.invalid`. Demonstrera kundens medlemskap/gym/matchställ, köp utan statistikmedgivande, ja/nej/återkallelse, betalningsfel och nytt försök samt Eriks order-, Nordic- och batcharbete. Visa P9:s aggregerade syntetiska försäljningsöversikt.
 
-Dela demoåtkomst privat med ett begränsat antal behöriga granskare. Visa inte lösenord, ordertoken eller adminnyckel i skärmbilder eller dokumentation. Basic Auth ger inte adminbehörighet; adminnyckeln är separat och hanteras av behörig administratör.
+Dela demoåtkomst privat med ett begränsat antal behöriga granskare. Visa inte lösenord, ordertoken eller adminnyckel i skärmbilder eller dokumentation. Basic Auth ger inte adminbehörighet; adminnyckeln är separat, stabil över deployer och delas privat med behörig administratör. Den ska aldrig dokumenteras eller visas i skärmbilder.
 
 Samla per återkopplingspunkt: vad deltagaren försökte göra, förväntat resultat, observerat problem/önskemål, skärmbild utan hemligheter när relevant, prioritet och beslut. Påstå inte att Erik/BoIS har godkänt något de ännu inte provat. Registrera faktisk webbläsare/enhet; fysisk iPhone/Safari är en möjlig manuell demokontroll, inte redan verifierad.
 
