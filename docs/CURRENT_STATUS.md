@@ -6,17 +6,17 @@ Datum: 2026-09-29
 
 **PROTECTED STAGING / LIVE VERIFIED / READY FOR LIMITED SYNTHETIC DEMO**
 
-Stagingens tidigare åtkomstblockerare är löst. BoIS-ägda run **36623915463** avslutades med **success** och samtliga jobbsteg passerade. Jobbsteg, faktisk logg och artifactmetadata har efterkontrollerats. Detta är verifierad testdrift, inte produktionslansering eller Eriks verksamhetsgodkännande.
+Stagingens åtkomstskydd och stabila adminåtkomst är nu verifierade. BoIS-ägda run **36906493137** avslutades med **success** och samtliga jobbsteg passerade. Den körningen aktiverade det privata Repository Secret `BOIS_STAGING_ADMIN_TOKEN` i serverns privata runtime och verifierade samma nyckel i API- och browseracceptansen. Detta är verifierad testdrift, inte produktionslansering eller Eriks verksamhetsgodkännande.
 
 | Referens | Värde |
 | --- | --- |
 | Repository för kod, CI, secrets och deployment | `AlbertAndersson/Tran-s-bois` |
 | Workflow | `.github/workflows/simply-deploy-bois-p9-staging.yml` |
-| Körning | [36623915463](https://github.com/AlbertAndersson/Tran-s-bois/actions/runs/36623915463) |
-| Jobb | `109595921802` – `deploy`, success |
-| Workflow/main vid körningen | `4918cef10bcc213ef9c756d407ca88d4990971fa` |
-| Faktiskt utcheckad och publicerad applikationsref | `c49ebcd9af9f7081e1764d28419d92dd05b4fd48` |
-| Avslutad körning | 2026-09-29, 20:08 UTC |
+| Körning | [36906493137](https://github.com/AlbertAndersson/Tran-s-bois/actions/runs/36906493137) |
+| Jobb | `110518241965` – `deploy`, success |
+| Workflow/main vid körningen | `9922c6362be711b889a032a267685b70f8204f2a` |
+| Faktiskt utcheckad och publicerad applikationsref | `e245b5f72e1446656c2bb2f27fddc19180a6f9cd` |
+| Avslutad körning | 2026-10-01, 18:25 UTC |
 
 Senare dokumentationscommits ändrar inte den publicerade applikationsrefen. Verifiera alltid aktuell `main` före nästa ändring; återställ inte till ett historiskt SHA.
 
@@ -64,11 +64,11 @@ Den tidigare deploymodellen skapade en ny slumpmässig adminnyckel vid varje sta
 
 Workflow och admintext är nu ändrade för en stabil, separat stagingnyckel via Repository Secret `BOIS_STAGING_ADMIN_TOKEN`. Den är skild från Basic Auth-lösenordet, får inte exponeras i dokumentation och lagras i privat server-runtime. P9 CI bevakar att stagingworkflowen inte återgår till slumpgenererad adminnyckel.
 
-**Viktigt:** run `36623915463` kör fortfarande med den gamla slumpgenererade nyckeln. Innan Erik provar admin ska det nya secretet läggas in och staging deployas/verifieras en gång till. Kundsidorna och Basic Auth i den nuvarande verifierade miljön påverkas inte av denna väntande adminrotation.
+**LIVE VERIFIED:** run `36906493137` använde den stabila adminnyckeln från `BOIS_STAGING_ADMIN_TOKEN`. Markören `STABLE_STAGING_ADMIN_TOKEN: configured` finns i verifieringsloggen och browser/admin-acceptansen passerade. Nyckeln är nu aktiv på Simply och förblir densamma över framtida deployer tills secretet roteras.
 
 ## Nästa steg – Erik/BoIS demo och återkoppling
 
-När den stabila adminnyckeln är aktiverad genom en verifierad deploy: använd `SYNTHETIC-DEMO.md` för en begränsad genomgång med syntetiska uppgifter och `example.invalid`-adresser. Samla konkret återkoppling om kundresan, medlems-/Nordic-hanteringen, matchställskön, samtyckesval och begripligheten i admin.
+Använd `SYNTHETIC-DEMO.md` för en begränsad genomgång med syntetiska uppgifter och `example.invalid`-adresser. Samla konkret återkoppling om kundresan, medlems-/Nordic-hanteringen, matchställskön, samtyckesval och begripligheten i admin.
 
 Ingen ny generell utvecklingsfas, ombyggnad eller deploy behövs enbart för att denna dokumentation uppdateras. Prioritera eventuella påvisade fel och önskemål efter genomgången och fatta beslut om ett avgränsat nästa uppdrag. Fysisk iPhone/Safari kan provas manuellt vid demot; redovisa då den faktiska enheten och resultatet.
 
@@ -86,4 +86,4 @@ Före skarp lansering återstår merchant/kontoägare/KYC, bank, godkända avgif
 
 De tidigare fullständiga status- och handofftexterna från main `4918cef10bcc213ef9c756d407ca88d4990971fa` har bevarats oförändrade i `history/CURRENT_STATUS-before-protected-staging-20260929.md` och `history/WORK-HANDOFF-before-protected-staging-20260929.md`. Deras uppgifter om öppen staging och väntande åtkomstdeploy är historiska och ersätts av denna verifiering.
 
-Viktiga revisionsreferenser: legacy-merge `36358028481`, P7-acceptans `36358111506`, cutover-kontroll `36358232965`, purge av exakt 18 äldre BoIS-tabeller `36394705592`, separationsdiagnos `36394944351` och återställd Work Capture-deploy `36403070406`. Privata rollback-backuper och övriga historiska spår har inte ändrats i closeouten. Historiska fasverifieringar: P6 `36327128975`, P7 `36355678030`, P8 `36414148818`, P9 `36445454316`, säkerhetsrättningsdeploy `36463946785` och tidigare öppna C1–C4/browserstaging `36517329717`. Den senaste skyddade stagingverifieringen är **36623915463**.
+Viktiga revisionsreferenser: legacy-merge `36358028481`, P7-acceptans `36358111506`, cutover-kontroll `36358232965`, purge av exakt 18 äldre BoIS-tabeller `36394705592`, separationsdiagnos `36394944351` och återställd Work Capture-deploy `36403070406`. Privata rollback-backuper och övriga historiska spår har inte ändrats i closeouten. Historiska fasverifieringar: P6 `36327128975`, P7 `36355678030`, P8 `36414148818`, P9 `36445454316`, säkerhetsrättningsdeploy `36463946785` och tidigare öppna C1–C4/browserstaging `36517329717`. Den senaste skyddade stagingverifieringen är **36906493137**. Run `36623915463` är föregående skyddade baseline före den stabila adminnyckeln.
