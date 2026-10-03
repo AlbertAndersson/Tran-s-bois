@@ -23,6 +23,10 @@ function bois_security_reject(int $status, string $message): never
 
 function bois_security_admin(array $config): void
 {
+    require_once __DIR__.'/p14_admin.php';
+    if(bois_p14_personal($config)){
+        bois_p14_request_authorize($config,(string)($_GET['action']??''));return;
+    }
     $expected=$config['admin_token']??'';
     $token=$_SERVER['HTTP_X_BOIS_ADMIN_TOKEN']??'';
     if($token===''){
@@ -88,7 +92,12 @@ function bois_security_gate(array $config,string $action,array $routes): void
         $admin=str_starts_with($action,'admin_');
         $sensitive=$admin||in_array($action,['order','checkout_status'],true)||$method!=='GET';
         if($sensitive) bois_security_rate($config,$admin?'admin':$action,$admin?120:($action==='sales_event'?300:60));
-        if($admin) bois_security_admin($config);
+        if($admin&&$action!=='admin_login') bois_security_admin($config);
+        if($action==='admin_login'){
+            require_once __DIR__.'/p14_admin.php';
+            if(!bois_p14_personal($config)||((($_SERVER['HTTPS']??'')!=='on')&&($config['mode']??'')!=='test')) bois_security_reject(401,'Personlig inloggning är inte tillgänglig.');
+            if(!is_string($origin)||!in_array($origin,$config['allowed_origins']??[],true))bois_security_reject(403,'Otillåtet ursprung.');
+        }
     }
     if(in_array($method,['POST','PATCH'],true)){
         $type=strtolower(trim(explode(';',(string)($_SERVER['CONTENT_TYPE']??''))[0]));

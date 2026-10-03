@@ -1,0 +1,24 @@
+name: P14 Personal Admin MFA
+on:
+  pull_request:
+  push:
+    branches: [main]
+    paths: ['server/**', 'tests/p14-*', 'site/commerce/admin.html', 'site/commerce/assets/admin.js', '.github/workflows/p14-ci.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  auth:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - name: Syntax
+        run: |
+          php -l server/p14_admin.php
+          php -l server/security.php
+          php -l server/commerce-api.php
+          php -l tests/p14-admin-smoke.php
+          node --check site/commerce/assets/admin.js
+      - name: Synthetic personal accounts and real HTTP auth lifecycle
+        run: php -d disable_functions=curl_init,curl_exec,mail tests/p14-admin-smoke.php

@@ -9,9 +9,11 @@ require __DIR__ . '/p7_assortment.php';
 require __DIR__ . '/p9_sales.php';
 require __DIR__ . '/consent.php';
 require_once __DIR__ . '/production.php';
+require_once __DIR__ . '/p14_admin.php';
 
 function commerce_respond(array $data, int $status=200): never
 {
+    bois_p14_finish($status);
     http_response_code($status);
     header('Content-Type: application/json; charset=utf-8');
     header('Cache-Control: no-store');
@@ -42,6 +44,9 @@ function commerce_auth_header(): ?string
 
 function commerce_require_admin(array $config): void
 {
+    if(bois_p14_personal($config)){
+        if(!isset($GLOBALS['bois_p14_actor']))throw new DomainException('Ej behörig.');return;
+    }
     $separate=$_SERVER['HTTP_X_BOIS_ADMIN_TOKEN']??null;
     if(is_string($separate)&&$separate!==''){
         if(!hash_equals((string)$config['admin_token'],$separate)) throw new DomainException('Ej behörig.');
@@ -70,6 +75,7 @@ function commerce_output_batch_csv(PDO $pdo, string $batchId): never
     header('Content-Type: text/csv; charset=utf-8');
     header('Content-Disposition: attachment; filename="tranas-bois-' . strtolower($batchId) . '.csv"');
     header('Cache-Control: no-store');
+    bois_p14_finish(200);
     echo $csv;
     exit;
 }
@@ -92,6 +98,10 @@ try {
         'orders'=>['POST'],
         'order'=>['GET'],
         'admin_orders'=>['GET'],
+        'admin_login'=>['POST'],
+        'admin_session'=>['GET'],
+        'admin_logout'=>['POST'],
+        'admin_revoke'=>['POST'],
         'admin_catalog'=>['GET'],
         'admin_p7'=>['GET'],
         'admin_p4'=>['GET'],
@@ -111,6 +121,19 @@ try {
         'admin_retry_outbox'=>['POST'],
         'admin_run_worker'=>['POST'],
     ]);
+    if(in_array($action,['admin_login','admin_session','admin_logout','admin_revoke'],true)){
+        if(!bois_p14_personal($config))throw new DomainException('Personlig inloggning är inte tillgänglig.');
+        if($action==='admin_login'){
+            $login=bois_p14_login($config,commerce_body());bois_p14_cookie($login['token']);unset($login['token']);
+            commerce_respond(['ok'=>true,'session'=>$login]);
+        }
+        $actor=$GLOBALS['bois_p14_actor'];
+        if($action==='admin_logout'){bois_p14_logout($config,(string)($_COOKIE['__Host-BoISAdmin']??''));bois_p14_cookie('');commerce_respond(['ok'=>true]);}
+        if($action==='admin_revoke'){
+            $input=commerce_body();bois_p14_revoke($config,(string)($input['username']??''));commerce_respond(['ok'=>true]);
+        }
+        commerce_respond(['ok'=>true,'session'=>array_intersect_key($actor,array_flip(['id','role','csrf','permissions']))]);
+    }
     $pdo=bois_p3_pdo($config);
     if(($config['mode']??'')!=='production'){
         bois_p5_apply_schema($pdo);
@@ -330,6 +353,7 @@ try {
         header('Content-Type: text/csv; charset=utf-8');
         header('Content-Disposition: attachment; filename="tranas-bois-nordic-wellness.csv"');
         header('Cache-Control: no-store');
+        bois_p14_finish(200);
         echo bois_p4_export_eligible_csv($pdo);
         exit;
     }
