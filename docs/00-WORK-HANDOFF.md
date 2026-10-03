@@ -1,3 +1,17 @@
+## P11 – verifierad Stripe sandbox E2E
+
+**DONE.** Skyddad separat sandbox är publicerad med app-SHA `6d13f811d9bce8ebcefec421ab6d360642353bce`. PR #29 mergeades som `636feb7870ac2212363400f81afa6952dbde1463`.
+
+Run [37131884326](https://github.com/AlbertAndersson/Tran-s-bois/actions/runs/37131884326), job `111228446294`: **success**. Hosted Checkout med testkort, faktisk signerad Stripe-webhook till PAID, metadata/belopp/SEK, order-idempotens, replay/signatur/timestamp, decline, cancel/return och testrefund till REFUNDED passerade. Mock-stagingens browserregression på 375/390/1280 px passerade också.
+
+Restricted test key och separat signing secret verifierades utan att visa värden: run `37132159485`, job `111229248605`, **success**. Relevant P2/P7/P8/P9/Security CI är grön; P8 inkluderar P3–P7-regression. Se `P11-STRIPE-SANDBOX-E2E.md` för samtliga referenser, verifieringsgränser och de två rättade routingfelen.
+
+Stripe live: NEJ. Riktig betalning/refund: NEJ. Extern mail/SMS/analytics/annonser: NEJ. Produktion aktiv: NEJ (`production_launch_enabled=false`). Ny extern kostnad: 0 kr. Swish är av och inte testat.
+
+P11-blockerare: inga. Nästa öppna etapp: **P12 – Produktionsmiljö och databascutover-readiness**. P12 har inte startats.
+
+## Historiskt läge före P11
+
 # Tranås BoIS – WORK HANDOFF
 
 ## P10 – DONE / skyddad staging slutverifierad
