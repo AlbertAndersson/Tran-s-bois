@@ -177,27 +177,33 @@ jobs:
           declare(strict_types=1);
           $config=require getenv('BOIS_P3_CONFIG_PATH');
           require getenv('BOIS_APP_PATH').'/p8_stripe.php';
-          $result=bois_p8_stripe_request(
-              $config,
-              'POST',
-              '/v1/checkout/sessions',
-              [
-                  'mode'=>'payment',
-                  'success_url'=>'https://alberiq.se/bois-shop-stripe-sandbox/order.html?provider_test=success',
-                  'cancel_url'=>'https://alberiq.se/bois-shop-stripe-sandbox/payment.html?provider_test=cancel',
-                  'payment_method_types'=>['card'],
-                  'line_items'=>[[
-                      'quantity'=>1,
-                      'price_data'=>[
-                          'currency'=>'sek',
-                          'unit_amount'=>100,
-                          'product_data'=>['name'=>'BoIS Stripe sandbox preflight'],
-                      ],
-                  ]],
-                  'metadata'=>['bois_purpose'=>'simply_sandbox_preflight'],
-              ],
-              'bois-sandbox-preflight-'.time()
-          );
+          try {
+              $result=bois_p8_stripe_request(
+                  $config,
+                  'POST',
+                  '/v1/checkout/sessions',
+                  [
+                      'mode'=>'payment',
+                      'success_url'=>'https://alberiq.se/bois-shop-stripe-sandbox/order.html?provider_test=success',
+                      'cancel_url'=>'https://alberiq.se/bois-shop-stripe-sandbox/payment.html?provider_test=cancel',
+                      'payment_method_types'=>['card'],
+                      'line_items'=>[[
+                          'quantity'=>1,
+                          'price_data'=>[
+                              'currency'=>'sek',
+                              'unit_amount'=>100,
+                              'product_data'=>['name'=>'BoIS Stripe sandbox preflight'],
+                          ],
+                      ]],
+                      'metadata'=>['bois_purpose'=>'simply_sandbox_preflight'],
+                  ],
+                  'bois-sandbox-preflight-'.time()
+              );
+          } catch (Throwable $e) {
+              $message=preg_replace('/(sk|rk|whsec)_[A-Za-z0-9_]+/','[REDACTED]',(string)$e->getMessage());
+              fwrite(STDERR,"STRIPE_PREFLIGHT_ERROR: ".substr($message,0,500)."\n");
+              exit(10);
+          }
           if(($result['livemode']??true)!==false) exit(1);
           if(!str_starts_with((string)($result['id']??''),'cs_test_')) exit(2);
           if(!str_starts_with((string)($result['url']??''),'https://checkout.stripe.com/')) exit(3);
