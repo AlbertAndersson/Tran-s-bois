@@ -230,14 +230,7 @@ jobs:
           mkdir -p "$next"
           REMOTE
 
-          tar -C "$RUNNER_TEMP/bois-stripe-public" -czf - . | ssh "${SSH_OPTS[@]}" -l "$SIMPLY_SSH_USER" "$SIMPLY_HOST" 'sh -s' -- "$target_rel" <<'REMOTE'
-          set -eu
-          next="$HOME/$1.next"
-          tar -xzf - -C "$next"
-          find "$next" -type d -exec chmod 755 {} +
-          find "$next" -type f -exec chmod 644 {} +
-          test -s "$next/.htaccess"
-          REMOTE
+          tar -C "$RUNNER_TEMP/bois-stripe-public" -czf - . | ssh "${SSH_OPTS[@]}" -l "$SIMPLY_SSH_USER" "$SIMPLY_HOST" "set -eu; next=\"\$HOME/$target_rel.next\"; tar -xzf - -C \"\$next\"; find \"\$next\" -type d -exec chmod 755 {} +; find \"\$next\" -type f -exec chmod 644 {} +; test -s \"\$next/.htaccess\""
 
           ssh "${SSH_OPTS[@]}" -l "$SIMPLY_SSH_USER" "$SIMPLY_HOST" 'sh -s' -- "$target_rel" <<'REMOTE'
           set -eu
