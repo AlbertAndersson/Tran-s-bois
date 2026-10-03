@@ -80,8 +80,8 @@ try{
     // Complete synthetic approvals validate only the checker, never business approval.
     $approved=$config;
     $approved=array_replace($approved,['admin_token'=>str_repeat('synthetic-future-',4),'checkout_enabled'=>true,
-        'payment_provider'=>'stripe','stripe_mode'=>'live','stripe_secret_key'=>'rk_live_synthetic_fixture',
-        'stripe_webhook_secret'=>'whsec_synthetic_fixture','public_base_url'=>'https://bois.example.org/shop',
+        'payment_provider'=>'stripe','stripe_mode'=>'live','stripe_secret_key'=>'rk_live_'.str_repeat('synthetic',6),
+        'stripe_webhook_secret'=>'whsec_'.str_repeat('synthetic',6),'public_base_url'=>'https://bois.example.org/shop',
         'allowed_origins'=>['https://bois.example.org'],'seller_legal_name'=>'Synthetic seller','seller_org_number'=>'synthetic',
         'support_email'=>'fixture@example.invalid','terms_url'=>'https://bois.example.org/terms','privacy_url'=>'https://bois.example.org/privacy',
         'merchant_verified'=>true,'stripe_fees_approved'=>true,'refund_policy_approved'=>true,'production_launch_enabled'=>true,'payment_mail_transport'=>'php_mail']);

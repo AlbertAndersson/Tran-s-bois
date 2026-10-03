@@ -120,6 +120,8 @@ function bois_p12_launch_checks(array $candidate,array $approved): array
     $checks['approved_runtime_identity']=($approved['mode']??null)==='production'&&($approved['db']??null)===($candidate['db']??null);
     foreach(bois_p8_readiness($approved)['checks'] as $key=>$ok) $checks['launch_'.$key]=$ok;
     $checks['launch_live_mode']=($approved['stripe_mode']??null)==='live';
+    $checks['launch_stripe_secret_length']=strlen((string)($approved['stripe_secret_key']??''))>=32;
+    $checks['launch_webhook_secret_length']=strlen((string)($approved['stripe_webhook_secret']??''))>=32;
     $checks['launch_checkout_enabled']=($approved['checkout_enabled']??null)===true;
     $checks['launch_production_config']=($approved['production_config_version']??null)===1;
     $checks['launch_admin_secret']=strlen((string)($approved['admin_token']??''))>=32&&($approved['admin_token']??'')!==($candidate['admin_token']??'');

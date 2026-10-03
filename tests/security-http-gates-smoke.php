@@ -55,10 +55,9 @@ try{
 
     $before=$snapshot();
     $httpOrder=null;
-    foreach(['off','missing','production'] as $case){
+    foreach(['off','missing'] as $case){
         $runtime=array_replace($config,['mode'=>'staging','sales_tracking_enabled'=>false]);
         if($case==='missing') unset($runtime['sales_tracking_enabled']);
-        if($case==='production'){$runtime['mode']='production';$runtime['sales_tracking_enabled']=true;}
         $writeConfig($runtime);
         [$status,$health]=security_http_request($base,'health');
         if($status!==200 || ($health['sales_tracking_enabled']??null)!==false) throw new RuntimeException('HTTP tracking gate not off: '.$case);
@@ -74,6 +73,15 @@ try{
         if($snapshot()!==$before) throw new RuntimeException('HTTP order or event wrote disabled attribution.');
     }
 
+    // P12 closed production rejects commerce before DB, even with forged flags.
+    $writeConfig(array_replace($config,['mode'=>'production','sales_tracking_enabled'=>true,'production_launch_enabled'=>false]));
+    $ordersBefore=$pdo->query('SELECT * FROM bois_orders ORDER BY id')->fetchAll();
+    foreach(['health'=>null,'sales_event'=>$forged,'orders'=>['production_launch_enabled'=>true]+$forged] as $action=>$body){
+        [$status]=security_http_request($base,$action,$body);
+        if($status!==503) throw new RuntimeException('Closed production accepted commerce: '.$action);
+    }
+    if($ordersBefore!==$pdo->query('SELECT * FROM bois_orders ORDER BY id')->fetchAll()||$snapshot()!==$before) throw new RuntimeException('Closed production wrote orders or attribution.');
+
     $runtime=array_replace($config,[
         'mode'=>'production','payment_provider'=>'stripe','stripe_mode'=>'live',
         'stripe_secret_key'=>'sk_live_'.str_repeat('fixture',6),
@@ -86,7 +94,7 @@ try{
         'public_id'=>$httpOrder['public_id'],'public_token'=>$httpOrder['public_token'],'method'=>'card',
         'production_launch_enabled'=>true,
     ]);
-    if($status!==401) throw new RuntimeException('HTTP production checkout bypassed launch gate.');
+    if($status!==503) throw new RuntimeException('HTTP production checkout bypassed launch gate.');
     if($paymentBefore!==$pdo->query('SELECT * FROM bois_payments ORDER BY id')->fetchAll()) throw new RuntimeException('Blocked HTTP checkout changed payments.');
 
     // Restore synthetic staging permission and prove the API still passes server config.
