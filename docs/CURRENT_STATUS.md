@@ -1,3 +1,13 @@
+## P12 – legacy-databas raderad efter uttryckligt godkännande
+
+2026-10-03: hela `socen_se_db` är raderad efter ny verifierad full backup.
+BoIS production-schema/rader är oförändrade och stängd readiness passerar.
+Gamla WordPress-webben är stängd (HTTPS 403); webb-filer och backup bevarade.
+Staging, DNS, Stripe live och e-post är orörda. Ingen mer manuell åtgärd krävs
+för legacy-raderingen. Separat SELECT-only hostkonto och publik app/full E2E
+återstår; P12 är inte DONE. Se `P12-SOCEN-HOSTING.md` för backup och efterkontroll.
+
+## Historiskt läge före godkänd legacy-radering
 ## P12 – SOCen backup och privat production verifierad; DB-grants blockerar
 
 2026-10-03: `socen.se` är beslutad som dedikerad BoIS production-produkt,

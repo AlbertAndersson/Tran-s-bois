@@ -3,7 +3,7 @@
 **P12 hostingbeslut 2026-10-03:** Simply-produkten `socen.se` är reserverad för
 dedikerad BoIS production. Staging och Stripe-sandbox ligger kvar på `alberiq.se`;
 production ska ha separat produkt, SSH-nyckel, databas och credentials. Lamport
-eller andra system får inte placeras i SOCen-miljön. Backup är verifierad, separat DB och privat stängd release är installerade. P12 är fortsatt BLOCKED på begränsade MySQL-konton; publik appinstallation återstår. Se `docs/P12-SOCEN-HOSTING.md`.
+eller andra system får inte placeras i SOCen-miljön. Backup är verifierad, separat DB och privat stängd release är installerade. Legacy-databasen är nu raderad efter uttryckligt godkännande och verifierad backup; gamla webben är stängd. Separat SELECT-only-verifiering och publik BoIS-app/full E2E återstår, så P12 är inte DONE. Se `docs/P12-SOCEN-HOSTING.md`.
 Stripe live och slutlig publik DNS-cutover kräver separat godkännande.
 
 Fristående BoIS-webshop med medlemskap, Nordic Wellness-förmån, matchställ och förberett supporter-/merchsortiment.

@@ -1,5 +1,29 @@
 # P12 – dedikerad BoIS production på socen.se
 
+## Uppdatering 2026-10-03 – legacy-databasen raderad
+
+Efter användarens uttryckliga godkännande har hela `socen_se_db` raderats med
+DROP DATABASE. Ny full backup före radering finns privat som
+`socen-final-before-delete.sql`; lokal/server SHA-256:
+`d06637fd6c0cf6a074ec80da5776f171a18679182698065423565d4344b14aed`.
+Dumpen innehåller 25 CREATE TABLE och avslutningsmarkör; båda kopiorna är verifierade.
+
+Efterkontroll: legacy-schemat saknas, BoIS production-schema och samtliga rader
+är oförändrade jämfört med tidigare baseline, och stängd readiness passerar.
+Den gamla WordPress-webben är spärrad via `.htaccess` och svarar 403 över HTTPS.
+Originalets `.htaccess` och samtliga webb-filer finns kvar i backup; webb-filerna
+har inte raderats. BoIS production är fortfarande privat/stängd. Ingen staging,
+DNS, Stripe live eller e-post ändrades.
+
+Raderingen är klar och kräver ingen ytterligare manuell åtgärd. Den tidigare
+blockeraren att produktionskontot når legacy-data är undanröjd. Separat SELECT-only
+hostkonto är fortfarande inte tillgängligt/verifierat enligt ursprunglig P12-runbook;
+detta är en separat verifieringsbegränsning. Publik BoIS-app och full E2E återstår,
+så P12 är inte DONE. Tidigare supportuppmaning ska inte tolkas som att användaren
+behöver kontakta Simply för legacy-raderingen.
+
+## Historisk rapport före godkänd legacy-radering
+
 Beslut 2026-10-03: Simply-produkten `socen.se` ska återanvändas uteslutande för
 Tranås BoIS production. Lamport, Work Capture och andra system får inte
 installeras där. Slutlig publik BoIS-domän och DNS-cutover är inte godkända.
