@@ -254,7 +254,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          curl(){ command curl --user "bois-demo:$DEMO_PASSWORD" "$@"; }
+          UA="AlberIQ-BoIS-Stripe-Sandbox-Check/1.0"
+          curl(){ command curl -A "$UA" --user "bois-demo:$DEMO_PASSWORD" "$@"; }
           curl --fail --silent --show-error "$BOIS_BASE_URL/commerce-api.php?action=health" -o "$RUNNER_TEMP/health.json"
           grep -q '"payment_provider":"stripe"' "$RUNNER_TEMP/health.json"
           grep -q '"payment_mode":"test"' "$RUNNER_TEMP/health.json"
@@ -263,11 +264,11 @@ jobs:
           grep -q '"payment_methods":\["card"\]' "$RUNNER_TEMP/health.json"
           grep -q '"mail_transport":"disabled"' "$RUNNER_TEMP/health.json"
 
-          unauth="$(command curl --silent --output /dev/null --write-out '%{http_code}' "$BOIS_BASE_URL/commerce-api.php?action=health")"
+          unauth="$(command curl -A "$UA" --silent --output /dev/null --write-out '%{http_code}' "$BOIS_BASE_URL/commerce-api.php?action=health")"
           [[ "$unauth" == 401 ]]
-          webhook_get="$(command curl --silent --output /dev/null --write-out '%{http_code}' "$BOIS_WEBHOOK_URL")"
+          webhook_get="$(command curl -A "$UA" --silent --output /dev/null --write-out '%{http_code}' "$BOIS_WEBHOOK_URL")"
           [[ "$webhook_get" == 405 ]]
-          webhook_bad="$(command curl --silent --output /dev/null --write-out '%{http_code}' -X POST -H 'Content-Type: application/json' --data '{}' "$BOIS_WEBHOOK_URL")"
+          webhook_bad="$(command curl -A "$UA" --silent --output /dev/null --write-out '%{http_code}' -X POST -H 'Content-Type: application/json' --data '{}' "$BOIS_WEBHOOK_URL")"
           [[ "$webhook_bad" == 400 ]]
 
           ssh -4 -F /dev/null -T -p 22 -i "$SSH_DIR/identity" -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$SSH_DIR/known_hosts" -o GlobalKnownHostsFile=/dev/null -o ConnectTimeout=12 -l "$SIMPLY_SSH_USER" "$SIMPLY_HOST" 'export BOIS_P3_CONFIG_PATH="$HOME/.bois-stripe-sandbox/config.php"; export BOIS_APP_PATH="$HOME/public_html/bois-shop-stripe-sandbox"; php "$HOME/.bois-stripe-sandbox/stripe-preflight.php"'
