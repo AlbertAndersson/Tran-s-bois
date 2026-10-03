@@ -1,3 +1,12 @@
+## P15 – IN PROGRESS, observability och driftberedskap
+
+Aktuell etapp är P15 från main 18ef6b03605ae96c5c1b84fa6f683037c0d452c8, PR #33.
+Health/readiness, privat JSON-loggning, request-ID och drift-runbook implementeras
+och verifieras isolerat. Se [P15-runbook](P15-OPERATIONS.md). Ingen Simply-deploy,
+productionaktivering, Stripe live, DNS-cutover, extern mail eller ny kostnad.
+P12-verifiering är uppskjuten enligt beslut. P16 har inte startats.
+Äldre status nedan är historisk.
+
 ## P14 – DONE, personliga konton och MFA verifierade
 
 Baslinje main: `c6e5787fe47cc46642a7b7bafbefbf9221c83eb8`. PR #32.
