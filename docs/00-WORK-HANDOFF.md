@@ -1,10 +1,37 @@
 # Tranås BoIS – WORK HANDOFF
 
-## P10 – aktuellt auktoriserat uppdrag
+## P10 – DONE / skyddad staging slutverifierad
 
-Albert har beställt nästa etapp enligt Drive-kön “01 – Tranås BoIS – Work utvecklingskö till go-live”. P10 är IN PROGRESS: säkerhetsförstärkning implementeras och verifieras före eventuell stängning. Tidigare instruktioner nedan om att invänta demoåterkoppling är historiskt nuläge och begränsar inte detta nya uppdrag.
+Baslinje main: `0a25f1be0114d147222518b69be805fe75c10d30`. PR #28 merge: `73aaefeb102d7c71ba0ae08231d203166aa843c6`. Workflowfix: `bc692e6ae991d606442155b0a9efb236f0803a85`.
+Publicerad applikationsref: `f355ff5c26ce11ad20815e2f48b35ec2f4bbc064`.
+Slutlig stagingrun: [37128656576](https://github.com/AlbertAndersson/Tran-s-bois/actions/runs/37128656576), jobb `111219110739`, **success**, samtliga steg gröna. Workflowref `bc692e6ae991d606442155b0a9efb236f0803a85`; senare dokumentationscommits är inte ny appdeploy.
 
-Baslinje main: `0a25f1be0114d147222518b69be805fe75c10d30`. Se `P10-PRODUCTION-HARDENING.md` för kontrollpunkter, riskregister och verifieringsläge. P11–P20 ingår inte. Alla produktions-, betalnings-, mail- och kostnadsspärrar består.
+Säkerhetsheaders/CSP på HTML och API, method/origin/JSON/body-kontroller, separat adminbehörighet före DB, privat atomiskt missbruksskydd och interna endpointspärrar är verifierade. HTTP Basic Auth består. Full P4–P9 mock-E2E och Chromium 375/390/1280 passerade: köp utan statistik, nekad/avbruten betalning och nytt försök, samtycke/attribution/återkallelse, medlemsverifiering, batch och mockrefund. Inga främmande tabeller tillkom; tabellnamnshash/count oförändrade, antal 0. Detta är inte en restoreövning.
+
+Stripe live: NEJ. Riktig betalning/refund: NEJ. Extern mail/SMS: NEJ. Extern analytics/annonser: NEJ. Produktion aktiv: NEJ (`production_launch_enabled=false`). Ny extern kostnad: 0 kr.
+
+P10-blockerare: inga. Kvarvarande tekniskt riskregister och HSTS-strategi finns i `P10-PRODUCTION-HARDENING.md`. Personliga adminroller, backup/restore, retention och produktionsdrift hanteras i senare etapper. Nästa öppna etapp: **P11 – Stripe Sandbox E2E**; den har inte startats här.
+
+CI på merge-SHA, samtliga success:
+
+| Kontroll | Run |
+| --- | --- |
+| P2 | [37128431291](https://github.com/AlbertAndersson/Tran-s-bois/actions/runs/37128431291) |
+| P3 | [37128431333](https://github.com/AlbertAndersson/Tran-s-bois/actions/runs/37128431333) |
+| P4 | [37128431304](https://github.com/AlbertAndersson/Tran-s-bois/actions/runs/37128431304) |
+| P5 | [37128431347](https://github.com/AlbertAndersson/Tran-s-bois/actions/runs/37128431347) |
+| P6 | [37128431339](https://github.com/AlbertAndersson/Tran-s-bois/actions/runs/37128431339) |
+| P7 | [37128431356](https://github.com/AlbertAndersson/Tran-s-bois/actions/runs/37128431356) |
+| P8 | [37128431275](https://github.com/AlbertAndersson/Tran-s-bois/actions/runs/37128431275) |
+| P9 | [37128431363](https://github.com/AlbertAndersson/Tran-s-bois/actions/runs/37128431363) |
+| Security controls | [37128431415](https://github.com/AlbertAndersson/Tran-s-bois/actions/runs/37128431415) |
+
+Browserartifact: `11276236203`, `bois-p9-synthetic-browser-37128656576`, 1 232 975 byte, digest `sha256:fcb0fcb1019af404ac1d17a3ba56a8203905e9c61967eb3328ce7c15bf74065b`, giltig till 2026-10-10 14:11:43 UTC. Fysisk iPhone/Safari och verksamhetsacceptans är inte testade av Chromiumkontrollen.
+
+Första stagingrun `37128488635` deployade samma appref men stoppades på en ny verifieringscurl utan etablerad User-Agent (HTTP 455). Workflowfixen återanvänder befintlig klientidentifiering. Slutrun ovan passerade hela kedjan.
+
+## Historiskt verifierat läge före P10
+
 
 
 ## Aktuell överlämning
