@@ -11,6 +11,15 @@ jobs:
   auth:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot"
+          --health-interval=5s --health-timeout=5s --health-retries=20
     steps:
       - uses: actions/checkout@v5
       - name: Syntax
@@ -22,3 +31,11 @@ jobs:
           node --check site/commerce/assets/admin.js
       - name: Synthetic personal accounts and real HTTP auth lifecycle
         run: php -d disable_functions=curl_init,curl_exec,mail tests/p14-admin-smoke.php
+      - name: Browser dependencies
+        run: |
+          npm install --no-save --package-lock=false playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Personal admin browser in isolated MySQL
+        run: |
+          mysql -h127.0.0.1 -uroot -proot -e 'CREATE DATABASE bois_p14_ci'
+          node tests/p14-browser.test.cjs

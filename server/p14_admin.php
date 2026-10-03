@@ -25,6 +25,7 @@ function bois_p14_paths(array $config): array
     if((fileperms($users)&0077)!==0||filesize($users)>65536) throw new RuntimeException('Private bounded user registry required.');
     $registry=json_decode(file_get_contents($users),true,16,JSON_THROW_ON_ERROR);
     if(!is_array($registry)||count($registry)>50) throw new RuntimeException('Invalid registry.');
+    $secrets=[];
     foreach($registry as $id=>$u){
         if(!preg_match('/^[a-z0-9][a-z0-9._-]{2,79}$/D',(string)$id)||!is_array($u)||
             !is_bool($u['enabled']??null)||!is_int($u['epoch']??null)||$u['epoch']<1||!bois_p14_permissions($u['role']??'')||
@@ -32,6 +33,8 @@ function bois_p14_paths(array $config): array
         $info=password_get_info($u['password_hash']);
         if(!(($info['algoName']==='bcrypt'&&($info['options']['cost']??0)>=12)||
             ($info['algoName']==='argon2id'&&($info['options']['memory_cost']??0)>=65536))) throw new RuntimeException('Strong password hash required.');
+        if(($config['mode']??'')==='production'&&isset($secrets[$u['totp_secret']]))throw new RuntimeException('Unique MFA secrets required.');
+        $secrets[$u['totp_secret']]=true;
     }
     return [$dir,$registry];
 }
@@ -99,7 +102,7 @@ function bois_p14_login(array $config,array $input): array
         if(count($s['sessions'])>=256)throw new RuntimeException('Admin session capacity reached.');
         $s['totp'][$id]=$matched;unset($s['attempts'][$bucket]);
         $token=bin2hex(random_bytes(32));$csrf=bin2hex(random_bytes(32));
-        $s['sessions'][hash('sha256',$token)]=['id'=>$id,'epoch'=>$account['epoch'],'revocation'=>$s['epochs'][$id]??0,'role'=>$account['role'],'csrf'=>$csrf,'last'=>$now,'expires'=>$now+28800];
+        $s['sessions'][hash('sha256',$token)]=['id'=>$id,'epoch'=>$account['epoch'],'credential'=>hash('sha256',$account['password_hash'].'|'.$account['totp_secret']),'revocation'=>$s['epochs'][$id]??0,'role'=>$account['role'],'csrf'=>$csrf,'last'=>$now,'expires'=>$now+28800];
         bois_p14_audit($dir,$id,$account['role'],'admin_login','success',bin2hex(random_bytes(12)));
         return ['token'=>$token,'csrf'=>$csrf,'id'=>$id,'role'=>$account['role'],'permissions'=>bois_p14_permissions($account['role'])];
     });
@@ -111,7 +114,8 @@ function bois_p14_authorize(array $config,string $action,string $token,string $c
     if(!preg_match('/^[a-f0-9]{64}$/D',$token))throw new DomainException('Ej behörig.');
     return bois_p14_locked($config,function(&$s,$users,$dir,$now)use($action,$token,$csrf,$write){
         $key=hash('sha256',$token);$row=$s['sessions'][$key]??null;$user=$row?($users[$row['id']]??null):null;
-        if(!$row||!$user||!$user['enabled']||$row['epoch']!==$user['epoch']||$row['role']!==$user['role']||$row['revocation']!==($s['epochs'][$row['id']]??0))throw new DomainException('Sessionen har gått ut.');
+        if(!$row||!$user||!$user['enabled']||$row['epoch']!==$user['epoch']||$row['role']!==$user['role']||
+            ($row['credential']??null)!==hash('sha256',$user['password_hash'].'|'.$user['totp_secret'])||$row['revocation']!==($s['epochs'][$row['id']]??0))throw new DomainException('Sessionen har gått ut.');
         if($write&&(!preg_match('/^[a-f0-9]{64}$/D',$csrf)||!hash_equals($row['csrf'],$csrf)))throw new DomainException('Ogiltigt sessionsskydd.');
         if(!in_array($action,['admin_session','admin_logout'],true)&&!in_array($action,bois_p14_permissions($user['role']),true)){
             bois_p14_audit($dir,$row['id'],$user['role'],$action,'denied',bin2hex(random_bytes(12)));throw new DomainException('Ej behörig för åtgärden.');
@@ -124,7 +128,7 @@ function bois_p14_authorize(array $config,string $action,string $token,string $c
 
 function bois_p14_logout(array $config,string $token): void
 {
-    bois_p14_locked($config,function(&$s){unset($s['sessions'][hash('sha256',$token)]);});
+    bois_p14_locked($config,function(&$s)use($token){unset($s['sessions'][hash('sha256',$token)]);});
 }
 function bois_p14_revoke(array $config,string $id): void
 {
@@ -140,6 +144,7 @@ function bois_p14_cookie(string $token): void
 }
 function bois_p14_request_authorize(array $config,string $action): void
 {
+    if(($config['mode']??'')==='production'&&($_SERVER['HTTPS']??'')!=='on')throw new DomainException('HTTPS krävs.');
     $write=($_SERVER['REQUEST_METHOD']??'GET')!=='GET';
     if($write&&(!is_string($_SERVER['HTTP_ORIGIN']??null)||!in_array($_SERVER['HTTP_ORIGIN'],$config['allowed_origins']??[],true)))throw new DomainException('Otillåtet ursprung.');
     $context=bois_p14_authorize($config,$action,(string)($_COOKIE['__Host-BoISAdmin']??''),(string)($_SERVER['HTTP_X_BOIS_CSRF']??''),$write);
