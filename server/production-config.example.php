@@ -22,6 +22,14 @@ return [
     'personal_admin' => ['enabled'=>false,'users_file'=>'','state_dir'=>'','public_root'=>''],
     // Provision an existing 0700 directory outside the existing public root.
     'observability' => ['enabled'=>false,'log_dir'=>'','public_root'=>''],
+    // TBD: business-approved durations; no production fallback to staging's 180 days.
+    'consent_validity_days' => null,
+    'consent_cookie_path' => null,
+    'retention' => [
+        'rules'=>['sales_events_days'=>null,'sales_sessions_days'=>null,'consent_inactive_days'=>null],
+        'batch_size'=>100,'apply_enabled'=>false,'legal_hold'=>true,
+        'policy_reference'=>'','backup_reference'=>'','approved_target'=>[],
+    ],
     'allowed_origins' => [],
     'public_base_url' => '', // Final URL requires a business decision.
     'seller_legal_name' => '',

@@ -1,0 +1,36 @@
+name: P16 Privacy Retention
+on:
+  pull_request:
+  push:
+    branches: [main]
+    paths: ['server/**', 'ops/p16-*', 'tests/p16-*', 'docs/P16-DATA-FIELDS.json', '.github/workflows/p16-ci.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  retention:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: bois_p16_ci
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+    env:
+      BOIS_P3_TEST_DB_HOST: 127.0.0.1
+      BOIS_P3_TEST_DB_NAME: bois_p16_ci
+      BOIS_P3_TEST_DB_USER: root
+      BOIS_P3_TEST_DB_PASSWORD: root
+      BOIS_P16_DISPOSABLE: 'YES'
+    steps:
+      - uses: actions/checkout@v5
+      - name: Syntax
+        run: for file in ops/p16-*.php tests/p16-*.php server/consent.php; do php -l "$file"; done
+      - name: Synthetic retention, SELECT-only dry-run and protected commerce
+        run: php -d disable_functions=mail,curl_exec,curl_init tests/p16-retention-smoke.php
+      # No data/config/log artifacts. Actual deletion is only in the disposable CI DB.
