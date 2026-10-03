@@ -1,4 +1,14 @@
 ## P13 DONE – P12-verifiering uppskjuten enligt beslut
+P13 closeout: PR #31 är mergad som `814a8105334c8316577b3fe368d05011a700016d`.
+Main före P13: `56c2d8ba6455fa385c02867922ec12308a26ae4b`.
+Slutlig PR-head: `6e235e9f50072361422122ab9dd12100de904dab`.
+P13 [37154784578](https://github.com/AlbertAndersson/Tran-s-bois/actions/runs/37154784578),
+jobb `111295845017`: success. P12 37154784586, P2 37154784622,
+P7 37154784615, P8 37154784589, P9 37154784630 och Security 37154784581:
+samtliga success på slutlig PR-head. Schema- och datakorruption verifieras
+oberoende av varandra. P13-acceptansen är klar med faktisk isolerad restore;
+P12:s kvarvarande host-/flödestester är fortsatt uppskjutna enligt beslut.
+
 
 Användaren har uttryckligen valt att fortsätta med P13 eftersom återstående
 P12-verifiering inte kan genomföras nu. P12 är inte DONE; dess kvarvarande
