@@ -292,10 +292,10 @@ jobs:
           api="$BOIS_BASE_URL/commerce-api.php"
           check(){
             expected="$1"; shift
-            actual="$(command curl --silent --show-error --max-time 20 --user "bois-demo:$DEMO_PASSWORD" -o /dev/null -w '%{http_code}' "$@")"
+            actual="$(command curl --silent --show-error --max-time 20 -A 'AlberIQ-BoIS-P9-Check/1.0' --user "bois-demo:$DEMO_PASSWORD" -o /dev/null -w '%{http_code}' "$@")"
             [[ "$actual" == "$expected" ]] || { echo "::error::P10 expected $expected got $actual"; exit 1; }
           }
-          command curl --fail --silent --show-error --user "bois-demo:$DEMO_PASSWORD" -D "$RUNNER_TEMP/p10-headers.txt" -o /dev/null "$BOIS_BASE_URL/index.html"
+          command curl --fail --silent --show-error -A 'AlberIQ-BoIS-P9-Check/1.0' --user "bois-demo:$DEMO_PASSWORD" -D "$RUNNER_TEMP/p10-headers.txt" -o /dev/null "$BOIS_BASE_URL/index.html"
           for header in content-security-policy x-frame-options x-content-type-options referrer-policy permissions-policy cache-control; do
             grep -qi "^$header:" "$RUNNER_TEMP/p10-headers.txt"
           done
