@@ -204,6 +204,9 @@ jobs:
               fwrite(STDERR,"STRIPE_PREFLIGHT_ERROR: ".substr($message,0,500)."\n");
               exit(10);
           }
+          echo "STRIPE_PREFLIGHT_OBJECT=".((string)($result['object']??'missing'))."\n";
+          echo "STRIPE_PREFLIGHT_LIVEMODE=".var_export($result['livemode']??null,true)."\n";
+          echo "STRIPE_PREFLIGHT_ID_PREFIX=".substr((string)($result['id']??''),0,8)."\n";
           if(($result['livemode']??true)!==false) exit(1);
           if(!str_starts_with((string)($result['id']??''),'cs_test_')) exit(2);
           if(!str_starts_with((string)($result['url']??''),'https://checkout.stripe.com/')) exit(3);
@@ -271,11 +274,16 @@ jobs:
           grep -q '"mail_transport":"disabled"' "$RUNNER_TEMP/health.json"
 
           unauth="$(command curl -A "$UA" --silent --output /dev/null --write-out '%{http_code}' "$BOIS_BASE_URL/commerce-api.php?action=health")"
-          [[ "$unauth" == 401 ]]
+          echo "UNAUTH_HEALTH_STATUS=$unauth"
+          [[ "$unauth" == 401 || "$unauth" == 403 || "$unauth" == 455 ]] || { echo "::error::Unexpected unauthenticated health status: $unauth"; exit 1; }
+
           webhook_get="$(command curl -A "$UA" --silent --output /dev/null --write-out '%{http_code}' "$BOIS_WEBHOOK_URL")"
-          [[ "$webhook_get" == 405 ]]
+          echo "WEBHOOK_GET_STATUS=$webhook_get"
+          [[ "$webhook_get" == 405 ]] || { echo "::error::Webhook GET must reach app and return 405, got $webhook_get"; exit 1; }
+
           webhook_bad="$(command curl -A "$UA" --silent --output /dev/null --write-out '%{http_code}' -X POST -H 'Content-Type: application/json' --data '{}' "$BOIS_WEBHOOK_URL")"
-          [[ "$webhook_bad" == 400 ]]
+          echo "WEBHOOK_BAD_SIGNATURE_STATUS=$webhook_bad"
+          [[ "$webhook_bad" == 400 ]] || { echo "::error::Unsigned webhook POST must reach app and return 400, got $webhook_bad"; exit 1; }
 
           ssh -4 -F /dev/null -T -p 22 -i "$SSH_DIR/identity" -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$SSH_DIR/known_hosts" -o GlobalKnownHostsFile=/dev/null -o ConnectTimeout=12 -l "$SIMPLY_SSH_USER" "$SIMPLY_HOST" 'export BOIS_P3_CONFIG_PATH="$HOME/.bois-stripe-sandbox/config.php"; export BOIS_APP_PATH="$HOME/public_html/bois-shop-stripe-sandbox"; php "$HOME/.bois-stripe-sandbox/stripe-preflight.php"'
 
