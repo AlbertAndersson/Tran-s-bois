@@ -1,6 +1,6 @@
 # Tranås BoIS – webshop
 
-P15 IN PROGRESS: säkra probes, privat strukturerad loggning och driftberedskap. Se [P15-runbook](docs/P15-OPERATIONS.md). Ingen hostdeploy eller productionaktivering; P12-verifiering är uppskjuten och P16 har inte startats.
+P15 DONE, PR #33: minimal liveness/readiness, privat JSON-loggning med request-ID, read-only driftkontroller och incidentrunbook. P15/P14 och alla regressioner är gröna. Se [P15-runbook](docs/P15-OPERATIONS.md). Ingen Simply-deploy eller productionaktivering; P12-verifiering är uppskjuten och P16 har inte startats.
 
 P14 DONE: personlig adminåtkomst med lösenord+TOTP, roller, serversessioner och audit implementerad i PR #32. Ingen productionaktivering eller riktiga konton. Se [P14-runbook](docs/P14-PERSONAL-ADMIN.md).
 
@@ -22,7 +22,7 @@ P8 är **TECHNICALLY COMPLETE / NOT ACTIVATED**. Stripe, riktig betalning, exter
 
 ## Nästa steg
 
-**Den stabila staging-adminnyckeln är nu liveverifierad.** Run `36906493137` använde `BOIS_STAGING_ADMIN_TOKEN` och browser/admin-acceptansen passerade. Genomför nu Eriks/BoIS faktiska demo. Använd sedan det syntetiska demomanuset och prioritera konkreta observationer innan nästa avgränsade ändring beslutas. Starta inte mer generell teknisk utveckling eller en ny deploy enbart för att slutdokumentationen uppdateras. Automatiserade testpass är inte samma sak som verksamhetens godkännande.
+P16 är nästa utvecklingsetapp och har inte startats. Den kvarvarande P12-host-/flödesverifieringen är uppskjuten enligt användarens beslut. Före verklig drift behövs även verksamhetens godkännanden och befintliga launchgrindar; CI ersätter inte dessa. P15 kräver ingen manuell åtgärd nu och har inte installerats i Simply-miljöerna.
 
 ## Status
 - P1 ordermotor: **COMPLETE**

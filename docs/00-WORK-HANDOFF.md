@@ -1,11 +1,18 @@
-## P15 – IN PROGRESS, observability och driftberedskap
+## P15 – DONE, observability och driftberedskap verifierade
 
-Aktuell etapp är P15 från main 18ef6b03605ae96c5c1b84fa6f683037c0d452c8, PR #33.
-Health/readiness, privat JSON-loggning, request-ID och drift-runbook implementeras
-och verifieras isolerat. Se [P15-runbook](P15-OPERATIONS.md). Ingen Simply-deploy,
-productionaktivering, Stripe live, DNS-cutover, extern mail eller ny kostnad.
-P12-verifiering är uppskjuten enligt beslut. P16 har inte startats.
-Äldre status nedan är historisk.
+Main före P15: `18ef6b03605ae96c5c1b84fa6f683037c0d452c8`. PR #33 är mergad;
+kod-main efter merge: `f298e69cdc94cffdb7011bac43e98a93ab989f7d`.
+Slutlig PR-head: `a7c476658118f908f69ee6f0bf554004b3a2faab`.
+Minimal liveness/readiness, privat JSON-loggning, request-ID/P14-auditkorrelation,
+read-only DB-/kö-/diskkontroller och incident-/första-veckan-runbook är klara.
+P15 [37157817328](https://github.com/AlbertAndersson/Tran-s-bois/actions/runs/37157817328),
+jobb `111304807554`: success. P14 37157817345 inklusive Chromium och
+P2–P13/Security är success på slutlig PR-head. Se [P15-runbook](P15-OPERATIONS.md).
+Ingen Simply-deploy, riktiga konton, productionaktivering, live Stripe, DNS-cutover,
+extern mail eller ny extern tjänst/kostnad. Production är fortsatt stängd på
+socen.se; staging/sandbox är separat alberiq.se. P12-verifieringen är uppskjuten
+som tidigare beslutat. Inga P15-blockerare eller manuella åtgärder nu.
+P16 är nästa etapp och har inte startats. Äldre status nedan är historisk.
 
 ## P14 – DONE, personliga konton och MFA verifierade
 

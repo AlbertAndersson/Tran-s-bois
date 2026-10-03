@@ -146,5 +146,19 @@ ingen fysisk hostingdisk fylls. Liveness fortsätter svara när DB är nere.
 Inga logg-/data-/konto-artifacts publiceras. Faktiskt production-TLS, cron,
 quota/inodes, hostkonto, flödes-E2E och bemannad drift är inte bevisade av CI.
 
-P15 run 37157440871 passerade på första kodversionen. Slutliga korrigerade
-P14/P15- och regressionsreferenser förs in när samtliga kontroller är verifierade.
+P15 DONE. PR #33: https://github.com/AlbertAndersson/Tran-s-bois/pull/33
+Main före: `18ef6b03605ae96c5c1b84fa6f683037c0d452c8`; PR-head:
+`a7c476658118f908f69ee6f0bf554004b3a2faab`; merge/kod-main efter:
+`f298e69cdc94cffdb7011bac43e98a93ab989f7d`.
+P15 [37157817328](https://github.com/AlbertAndersson/Tran-s-bois/actions/runs/37157817328),
+jobb `111304807554`, success. P14 [37157817345](https://github.com/AlbertAndersson/Tran-s-bois/actions/runs/37157817345),
+jobb `111304807611`, success inklusive verklig Chromium. P2 37157817338,
+P3 37157817339, P4 37157817382, P5 37157817330, P6 37157817310,
+P7 37157817683, P8 37157817318, P9 37157817362, P12 37157817320,
+P13 37157817429 och Security 37157817423: samtliga success på slutlig PR-head.
+Inga P15-blockerare; inga manuella åtgärder behövs för etappens closeout.
+Hostinförande och godkänd launch återstår enligt ovan; P16 har inte startats.
+
+Merge-main verifierades också: P15 37157946246, P14 37157946279,
+P12 37157946306, P13 37157946396 och Security 37157946350 är success,
+liksom samtliga övriga push-kontroller som startades. P7 körde på slutlig PR-head.
