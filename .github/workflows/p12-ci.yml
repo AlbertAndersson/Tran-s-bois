@@ -1,0 +1,61 @@
+name: P12 Closed Production CI
+
+on:
+  pull_request:
+  push:
+    branches: [main, "chatgpt/**"]
+    paths: ["server/**", "ops/p12-*", "tests/p12-*", ".github/workflows/p12-ci.yml", ".github/workflows/simply-validate-bois-p8-production.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+        ports: ["3306:3306"]
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+    env:
+      BOIS_P3_TEST_DB_HOST: 127.0.0.1
+      BOIS_P3_TEST_DB_PORT: 3306
+      BOIS_P3_TEST_DB_USER: root
+      BOIS_P3_TEST_DB_PASSWORD: root
+    steps:
+      - uses: actions/checkout@v5
+      - name: Syntax
+        run: |
+          for file in server/production*.php ops/p12-*.php tests/p12-*.php; do php -l "$file"; done
+          php -l server/commerce-api.php
+      - name: Disposable isolated databases and separate principals
+        run: |
+          mysql -h127.0.0.1 -uroot -proot <<'SQL'
+          CREATE DATABASE bois_p12_candidate;
+          CREATE DATABASE bois_p12_staging;
+          CREATE TABLE bois_p12_staging.sentinel(id INT PRIMARY KEY, value VARCHAR(40));
+          INSERT INTO bois_p12_staging.sentinel VALUES(1,'staging-preserve');
+          CREATE USER 'bois_p12_owner'@'%' IDENTIFIED BY 'synthetic-owner-only';
+          CREATE USER 'bois_p12_reader'@'%' IDENTIFIED BY 'synthetic-reader-only';
+          GRANT ALL ON bois_p12_candidate.* TO 'bois_p12_owner'@'%';
+          GRANT SELECT ON bois_p12_candidate.* TO 'bois_p12_reader'@'%';
+          SQL
+      - name: Closed production bootstrap, readonly readiness and HTTP gates
+        run: php -d disable_functions=curl_init,curl_exec,mail tests/p12-production-smoke.php
+      - name: Existing P3-P9 regression in other disposable databases
+        shell: bash
+        run: |
+          set -euo pipefail
+          for phase in p3 p4 p5 p6 p7-gate p8-stripe p9-sales; do
+            export BOIS_P3_TEST_DB_NAME="bois_p12_reg_${phase//-/_}"
+            mysql -h127.0.0.1 -uroot -proot -e "CREATE DATABASE \`$BOIS_P3_TEST_DB_NAME\`"
+            php -d disable_functions=curl_init,curl_exec,mail "tests/${phase}-smoke.php"
+          done

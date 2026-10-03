@@ -8,6 +8,7 @@ require __DIR__ . '/p6_payment.php';
 require __DIR__ . '/p7_assortment.php';
 require __DIR__ . '/p9_sales.php';
 require __DIR__ . '/consent.php';
+require_once __DIR__ . '/production.php';
 
 function commerce_respond(array $data, int $status=200): never
 {
@@ -76,6 +77,7 @@ function commerce_output_batch_csv(PDO $pdo, string $batchId): never
 try {
     $config=bois_p3_load_config();
     $action=(string)($_GET['action']??'health');
+    bois_production_http_gate($config,$action);
     $method=(string)($_SERVER['REQUEST_METHOD']??'GET');
     bois_security_gate($config,$action,[
         'consent'=>['GET','POST'],
@@ -110,13 +112,15 @@ try {
         'admin_run_worker'=>['POST'],
     ]);
     $pdo=bois_p3_pdo($config);
-    bois_p5_apply_schema($pdo);
-    bois_p4_apply_schema($pdo);
-    bois_p6_apply_schema($pdo);
-    bois_p7_apply_schema($pdo);
-    bois_p8_apply_schema($pdo);
-    bois_p9_apply_schema($pdo);
-    bois_consent_schema($pdo);
+    if(($config['mode']??'')!=='production'){
+        bois_p5_apply_schema($pdo);
+        bois_p4_apply_schema($pdo);
+        bois_p6_apply_schema($pdo);
+        bois_p7_apply_schema($pdo);
+        bois_p8_apply_schema($pdo);
+        bois_p9_apply_schema($pdo);
+        bois_consent_schema($pdo);
+    }
     commerce_check_origin($config);
 
     if(($_SERVER['REQUEST_METHOD']??'')==='OPTIONS'){
