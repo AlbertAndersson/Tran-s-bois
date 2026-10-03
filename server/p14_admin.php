@@ -71,11 +71,11 @@ function bois_p14_locked(array $config,callable $fn): mixed
     }finally{flock($h,LOCK_UN);fclose($h);}
 }
 
-function bois_p14_audit(string $dir,string $actor,string $role,string $action,string $outcome,string $request): void
+function bois_p14_audit(string $dir,string $actor,string $role,string $action,string $outcome,string $request,string $target=''): void
 {
     $path=$dir.'/audit.jsonl';if(is_link($path))throw new RuntimeException('Audit symlink refused.');
     // No passwords, OTPs, tokens, customer data, request bodies, IPs or user agents.
-    $line=json_encode(['time'=>gmdate('c'),'actor'=>$actor,'role'=>$role,'action'=>$action,'outcome'=>$outcome,'request'=>$request],JSON_THROW_ON_ERROR)."\n";
+    $line=json_encode(['time'=>gmdate('c'),'actor'=>$actor,'role'=>$role,'action'=>$action,'outcome'=>$outcome,'request'=>$request]+($target!==''?['target'=>$target]:[]),JSON_THROW_ON_ERROR)."\n";
     $old=umask(0077);$h=fopen($path,'ab');umask($old);
     if(!$h)throw new RuntimeException('Audit unavailable.');
     try{if(!chmod($path,0600)||!flock($h,LOCK_EX)||fwrite($h,$line)!==strlen($line)||!fflush($h))throw new RuntimeException('Audit write failed.');}
@@ -132,8 +132,10 @@ function bois_p14_logout(array $config,string $token): void
 }
 function bois_p14_revoke(array $config,string $id): void
 {
-    bois_p14_locked($config,function(&$s,$users)use($id){
+    bois_p14_locked($config,function(&$s,$users,$dir)use($id){
         if(!isset($users[$id]))throw new InvalidArgumentException('Kontot finns inte.');
+        $actor=$GLOBALS['bois_p14_actor']??null;
+        if($actor)bois_p14_audit($dir,$actor['id'],$actor['role'],'admin_revoke','intent',$actor['request'],$id);
         $s['epochs'][$id]=($s['epochs'][$id]??0)+1;
         foreach($s['sessions'] as $key=>$row)if($row['id']===$id)unset($s['sessions'][$key]);
     });

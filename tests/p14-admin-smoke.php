@@ -73,6 +73,7 @@ $events=array_map(fn($line)=>json_decode($line,true),array_filter(explode("\n",f
 $intents=array_filter($events,fn($r)=>$r['action']==='admin_revoke'&&$r['outcome']==='intent');
 $completed=false;foreach($intents as $intent)foreach($events as $event)if($event['request']===$intent['request']&&$event['outcome']==='success')$completed=true;
 p14_ok($completed,'Missing correlated mutation audit completion.');
+p14_ok(count(array_filter($events,fn($r)=>($r['target']??'')==='http-user'&&$r['action']==='admin_revoke'))===1,'Revoke target missing from audit.');
 rename($tmp.'/private/audit.jsonl',$tmp.'/private/audit-preserved.jsonl');symlink($tmp.'/public/audit.jsonl',$tmp.'/private/audit.jsonl');
 p14_no(fn()=>bois_p14_authorize($cfg,'admin_orders',$tech['token']));
 unlink($tmp.'/private/audit.jsonl');rename($tmp.'/private/audit-preserved.jsonl',$tmp.'/private/audit.jsonl');

@@ -98,7 +98,7 @@
         '<td>'+esc(b.status)+'</td>'+
         '<td>'+esc(b.outbox_status||'–')+'<div class="small">försök: '+esc(b.attempts??0)+'</div>'+retry+'</td>'+
         '<td>'+esc(b.created_at||'')+'</td>'+
-        '<td><button class="btn ghost p5-csv" data-batch="'+esc(b.public_id)+'">CSV</button></td>'+
+        '<td>'+(may('admin_batch_csv')?'<button class="btn ghost p5-csv" data-batch="'+esc(b.public_id)+'">CSV</button>':'–')+'</td>'+
       '</tr>';
     }).join('') : '<tr><td colspan="7">Inga batcher ännu.</td></tr>';
 
