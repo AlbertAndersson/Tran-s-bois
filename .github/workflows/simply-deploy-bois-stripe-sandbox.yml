@@ -200,7 +200,7 @@ jobs:
                           'quantity'=>1,
                           'price_data'=>[
                               'currency'=>'sek',
-                              'unit_amount'=>100,
+                              'unit_amount'=>300,
                               'product_data'=>['name'=>'BoIS Stripe sandbox preflight'],
                           ],
                       ]],
@@ -327,6 +327,41 @@ jobs:
             echo "EXTERNAL_MAIL: no"
             echo "NEW_EXTERNAL_COST: 0"
           } >> "$GITHUB_STEP_SUMMARY"
+
+
+      - name: Checkout P11 verification scripts
+        uses: actions/checkout@v5
+        with:
+          path: bois-verification
+
+      - name: Stripe sandbox hosted Checkout E2E
+        shell: bash
+        env:
+          BOIS_ADMIN_TOKEN: ${{ secrets.BOIS_STAGING_ADMIN_TOKEN }}
+        run: |
+          set -euo pipefail
+          npm install --prefix "$RUNNER_TEMP/bois-browser" --no-save --ignore-scripts playwright@1.62.1
+          "$RUNNER_TEMP/bois-browser/node_modules/.bin/playwright" install --with-deps chromium
+          NODE_PATH="$RUNNER_TEMP/bois-browser/node_modules" node bois-verification/tests/p11-sandbox-e2e.cjs
+
+      - name: Mock staging browser regression
+        shell: bash
+        env:
+          BOIS_BASE_URL: https://alberiq.se/bois-shop-p3
+          BOIS_ADMIN_TOKEN: ${{ secrets.BOIS_STAGING_ADMIN_TOKEN }}
+        run: |
+          NODE_PATH="$RUNNER_TEMP/bois-browser/node_modules" node bois-src/tests/staging-browser-smoke.cjs
+
+      - name: Save P11 synthetic screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bois-p11-sandbox-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/bois-p11-evidence/*.png
+            ${{ runner.temp }}/bois-browser-evidence/*.png
+          if-no-files-found: ignore
+          retention-days: 7
 
       - name: Cleanup
         if: always()
