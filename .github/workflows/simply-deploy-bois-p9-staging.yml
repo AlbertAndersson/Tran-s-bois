@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     env:
-      BOIS_SOURCE_REF: e245b5f72e1446656c2bb2f27fddc19180a6f9cd
+      BOIS_SOURCE_REF: f355ff5c26ce11ad20815e2f48b35ec2f4bbc064
       BOIS_PUBLIC_PATH: bois-shop-p3
       BOIS_BASE_URL: https://alberiq.se/bois-shop-p3
       SIMPLY_HOST: ssh.simply.com
@@ -137,7 +137,7 @@ jobs:
 
           for f in index.html membership.html match-kit.html order.html admin.html payment.html assortment-preview.html cookies.html; do cp "bois-src/site/commerce/$f" "$out/$f"; done
           for f in common.js membership.js matchkit.js order.js admin.js payment.js assortment-preview.js commerce.css p5.css; do cp "bois-src/site/commerce/assets/$f" "$out/assets/$f"; done
-          for f in commerce-api.php consent.php p3_db.php p5_batch.php p5-migrate.php p5-worker.php p4_membership.php p4-migrate.php p6_payment.php p6-migrate.php p7_assortment.php p7-migrate.php p8_stripe.php p8-migrate.php p9_sales.php p9-migrate.php; do cp "bois-src/server/$f" "$out/$f"; done
+          for f in security.php commerce-api.php consent.php p3_db.php p5_batch.php p5-migrate.php p5-worker.php p4_membership.php p4-migrate.php p6_payment.php p6-migrate.php p7_assortment.php p7-migrate.php p8_stripe.php p8-migrate.php p9_sales.php p9-migrate.php; do cp "bois-src/server/$f" "$out/$f"; done
 
           cat > "$out/config.js" <<'JS'
           window.BOIS_COMMERCE_CONFIG = Object.freeze({
@@ -218,10 +218,11 @@ jobs:
           AuthName "BoIS staging demo"
           AuthUserFile $private_path/demo.htpasswd
           Require valid-user
-          <FilesMatch "^(consent|p3_db|p5_batch|p5-migrate|p5-worker|p4_membership|p4-migrate|p6_payment|p6-migrate|p7_assortment|p7-migrate|p8_stripe|p8-migrate|p9_sales|p9-migrate)\.php$">
+          <FilesMatch "^(security|consent|p3_db|p5_batch|p5-migrate|p5-worker|p4_membership|p4-migrate|p6_payment|p6-migrate|p7_assortment|p7-migrate|p8_stripe|p8-migrate|p9_sales|p9-migrate)\.php$">
             Require all denied
           </FilesMatch>
           HT
+          cat bois-src/ops/security-headers.conf >> "$RUNNER_TEMP/bois-p9-public/.htaccess"
           cat "$RUNNER_TEMP/bois-demo.htpasswd" | ssh "${SSH_OPTS[@]}" -l "$SIMPLY_SSH_USER" "$SIMPLY_HOST" 'umask 077; cat > "$HOME/.bois-demo-auth/demo.htpasswd.next"; chmod 644 "$HOME/.bois-demo-auth/demo.htpasswd.next"; mv "$HOME/.bois-demo-auth/demo.htpasswd.next" "$HOME/.bois-demo-auth/demo.htpasswd"'
           cat "$RUNNER_TEMP/config.php" | ssh "${SSH_OPTS[@]}" -l "$SIMPLY_SSH_USER" "$SIMPLY_HOST" 'umask 077; cat > "$HOME/.bois-p3/config.php"; chmod 600 "$HOME/.bois-p3/config.php"'
           cat bois-src/data/p7-assortment.json | ssh "${SSH_OPTS[@]}" -l "$SIMPLY_SSH_USER" "$SIMPLY_HOST" 'umask 077; cat > "$HOME/.bois-p3/p7-assortment.json"; chmod 600 "$HOME/.bois-p3/p7-assortment.json"'
@@ -283,6 +284,31 @@ jobs:
           status="$(command curl --silent --show-error --max-time 20 -A 'BoIS-staging-gate-check/1.0' -o /dev/null -w '%{http_code}' --user 'bois-demo:wrong-demo-credential' "$BOIS_BASE_URL/commerce-api.php?action=health")"
           [[ "$status" == 401 ]]
           echo 'STAGING_DIRECTORY_AUTH_DIRECT_URLS: pass' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Verify P10 protected HTTP controls
+        shell: bash
+        run: |
+          set -euo pipefail
+          api="$BOIS_BASE_URL/commerce-api.php"
+          check(){
+            expected="$1"; shift
+            actual="$(command curl --silent --show-error --max-time 20 --user "bois-demo:$DEMO_PASSWORD" -o /dev/null -w '%{http_code}' "$@")"
+            [[ "$actual" == "$expected" ]] || { echo "::error::P10 expected $expected got $actual"; exit 1; }
+          }
+          command curl --fail --silent --show-error --user "bois-demo:$DEMO_PASSWORD" -D "$RUNNER_TEMP/p10-headers.txt" -o /dev/null "$BOIS_BASE_URL/index.html"
+          for header in content-security-policy x-frame-options x-content-type-options referrer-policy permissions-policy cache-control; do
+            grep -qi "^$header:" "$RUNNER_TEMP/p10-headers.txt"
+          done
+          grep -qi "script-src 'self'" "$RUNNER_TEMP/p10-headers.txt"
+          check 401 "$api?action=admin_orders"
+          check 401 -H 'X-Bois-Admin-Token: invalid-fixture' "$api?action=admin_orders"
+          check 405 "$api?action=orders"
+          check 403 -X POST -H 'Content-Type: application/json' -H 'Origin: https://attacker.invalid' --data '{}' "$api?action=consent"
+          check 415 -X POST -H 'Content-Type: text/plain' --data '{}' "$api?action=consent"
+          for path in security.php p3_db.php p5-worker.php p9-migrate.php consent.php; do
+            check 403 "$BOIS_BASE_URL/$path"
+          done
+          echo 'P10_PROTECTED_HTTP_HEADERS_AND_GATES: pass' >> "$GITHUB_STEP_SUMMARY"
 
       - name: Verify P4–P9 zero-cost staging end-to-end
         shell: bash
