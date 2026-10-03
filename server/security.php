@@ -15,6 +15,7 @@ function bois_security_headers(): void
 
 function bois_security_reject(int $status, string $message): never
 {
+    if(function_exists('bois_p14_finish'))bois_p14_finish($status);
     http_response_code($status);
     header('Content-Type: application/json; charset=utf-8');
     echo json_encode(['error'=>$message], JSON_THROW_ON_ERROR);
