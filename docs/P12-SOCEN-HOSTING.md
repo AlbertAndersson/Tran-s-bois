@@ -1,5 +1,48 @@
 # P12 – dedikerad BoIS production på socen.se
 
+## Uppdatering 2026-10-03 – skyddad BoIS-app installerad över HTTPS
+
+Fortsatt arbete efter användarens fråga om utvecklingen kan gå vidare.
+App/release-SHA: `020446867dcf29b7ebe63a060f8594e8f8da8aff`, då aktuell main.
+Skyddad kandidat: `https://socen.se/bois-shop-production/`.
+Privat runtime är fortsatt `.bois-production/config.php`; wrappern väljer denna
+explicit och implementationen ligger helt utanför webbroten i privat release.
+Ingen produktionskonfiguration eller Stripe-/launchflagga har öppnats.
+
+Gamla public_html flyttades till
+`/var/www/socen.se/.socen-backup-20261003/legacy-public-html-original/`.
+Ingen äldre kod har återinstallerats och inga originalfiler har raderats.
+Rooten är stängd; BoIS-kandidaten har separat HTTP Basic Auth. Slumpmässigt
+åtkomstlösenord ligger endast privat på hosten och lokalt, inte i repo/loggar.
+Apache läser en bcrypt-hash i en separat authkatalog utanför webbroten;
+konfigurationen och dess katalog behåller 0600 respektive 0700.
+
+Faktisk HTTPS-verifiering:
+- Obehörig index/API/admin/membership/config/assets: 401.
+- Behörig index/admin/membership/match-kit/payment/config/assets: 200.
+- Behörig health/catalog/admin_orders: 503.
+- Behörig orders/checkout/consent/sales_event POST: 503.
+- TLS-certifikat verifierat utan bypass; HTTP omdirigeras till HTTPS med 301.
+- CSP, nosniff, frame-deny, referrer-policy och no-store finns i API-svaret.
+- .htaccess nekas (403); server/ops saknas publikt (404); gammal wp-config-url
+  stoppas av Simply WAF (455). WAF-blocket är inte en exponerad fil.
+- Privat PHP-loggning verifierad med en tillfällig konstant markör via faktiskt
+  HTTPS-anrop. Originalwrappern återställdes byte-identiskt efter loggprovet.
+- DB-schema och alla rader är oförändrade efter HTTPS-kontrollerna; stängd
+  P12-readiness passerar fortfarande och ready_for_launch är false.
+
+Verifieringsresultat ligger privat under
+`C:\Users\AlbertAndersson\.codex\private\bois-production\` som
+`https-verification-20261003.txt` och `post-https-readiness-20261003.txt`.
+
+P12 har kommit vidare till skyddad hostverifiering men är inte DONE. Fullständiga
+syntetiska köp-/medlems-/admin-E2E och separat SELECT-only hostkonto återstår.
+De gamla supportuppmaningarna blockerar inte denna appinstallation. Inget liveköp,
+extern mail/analytics eller slutlig DNS-cutover har gjorts. Staging/sandbox på
+alberiq.se är kvar och har inte deployats om. P13 har inte startats.
+
+## Historik före skyddad appinstallation
+
 ## Uppdatering 2026-10-03 – legacy-databasen raderad
 
 Efter användarens uttryckliga godkännande har hela `socen_se_db` raderats med

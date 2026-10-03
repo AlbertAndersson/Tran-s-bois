@@ -1,3 +1,15 @@
+## P12 – skyddad production-kandidat installerad och HTTPS-verifierad
+
+2026-10-03: aktuell app-main `020446867dcf29b7ebe63a060f8594e8f8da8aff` är
+installerad på `https://socen.se/bois-shop-production/` bakom separat Basic Auth.
+Obehöriga nekas (401), behöriga sidor laddas (200) och commerce/admin/köp nekas
+av stängd production-grind (503). HTTPS, säkerhetsheaders och privat PHP-loggning
+passerar. Production-schema/rader är oförändrade och stängd readiness är grön.
+Legacy-webbroten är arkiverad privat. Staging/sandbox, DNS och live Stripe är
+orörda. P12 är inte DONE: full syntetisk flödes-E2E och separat SELECT-only
+hostkonto återstår. Se P12-SOCEN-HOSTING.md för bevis och avgränsningar.
+
+## Historiskt läge före skyddad appinstallation
 ## P12 – legacy-databas raderad efter uttryckligt godkännande
 
 2026-10-03: hela `socen_se_db` är raderad efter ny verifierad full backup.
