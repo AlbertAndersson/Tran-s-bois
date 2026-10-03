@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+require_once __DIR__ . "/security.php";
 
 // The opaque, HttpOnly cookie is a random capability; only its hash is stored.
 // A revoked or expired capability can never be reactivated by replaying it.

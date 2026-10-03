@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+require_once __DIR__ . "/security.php";
 require __DIR__ . '/bootstrap.php';
 $config=bois_load_config();
 if(($config['mode']??'')!=='staging'){fwrite(STDERR,"Refusing to seed outside staging.\n");exit(2);}

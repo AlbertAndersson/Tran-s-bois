@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+require_once __DIR__ . "/security.php";
 
 const BOIS_SCHEMA_VERSION = 2;
 
@@ -45,6 +46,7 @@ function bois_load_config(): array
     $config['rate_limit_window'] = max(10, (int)($config['rate_limit_window'] ?? 60));
     $config['rate_limit_max'] = max(1, (int)($config['rate_limit_max'] ?? 20));
 
+    $config["_security_dir"] = dirname($path) . "/security-rate";
     return $config;
 }
 

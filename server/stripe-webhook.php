@@ -25,7 +25,7 @@ try{
         throw new DomainException('Stripe sandbox webhook is disabled.');
     }
 
-    $raw=file_get_contents('php://input');
+    $raw=bois_security_body(1048576);
     if(!is_string($raw) || $raw==='') throw new InvalidArgumentException('Webhook body missing.');
     if(strlen($raw)>1048576) throw new InvalidArgumentException('Webhook body too large.');
 
@@ -58,6 +58,6 @@ try{
 }catch(DomainException|InvalidArgumentException|JsonException $e){
     bois_stripe_webhook_respond(['ok'=>false,'error'=>'invalid_webhook'],400);
 }catch(Throwable $e){
-    error_log('BoIS Stripe webhook error: '.$e->getMessage());
+    error_log('BoIS Stripe webhook: internal_error');
     bois_stripe_webhook_respond(['ok'=>false,'error'=>'server_error'],500);
 }

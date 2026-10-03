@@ -1,5 +1,12 @@
 # Tranås BoIS – WORK HANDOFF
 
+## P10 – aktuellt auktoriserat uppdrag
+
+Albert har beställt nästa etapp enligt Drive-kön “01 – Tranås BoIS – Work utvecklingskö till go-live”. P10 är IN PROGRESS: säkerhetsförstärkning implementeras och verifieras före eventuell stängning. Tidigare instruktioner nedan om att invänta demoåterkoppling är historiskt nuläge och begränsar inte detta nya uppdrag.
+
+Baslinje main: `0a25f1be0114d147222518b69be805fe75c10d30`. Se `P10-PRODUCTION-HARDENING.md` för kontrollpunkter, riskregister och verifieringsläge. P11–P20 ingår inte. Alla produktions-, betalnings-, mail- och kostnadsspärrar består.
+
+
 ## Aktuell överlämning
 
 **Skyddad staging är publicerad och liveverifierad. Nästa steg är Erik/BoIS demo och återkoppling, inte en ny generell teknisk utvecklingsfas.**

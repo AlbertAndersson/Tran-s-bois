@@ -157,6 +157,8 @@ try{
     echo "EXTERNAL_NETWORK_TRANSPORTS_DISABLED: yes\n";
 }finally{
     if(is_resource($process)){proc_terminate($process);proc_close($process);}
+    foreach(glob($tmp.'/security-rate/*')?:[] as $file) unlink($file);
+    if(is_dir($tmp.'/security-rate')) rmdir($tmp.'/security-rate');
     foreach(glob($tmp.'/*')?:[] as $file) unlink($file);
     rmdir($tmp);
 }

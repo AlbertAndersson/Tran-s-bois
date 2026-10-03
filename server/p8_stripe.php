@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+require_once __DIR__ . "/security.php";
 
 /**
  * P8 Stripe adapter and production-readiness helpers.

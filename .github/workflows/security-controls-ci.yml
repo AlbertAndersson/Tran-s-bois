@@ -6,6 +6,7 @@ on:
     branches: [main]
     paths:
       - 'server/**'
+      - 'ops/security-headers.conf'
       - 'site/commerce/assets/common.js'
       - 'tests/security-*'
       - 'tests/p9-sales-smoke.php'
@@ -41,6 +42,8 @@ jobs:
       - uses: actions/checkout@v5
       - name: Syntax
         run: |
+          php -l server/security.php
+          php -l tests/security-hardening-smoke.php
           php -l server/p8_stripe.php
           php -l server/p9_sales.php
           php -l server/consent.php
@@ -49,6 +52,8 @@ jobs:
           php -l tests/security-http-gates-smoke.php
           php -l tests/p9-sales-smoke.php
           node --check site/commerce/assets/common.js
+      - name: P10 early HTTP protection and atomic abuse limits
+        run: php -d disable_functions=curl_init,curl_exec,mail tests/security-hardening-smoke.php
       - name: Checkout gate without a database or external transport
         run: php -d disable_functions=curl_init,curl_exec,mail tests/security-checkout-gate-smoke.php
       - name: Browser storage and event guards without external requests
