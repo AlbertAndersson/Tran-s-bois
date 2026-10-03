@@ -66,6 +66,14 @@ Workflow och admintext är nu ändrade för en stabil, separat stagingnyckel via
 
 **LIVE VERIFIED:** run `36906493137` använde den stabila adminnyckeln från `BOIS_STAGING_ADMIN_TOKEN`. Markören `STABLE_STAGING_ADMIN_TOKEN: configured` finns i verifieringsloggen och browser/admin-acceptansen passerade. Nyckeln är nu aktiv på Simply och förblir densamma över framtida deployer tills secretet roteras.
 
+## Stripe sandbox – parallellt integrationsspår
+
+Stripe-kontot **Alberiq** är anslutet i sandbox/test mode. En riktig hosted Checkout Session har skapats med `livemode=false`, vilket verifierar att Checkout fungerar utan riktiga pengar. Kort är tillgängligt; Swish rapporteras för närvarande som `available=false`.
+
+PR #27 mergeades som `571f78acb29e3e8515853f7afd7818cebd8833f5`. Den lägger till restricted test key-stöd, ett separat signaturverifierat webhook-endpoint och en separat Simply-sandboxworkflow på `/bois-shop-stripe-sandbox/`. Erik-demot på `/bois-shop-p3/` fortsätter oförändrat med mock.
+
+Stripe webhook endpoint är skapad i sandbox. Före Simply-deploy återstår att lägga restricted/test API key och webhook signing secret i GitHub Secrets. Inga livebetalningar, KYC-aktiveringar, Swish, externa mejl eller produktionsgrindar har öppnats.
+
 ## Nästa steg – Erik/BoIS demo och återkoppling
 
 Använd `SYNTHETIC-DEMO.md` för en begränsad genomgång med syntetiska uppgifter och `example.invalid`-adresser. Samla konkret återkoppling om kundresan, medlems-/Nordic-hanteringen, matchställskön, samtyckesval och begripligheten i admin.
