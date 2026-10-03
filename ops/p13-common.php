@@ -48,5 +48,11 @@ function bois_p13_snapshot(PDO $pdo): array
 
 function bois_p13_equal(array $source,array $restored): void
 {
-    if($source!==$restored) throw new RuntimeException('Restored schema, ledger or data differs.');
+    if($source!==$restored) {
+        $differences=[];
+        foreach($source['tables']??[] as $table=>$checks)
+            foreach($checks as $key=>$value)
+                if(($restored['tables'][$table][$key]??null)!==$value) $differences[]=$table.'.'.$key;
+        throw new RuntimeException('Restored schema, ledger or data differs: '.implode(',',$differences));
+    }
 }
