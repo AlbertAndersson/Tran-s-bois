@@ -4,7 +4,7 @@ Datum: 2026-10-03
 
 ## Status
 
-**ACCOUNT CONNECTED / SANDBOX CHECKOUT VERIFIED / SIMPLY SANDBOX DEPLOY PENDING**
+**ACCOUNT CONNECTED / SANDBOX CHECKOUT VERIFIED / CODE MERGED / GITHUB SECRETS + SIMPLY DEPLOY PENDING**
 
 Stripe-konto: Alberiq, Sverige, SEK, sandbox/test mode.
 
@@ -84,3 +84,11 @@ Befintliga Secrets för Simply, BoIS DB, demoauth och staging admin återanvänd
 10. Swish väntar tills Stripe-kontot visar `available=true`.
 
 Ingen del av detta öppnar livebetalningar.
+
+
+## Merge- och workflowstatus
+
+Stripe-sandboxkoden mergeades via PR #27 som `571f78acb29e3e8515853f7afd7818cebd8833f5`.
+Den manuella sandboxworkflowen är pinnad till denna source ref i commit `40dfb65711cd2ef87f8d93b2ed8c266a840ce89c`.
+
+Före första deploy återstår endast att lägga in de två privata GitHub Secrets som beskrivs ovan. Den vanliga mock-stagingen påverkas inte.
