@@ -42,6 +42,11 @@ vägrar andra host-/databasnamn och kräver `BOIS_P13_DISPOSABLE=YES`.
    krävs; inga främmande tabeller accepteras.
 3. En read-only consistent snapshot tar schemahash, radantal och ordningsoberoende
    SHA-256 av alla rader. Alla aktuella foreign keys kontrolleras mot orphans.
+   Schemajämförelsen normaliserar endast redundant explicit column charset när
+   samma efterföljande collation redan anger charset. Faktiska collation-,
+   kolumn-, index-, constraint- och AUTO_INCREMENT-skillnader behålls.
+   SELECT-only-konto verifierar privat snapshot-CLI och spärrar mot publik
+   output, publik config och överskrivning av befintlig snapshot.
 4. `mysqldump --single-transaction --no-tablespaces --routines --triggers --events`
    skapar en faktisk SQL-backup. Server/ops-filer och syntetisk privat konfiguration
    arkiveras med `tar`; arkiv och individuella filer får kontrollsummor.

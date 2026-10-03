@@ -47,6 +47,7 @@ jobs:
           export BOIS_P3_TEST_DB_NAME=bois_p13_source
           php -d disable_functions=curl_init,curl_exec,mail tests/p13-restore-smoke.php seed
           php tests/p13-restore-smoke.php snapshot "$tmp/source.json"
+          php tests/p13-restore-smoke.php cli-check "$tmp"
           start=$(date +%s)
           mysqldump --defaults-extra-file="$tmp/mysql.cnf" --no-tablespaces --single-transaction --routines --triggers --events --set-gtid-purged=OFF bois_p13_source > "$tmp/database.sql"
           grep -q 'Dump completed' "$tmp/database.sql"

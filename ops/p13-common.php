@@ -2,6 +2,13 @@
 declare(strict_types=1);
 require_once __DIR__.'/p12-common.php';
 
+function bois_p13_canonical_schema(string $ddl): string
+{
+    // mysqldump can make an inherited column charset explicit. The following
+    // collation already determines that exact charset; retain the collation.
+    return preg_replace('/ CHARACTER SET ([a-z0-9_]+)(?= COLLATE \1_[a-z0-9_]+)/i','',$ddl);
+}
+
 /** Read-only logical snapshot. Never emit row values or credentials. */
 function bois_p13_snapshot(PDO $pdo): array
 {
@@ -16,7 +23,7 @@ function bois_p13_snapshot(PDO $pdo): array
         if ($ledger!==$expected) throw new RuntimeException('Unexpected migration ledger.');
         $result=['format'=>1,'ledger'=>$ledger,'tables'=>[]];
         foreach ($tables as $table) {
-            $ddl=$pdo->query('SHOW CREATE TABLE `'.$table.'`')->fetch(PDO::FETCH_NUM)[1];
+            $ddl=bois_p13_canonical_schema($pdo->query('SHOW CREATE TABLE `'.$table.'`')->fetch(PDO::FETCH_NUM)[1]);
             $rows=$pdo->query('SELECT * FROM `'.$table.'`')->fetchAll(PDO::FETCH_ASSOC);
             $encoded=array_map(fn($row)=>json_encode($row,JSON_THROW_ON_ERROR|JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES),$rows);
             sort($encoded,SORT_STRING);
