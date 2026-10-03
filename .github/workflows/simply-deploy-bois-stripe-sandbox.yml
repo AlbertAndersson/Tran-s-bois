@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     env:
-      BOIS_SOURCE_REF: 4f28c63d62768af3bd202470ce406932193fa85d
+      BOIS_SOURCE_REF: 571f78acb29e3e8515853f7afd7818cebd8833f5
       BOIS_PUBLIC_PATH: bois-shop-stripe-sandbox
       BOIS_BASE_URL: https://alberiq.se/bois-shop-stripe-sandbox
       BOIS_WEBHOOK_URL: https://alberiq.se/bois-stripe-sandbox-webhook.php
