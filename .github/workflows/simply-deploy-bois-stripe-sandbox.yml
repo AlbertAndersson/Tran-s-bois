@@ -266,12 +266,32 @@ jobs:
           UA="AlberIQ-BoIS-Stripe-Sandbox-Check/1.0"
           curl(){ command curl -A "$UA" --user "bois-demo:$DEMO_PASSWORD" "$@"; }
           curl --fail --silent --show-error "$BOIS_BASE_URL/commerce-api.php?action=health" -o "$RUNNER_TEMP/health.json"
-          grep -q '"payment_provider":"stripe"' "$RUNNER_TEMP/health.json"
-          grep -q '"payment_mode":"test"' "$RUNNER_TEMP/health.json"
-          grep -q '"stripe_ready_for_test":true' "$RUNNER_TEMP/health.json"
-          grep -q '"production_launch_ready":false' "$RUNNER_TEMP/health.json"
-          grep -q '"payment_methods":\["card"\]' "$RUNNER_TEMP/health.json"
-          grep -q '"mail_transport":"disabled"' "$RUNNER_TEMP/health.json"
+          php -r '
+            $d=json_decode(file_get_contents($argv[1]),true,64,JSON_THROW_ON_ERROR);
+            $safe=[
+              "phase"=>$d["phase"]??null,
+              "payment_provider"=>$d["payment_provider"]??null,
+              "payment_mode"=>$d["payment_mode"]??null,
+              "payment_enabled"=>$d["payment_enabled"]??null,
+              "checkout_enabled"=>$d["checkout_enabled"]??null,
+              "stripe_ready_for_test"=>$d["stripe_ready_for_test"]??null,
+              "production_launch_ready"=>$d["production_launch_ready"]??null,
+              "payment_methods"=>$d["payment_methods"]??null,
+              "mail_transport"=>$d["mail_transport"]??null,
+            ];
+            echo "SANDBOX_HEALTH=".json_encode($safe,JSON_UNESCAPED_SLASHES)."\n";
+            $expected=
+              ($safe["phase"]==="P9") &&
+              ($safe["payment_provider"]==="stripe") &&
+              ($safe["payment_mode"]==="test") &&
+              ($safe["payment_enabled"]===true) &&
+              ($safe["checkout_enabled"]===true) &&
+              ($safe["stripe_ready_for_test"]===true) &&
+              ($safe["production_launch_ready"]===false) &&
+              ($safe["payment_methods"]===["card"]) &&
+              ($safe["mail_transport"]==="disabled");
+            if(!$expected){fwrite(STDERR,"SANDBOX_HEALTH_MISMATCH\n");exit(20);}
+          ' "$RUNNER_TEMP/health.json"
 
           unauth="$(command curl -A "$UA" --silent --output /dev/null --write-out '%{http_code}' "$BOIS_BASE_URL/commerce-api.php?action=health")"
           echo "UNAUTH_HEALTH_STATUS=$unauth"
