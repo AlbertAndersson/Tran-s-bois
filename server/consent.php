@@ -10,7 +10,16 @@ const BOIS_CONSENT_COOKIE = 'boisConsent';
 function bois_consent_days(array $config): int
 {
     $days=$config['consent_validity_days']??180;
+    if(($config['mode']??'')==='production'&&(!is_int($config['consent_validity_days']??null)||$days<1||$days>365))throw new RuntimeException('Production consent validity is undecided.');
     return is_int($days)&&$days>=1&&$days<=365 ? $days : 180;
+}
+
+function bois_consent_cookie_path(array $config): string
+{
+    $path=$config['consent_cookie_path']??'/bois-shop-p3/';
+    if(($config['mode']??'')==='production'&&!is_string($config['consent_cookie_path']??null))throw new RuntimeException('Production consent cookie scope is undecided.');
+    if(!is_string($path)||!preg_match('#^/(?:[A-Za-z0-9_-]+/)*$#D',$path))throw new RuntimeException('Invalid consent cookie scope.');
+    return $path;
 }
 
 function bois_consent_schema(PDO $pdo): void
@@ -53,6 +62,7 @@ function bois_consent_statistics_allowed(PDO $pdo): bool
 
 function bois_consent_save(PDO $pdo,array $config,bool $statistics): array
 {
+    $days=bois_consent_days($config);$cookiePath=bois_consent_cookie_path($config);
     $old=bois_consent_token();
     $pdo->beginTransaction();
     try{
@@ -61,13 +71,12 @@ function bois_consent_save(PDO $pdo,array $config,bool $statistics): array
             $stmt->execute([hash('sha256',$old)]);
         }
         $token=bin2hex(random_bytes(32));
-        $days=bois_consent_days($config);
         $stmt=$pdo->prepare('INSERT INTO bois_consent_choices(token_hash,policy_version,statistics,expires_at) VALUES(?,?,?,DATE_ADD(UTC_TIMESTAMP(), INTERVAL ? DAY))');
         $stmt->execute([hash('sha256',$token),BOIS_CONSENT_POLICY,$statistics?1:0,$days]);
         $pdo->commit();
     }catch(Throwable $e){if($pdo->inTransaction())$pdo->rollBack();throw $e;}
     setcookie(BOIS_CONSENT_COOKIE,$token,[
-        'expires'=>time()+$days*86400,'path'=>'/bois-shop-p3/',
+        'expires'=>time()+$days*86400,'path'=>$cookiePath,
         'secure'=>!in_array((string)($config['mode']??''),['test'],true),
         'httponly'=>true,'samesite'=>'Lax'
     ]);
