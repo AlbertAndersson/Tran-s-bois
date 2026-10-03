@@ -172,6 +172,39 @@ jobs:
           PHP
           chmod 600 "$RUNNER_TEMP/config.php"
 
+          cat > "$RUNNER_TEMP/stripe-preflight.php" <<'PHP'
+          <?php
+          declare(strict_types=1);
+          $config=require getenv('BOIS_P3_CONFIG_PATH');
+          require getenv('BOIS_APP_PATH').'/p8_stripe.php';
+          $result=bois_p8_stripe_request(
+              $config,
+              'POST',
+              '/v1/checkout/sessions',
+              [
+                  'mode'=>'payment',
+                  'success_url'=>'https://alberiq.se/bois-shop-stripe-sandbox/order.html?provider_test=success',
+                  'cancel_url'=>'https://alberiq.se/bois-shop-stripe-sandbox/payment.html?provider_test=cancel',
+                  'payment_method_types'=>['card'],
+                  'line_items'=>[[
+                      'quantity'=>1,
+                      'price_data'=>[
+                          'currency'=>'sek',
+                          'unit_amount'=>100,
+                          'product_data'=>['name'=>'BoIS Stripe sandbox preflight'],
+                      ],
+                  ]],
+                  'metadata'=>['bois_purpose'=>'simply_sandbox_preflight'],
+              ],
+              'bois-sandbox-preflight-'.time()
+          );
+          if(($result['livemode']??true)!==false) exit(1);
+          if(!str_starts_with((string)($result['id']??''),'cs_test_')) exit(2);
+          if(!str_starts_with((string)($result['url']??''),'https://checkout.stripe.com/')) exit(3);
+          echo "STRIPE_TEST_API_CALL: pass\n";
+          PHP
+          chmod 600 "$RUNNER_TEMP/stripe-preflight.php"
+
           cat > "$RUNNER_TEMP/webhook-wrapper.php" <<PHP
           <?php
           declare(strict_types=1);
@@ -189,17 +222,28 @@ jobs:
           cat "$RUNNER_TEMP/bois-demo.htpasswd" | ssh "${SSH_OPTS[@]}" -l "$SIMPLY_SSH_USER" "$SIMPLY_HOST" 'umask 077; cat > "$HOME/.bois-demo-auth/demo.htpasswd.next"; chmod 644 "$HOME/.bois-demo-auth/demo.htpasswd.next"; mv "$HOME/.bois-demo-auth/demo.htpasswd.next" "$HOME/.bois-demo-auth/demo.htpasswd"'
 
           target_rel="public_html/$BOIS_PUBLIC_PATH"
-          tar -C "$RUNNER_TEMP/bois-stripe-public" -czf - . | ssh "${SSH_OPTS[@]}" -l "$SIMPLY_SSH_USER" "$SIMPLY_HOST" 'sh -s' -- "$target_rel" <<'REMOTE'
+          ssh "${SSH_OPTS[@]}" -l "$SIMPLY_SSH_USER" "$SIMPLY_HOST" 'sh -s' -- "$target_rel" <<'REMOTE'
           set -eu
           target="$HOME/$1"
           next="$target.next"
-          prev="$target.prev"
           rm -rf -- "$next"
           mkdir -p "$next"
+          REMOTE
+
+          tar -C "$RUNNER_TEMP/bois-stripe-public" -czf - . | ssh "${SSH_OPTS[@]}" -l "$SIMPLY_SSH_USER" "$SIMPLY_HOST" 'sh -s' -- "$target_rel" <<'REMOTE'
+          set -eu
+          next="$HOME/$1.next"
           tar -xzf - -C "$next"
           find "$next" -type d -exec chmod 755 {} +
           find "$next" -type f -exec chmod 644 {} +
           test -s "$next/.htaccess"
+          REMOTE
+
+          ssh "${SSH_OPTS[@]}" -l "$SIMPLY_SSH_USER" "$SIMPLY_HOST" 'sh -s' -- "$target_rel" <<'REMOTE'
+          set -eu
+          target="$HOME/$1"
+          next="$target.next"
+          prev="$target.prev"
           rm -rf -- "$prev"
           if [ -e "$target" ]; then mv "$target" "$prev"; fi
           if ! mv "$next" "$target"; then
@@ -210,6 +254,7 @@ jobs:
           REMOTE
 
           cat "$RUNNER_TEMP/webhook-wrapper.php" | ssh "${SSH_OPTS[@]}" -l "$SIMPLY_SSH_USER" "$SIMPLY_HOST" 'umask 022; cat > "$HOME/public_html/bois-stripe-sandbox-webhook.php"; chmod 644 "$HOME/public_html/bois-stripe-sandbox-webhook.php"'
+          cat "$RUNNER_TEMP/stripe-preflight.php" | ssh "${SSH_OPTS[@]}" -l "$SIMPLY_SSH_USER" "$SIMPLY_HOST" 'umask 077; cat > "$HOME/.bois-stripe-sandbox/stripe-preflight.php"; chmod 600 "$HOME/.bois-stripe-sandbox/stripe-preflight.php"'
           ssh "${SSH_OPTS[@]}" -l "$SIMPLY_SSH_USER" "$SIMPLY_HOST" 'export BOIS_P3_CONFIG_PATH="$HOME/.bois-stripe-sandbox/config.php"; php "$HOME/public_html/bois-shop-stripe-sandbox/p5-migrate.php"; php "$HOME/public_html/bois-shop-stripe-sandbox/p4-migrate.php"; php "$HOME/public_html/bois-shop-stripe-sandbox/p6-migrate.php"; php "$HOME/public_html/bois-shop-stripe-sandbox/p8-migrate.php"; php "$HOME/public_html/bois-shop-stripe-sandbox/p9-migrate.php"'
 
       - name: Verify sandbox gates and real Stripe test API
@@ -232,7 +277,7 @@ jobs:
           webhook_bad="$(command curl --silent --output /dev/null --write-out '%{http_code}' -X POST -H 'Content-Type: application/json' --data '{}' "$BOIS_WEBHOOK_URL")"
           [[ "$webhook_bad" == 400 ]]
 
-          ssh -4 -F /dev/null -T -p 22 -i "$SSH_DIR/identity" -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$SSH_DIR/known_hosts" -o GlobalKnownHostsFile=/dev/null -o ConnectTimeout=12 -l "$SIMPLY_SSH_USER" "$SIMPLY_HOST" 'export BOIS_P3_CONFIG_PATH="$HOME/.bois-stripe-sandbox/config.php"; php -r '\''$c=require getenv("BOIS_P3_CONFIG_PATH"); require getenv("HOME")."/public_html/bois-shop-stripe-sandbox/p8_stripe.php"; $r=bois_p8_stripe_request($c,"POST","/v1/checkout/sessions",["mode"=>"payment","success_url"=>"https://alberiq.se/bois-shop-stripe-sandbox/order.html?provider_test=success","cancel_url"=>"https://alberiq.se/bois-shop-stripe-sandbox/payment.html?provider_test=cancel","payment_method_types"=>["card"],"line_items"=>[["quantity"=>1,"price_data"=>["currency"=>"sek","unit_amount"=>100,"product_data"=>["name"=>"BoIS Stripe sandbox preflight"]]]],"metadata"=>["bois_purpose"=>"simply_sandbox_preflight"]],"bois-sandbox-preflight-".time()); if(($r["livemode"]??true)!==false || !str_starts_with((string)($r["id"]??""),"cs_test_") || !str_starts_with((string)($r["url"]??""),"https://checkout.stripe.com/")) exit(1); echo "STRIPE_TEST_API_CALL: pass\n";'\'''
+          ssh -4 -F /dev/null -T -p 22 -i "$SSH_DIR/identity" -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$SSH_DIR/known_hosts" -o GlobalKnownHostsFile=/dev/null -o ConnectTimeout=12 -l "$SIMPLY_SSH_USER" "$SIMPLY_HOST" 'export BOIS_P3_CONFIG_PATH="$HOME/.bois-stripe-sandbox/config.php"; export BOIS_APP_PATH="$HOME/public_html/bois-shop-stripe-sandbox"; php "$HOME/.bois-stripe-sandbox/stripe-preflight.php"'
 
           {
             echo "STRIPE_SANDBOX_DEPLOY: pass"
@@ -249,4 +294,4 @@ jobs:
       - name: Cleanup
         if: always()
         shell: bash
-        run: rm -f "$RUNNER_TEMP/config.php" "$RUNNER_TEMP/bois-demo.htpasswd" "$RUNNER_TEMP/webhook-wrapper.php" || true
+        run: rm -f "$RUNNER_TEMP/config.php" "$RUNNER_TEMP/bois-demo.htpasswd" "$RUNNER_TEMP/webhook-wrapper.php" "$RUNNER_TEMP/stripe-preflight.php" || true
