@@ -46,8 +46,13 @@ Syftet är att kunna verifiera riktiga Stripe sandbox-API-anrop och signerade we
 `BOIS_STRIPE_TEST_API_KEY`
 - använd helst en restricted sandbox key (`rk_test_...`),
 - aldrig live key,
-- rekommenderade minimibehörigheter: Checkout Sessions Write och Refunds Write,
-- utöka endast om Stripe request logs visar att en ytterligare permission faktiskt krävs.
+- rekommenderade minimibehörigheter för nuvarande implementation:
+  - Checkout Sessions: Write
+  - Prices: Write
+  - Products: Write
+  - Charges and Refunds: Write
+- orsaken är att BoIS skapar line items med `price_data.product_data` inline från serverns orderdata och dessutom behöver kunna begära refund i sandbox.
+- utöka inte med andra rättigheter om inte Stripe-loggen visar att något konkret saknas.
 
 `BOIS_STRIPE_TEST_WEBHOOK_SECRET`
 - signing secret för endpointen ovan,
