@@ -1,6 +1,6 @@
 # P14 – personliga konton, roller och MFA-readiness
 
-Status: IN PROGRESS. Baslinje main `c6e5787fe47cc46642a7b7bafbefbf9221c83eb8`.
+Status: DONE. Baslinje main `c6e5787fe47cc46642a7b7bafbefbf9221c83eb8`.
 PR [#32](https://github.com/AlbertAndersson/Tran-s-bois/pull/32).
 Ingen productiondeploy eller kontoregistrering utförs. Inga riktiga konton seedas.
 P12:s uppskjutna verifiering består och production förblir stängd.
@@ -118,5 +118,9 @@ password/MFA/replay, roller, CSRF, timeout, logout, revoke, disable/role/credent
 serversession/cookie, serverstyrda roller, reload och logout mot isolerad MySQL.
 P14 workflow exporterar inga konto-/state-/audit-artifacts.
 
-CI-referenser och slutlig status registreras efter godkänd körning.
+Slutlig kod-SHA `899913d716d9f820d7c1fda1ddad4392bc0675c6`: P14 [37156273030](https://github.com/AlbertAndersson/Tran-s-bois/actions/runs/37156273030), jobb `111300181791`, success inklusive PHP/HTTP och Chromium. P2 37156273007, P3 37156273005, P4 37156273078, P5 37156272994, P6 37156272925, P7 37156273114, P8 37156272949, P9 37156272981, P12 37156273026, P13 37156273006 och Security 37156272987: samtliga success. Inga P14-blockerare; verklig kontoprovisionering och godkänd aktivering återstår inför drift.
 P15 är nästa etapp och har inte startats.
+
+PR #32 merge: `7727dedd50fda3919b3915bb361d3e921d478734`. Main före P14:
+`c6e5787fe47cc46642a7b7bafbefbf9221c83eb8`. Koden är mergad, men ingen
+productiondeploy har gjorts. P15 är nästa etapp och har inte startats.

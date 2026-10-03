@@ -1,3 +1,15 @@
+## P14 – DONE, personliga konton och MFA verifierade
+
+Baslinje main: `c6e5787fe47cc46642a7b7bafbefbf9221c83eb8`. PR #32.
+Personliga lösenord+TOTP-konton, serverstyrda superadmin/club_admin/operator,
+privata serversessioner, timeout, CSRF, logout/revoke och audit är implementerade.
+Production accepterar inte den delade stagingnyckeln. Inga riktiga konton seedas,
+ingen hostdeploy/launch, Stripe live, DNS-cutover, extern mail eller ny kostnad.
+PHP/HTTP och Chromium passerade i P14 run 37156273030, jobb 111300181791;
+P2–P9, P12/P13 och Security är success på kod-SHA 899913d716d9f820d7c1fda1ddad4392bc0675c6. P12-verifieringen är uppskjuten
+som tidigare beslutat. Se [P14-runbook](P14-PERSONAL-ADMIN.md).
+P15 har inte startats. Äldre status nedan är historisk.
+
 ## P13 DONE – P12-verifiering uppskjuten enligt beslut
 P13 closeout: PR #31 är mergad som `814a8105334c8316577b3fe368d05011a700016d`.
 Main före P13: `56c2d8ba6455fa385c02867922ec12308a26ae4b`.
@@ -241,3 +253,7 @@ Före skarp lansering återstår merchant/kontoägare/KYC, bank, godkända avgif
 De tidigare fullständiga status- och handofftexterna från main `4918cef10bcc213ef9c756d407ca88d4990971fa` har bevarats oförändrade i `history/CURRENT_STATUS-before-protected-staging-20260929.md` och `history/WORK-HANDOFF-before-protected-staging-20260929.md`. Deras uppgifter om öppen staging och väntande åtkomstdeploy är historiska och ersätts av denna verifiering.
 
 Viktiga revisionsreferenser: legacy-merge `36358028481`, P7-acceptans `36358111506`, cutover-kontroll `36358232965`, purge av exakt 18 äldre BoIS-tabeller `36394705592`, separationsdiagnos `36394944351` och återställd Work Capture-deploy `36403070406`. Privata rollback-backuper och övriga historiska spår har inte ändrats i closeouten. Historiska fasverifieringar: P6 `36327128975`, P7 `36355678030`, P8 `36414148818`, P9 `36445454316`, säkerhetsrättningsdeploy `36463946785` och tidigare öppna C1–C4/browserstaging `36517329717`. Den senaste skyddade stagingverifieringen är **36906493137**. Run `36623915463` är föregående skyddade baseline före den stabila adminnyckeln.
+
+PR #32 merge: `7727dedd50fda3919b3915bb361d3e921d478734`. Main före P14:
+`c6e5787fe47cc46642a7b7bafbefbf9221c83eb8`. Koden är mergad, men ingen
+productiondeploy har gjorts. P15 är nästa etapp och har inte startats.

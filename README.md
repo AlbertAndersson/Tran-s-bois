@@ -1,5 +1,8 @@
 # Tranås BoIS – webshop
 
+P14 DONE: personlig adminåtkomst med lösenord+TOTP, roller, serversessioner och audit implementerad i PR #32. Ingen productionaktivering eller riktiga konton. Se [P14-runbook](docs/P14-PERSONAL-ADMIN.md).
+
+
 P13 DONE, PR #31 och restore-CI 37154604007: isolerad backup/restore och DR-runbook. Återstående P12-verifiering är uppskjuten enligt användarens beslut; P12 är inte DONE och production förblir stängd. Se [P13-runbook](docs/P13-BACKUP-RESTORE.md).
 
 
