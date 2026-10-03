@@ -28,7 +28,7 @@ const delay=ms=>new Promise(r=>setTimeout(r,ms));
   const stripe=async(ref)=>{
     assert.match(ref,/^cs_test_/);
     const response=await fetch('https://api.stripe.com/v1/checkout/sessions/'+ref,{headers:{Authorization:'Bearer '+key}});
-    assert.equal(response.ok,true,'Stripe sandbox session read HTTP '+response.status());return response.json();
+    assert.equal(response.ok,true,'Stripe sandbox session read HTTP '+response.status);return response.json();
   };
   const create=async(label)=>{
     const data={customer:{name:'P11 Test',email:'p11-'+label+'-'+suffix+'@example.invalid',phone:''},items:[{sku:'MEM-ADULT',quantity:1,metadata:{member_name:'P11 Test'}}],existing_member:false,consent:true,website:'',idempotency_key:'p11-'+label+'-'+suffix};
