@@ -395,7 +395,8 @@ function bois_p6_mark_event_error(PDO $pdo,int $eventDbId,Throwable $e): void
     $stmt=$pdo->prepare(
         "UPDATE bois_payment_events SET status='ERROR',last_error=? WHERE id=?"
     );
-    $stmt->execute([substr($e->getMessage(),0,2000),$eventDbId]);
+    $stmt->execute(['webhook_processing_failed',$eventDbId]);
+    bois_p15_error('webhook_failed');
 }
 
 function bois_p6_finish_event(PDO $pdo,int $eventDbId,int $paymentId,int $orderId): void
@@ -889,7 +890,7 @@ function bois_p6_deliver_outbox(PDO $pdo,array $config,?callable $sender=null,in
             $ok=(bool)$sender($message);
             if(!$ok) $error='Transport returned false.';
         } catch(Throwable $e){
-            $error=$e->getMessage();
+            $error='transport_failed';
         }
 
         $pdo->beginTransaction();
@@ -919,6 +920,7 @@ function bois_p6_deliver_outbox(PDO $pdo,array $config,?callable $sender=null,in
                      WHERE id=?"
                 )->execute([$status,$attempts,substr((string)$error,0,2000),$delay,(int)$message['id']]);
                 $result['failed']++;
+                bois_p15_error('outbox_failed');
             }
             $pdo->commit();
         } catch(Throwable $e){

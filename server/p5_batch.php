@@ -550,7 +550,7 @@ function bois_p5_deliver_outbox(PDO $pdo, array $config, ?callable $sender=null,
             $ok = (bool)$sender($message);
             if (!$ok) $error = 'Transport returned false.';
         } catch (Throwable $e) {
-            $error = $e->getMessage();
+            $error = 'transport_failed';
         }
 
         $pdo->beginTransaction();
@@ -620,6 +620,7 @@ function bois_p5_deliver_outbox(PDO $pdo, array $config, ?callable $sender=null,
                     $status,$attempts,substr((string)$error,0,2000),$delayMinutes,(int)$message['id']
                 ]);
                 $result['failed']++;
+                bois_p15_error('outbox_failed');
             }
 
             $pdo->commit();

@@ -1,5 +1,7 @@
 # Tranås BoIS – webshop
 
+P15 IN PROGRESS: säkra probes, privat strukturerad loggning och driftberedskap. Se [P15-runbook](docs/P15-OPERATIONS.md). Ingen hostdeploy eller productionaktivering; P12-verifiering är uppskjuten och P16 har inte startats.
+
 P14 DONE: personlig adminåtkomst med lösenord+TOTP, roller, serversessioner och audit implementerad i PR #32. Ingen productionaktivering eller riktiga konton. Se [P14-runbook](docs/P14-PERSONAL-ADMIN.md).
 
 

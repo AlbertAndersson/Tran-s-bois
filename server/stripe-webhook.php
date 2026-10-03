@@ -15,12 +15,14 @@ function bois_stripe_webhook_respond(array $data,int $status=200): never
 }
 
 try{
+    header('X-Request-ID: '.bois_p15_id());
     if(($_SERVER['REQUEST_METHOD']??'')!=='POST'){
         header('Allow: POST');
         bois_stripe_webhook_respond(['ok'=>false,'error'=>'method_not_allowed'],405);
     }
 
     $config=bois_p3_load_config();
+    bois_p15_begin($config,'stripe_webhook');
     if(bois_p6_provider($config)!=='stripe' || bois_p8_stripe_mode($config)!=='test'){
         throw new DomainException('Stripe sandbox webhook is disabled.');
     }
@@ -58,6 +60,6 @@ try{
 }catch(DomainException|InvalidArgumentException|JsonException $e){
     bois_stripe_webhook_respond(['ok'=>false,'error'=>'invalid_webhook'],400);
 }catch(Throwable $e){
-    error_log('BoIS Stripe webhook: internal_error');
+    bois_p15_error();
     bois_stripe_webhook_respond(['ok'=>false,'error'=>'server_error'],500);
 }
