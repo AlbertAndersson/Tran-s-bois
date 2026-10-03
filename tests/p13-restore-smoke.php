@@ -13,7 +13,9 @@ if($mode==='seed'&&$name==='bois_p13_source') {
     if($pdo->query('SHOW TABLES')->fetchColumn()!==false) throw new RuntimeException('Nonempty source refused.');
     // Existing fixture exercises mock paid, failed, cancelled and refunded orders,
     // memberships, benefits, receipt retries and idempotent signed mock events.
-    require __DIR__.'/p6-smoke.php';
+    $process=proc_open([PHP_BINARY,'-d','disable_functions=curl_init,curl_exec,mail',__DIR__.'/p6-smoke.php'],
+        [0=>['file','/dev/null','r'],1=>STDOUT,2=>STDERR],$pipes);
+    if(!is_resource($process)||proc_close($process)!==0) throw new RuntimeException('Synthetic payment fixture failed.');
     bois_p7_apply_schema($pdo);bois_p7_seed_assortment($pdo);
     bois_p8_apply_schema($pdo);bois_p9_apply_schema($pdo);bois_consent_schema($pdo);
     $pdo->prepare('INSERT INTO bois_schema_migrations(version) VALUES(?)')->execute(['20261003_p12_production_bootstrap_v1']);
