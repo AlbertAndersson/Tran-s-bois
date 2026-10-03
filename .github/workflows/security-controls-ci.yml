@@ -53,7 +53,9 @@ jobs:
           php -l tests/p9-sales-smoke.php
           node --check site/commerce/assets/common.js
       - name: P10 early HTTP protection and atomic abuse limits
-        run: php -d disable_functions=curl_init,curl_exec,mail tests/security-hardening-smoke.php
+        run: |
+          php -d disable_functions=curl_init,curl_exec,mail tests/security-hardening-smoke.php
+          php -d disable_functions=curl_init,curl_exec,mail tests/p11-runtime-routing-smoke.php
       - name: Checkout gate without a database or external transport
         run: php -d disable_functions=curl_init,curl_exec,mail tests/security-checkout-gate-smoke.php
       - name: Browser storage and event guards without external requests

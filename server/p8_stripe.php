@@ -235,7 +235,6 @@ function bois_p8_stripe_checkout(
         'client_reference_id'=>(string)$row['public_id'],
         'customer_email'=>(string)$row['customer_email'],
         'locale'=>'sv',
-        'payment_method_types'=>[$method],
         'line_items'=>[[
             'price_data'=>[
                 'currency'=>$currency,

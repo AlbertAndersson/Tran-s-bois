@@ -120,6 +120,15 @@ jobs:
           [[ "$private_path" =~ ^/[A-Za-z0-9_./-]+$ ]]
           echo "REMOTE_HOME=$private_path" >> "$GITHUB_ENV"
 
+          # HTTP requests must select the same private runtime as CLI migrations.
+          mv "$out/commerce-api.php" "$out/commerce-api-app.php"
+          cat > "$out/commerce-api.php" <<PHP
+          <?php
+          declare(strict_types=1);
+          putenv('BOIS_P3_CONFIG_PATH=$private_path/.bois-stripe-sandbox/config.php');
+          require __DIR__ . '/commerce-api-app.php';
+          PHP
+
           printf '%s\n' "$DEMO_PASSWORD" | htpasswd -Bni bois-demo > "$RUNNER_TEMP/bois-demo.htpasswd"
           cat > "$out/.htaccess" <<HT
           Options -Indexes
@@ -127,7 +136,7 @@ jobs:
           AuthName "BoIS Stripe sandbox"
           AuthUserFile $private_path/.bois-demo-auth/demo.htpasswd
           Require valid-user
-          <FilesMatch "^(security|consent|p3_db|p5_batch|p5-migrate|p5-worker|p4_membership|p4-migrate|p6_payment|p6-migrate|p7_assortment|p7-migrate|p8_stripe|p8-migrate|p9_sales|p9-migrate|stripe-webhook)\.php$">
+          <FilesMatch "^(security|consent|commerce-api-app|p3_db|p5_batch|p5-migrate|p5-worker|p4_membership|p4-migrate|p6_payment|p6-migrate|p7_assortment|p7-migrate|p8_stripe|p8-migrate|p9_sales|p9-migrate|stripe-webhook)\.php$">
             Require all denied
           </FilesMatch>
           HT
@@ -187,7 +196,6 @@ jobs:
                       'mode'=>'payment',
                       'success_url'=>'https://alberiq.se/bois-shop-stripe-sandbox/order.html?provider_test=success',
                       'cancel_url'=>'https://alberiq.se/bois-shop-stripe-sandbox/payment.html?provider_test=cancel',
-                      'payment_method_types'=>['card'],
                       'line_items'=>[[
                           'quantity'=>1,
                           'price_data'=>[
