@@ -70,8 +70,10 @@ function bois_p8_stripe_runtime_ready(array $config): bool
 
     $secret=(string)($config['stripe_secret_key'] ?? '');
     $webhook=(string)($config['stripe_webhook_secret'] ?? '');
-    if($mode==='test' && !str_starts_with($secret,'sk_test_')) return false;
-    if($mode==='live' && !str_starts_with($secret,'sk_live_')) return false;
+    $testKey=str_starts_with($secret,'sk_test_') || str_starts_with($secret,'rk_test_');
+    $liveKey=str_starts_with($secret,'sk_live_') || str_starts_with($secret,'rk_live_');
+    if($mode==='test' && !$testKey) return false;
+    if($mode==='live' && !$liveKey) return false;
     if(!str_starts_with($webhook,'whsec_') || strlen($webhook)<16) return false;
 
     try { bois_p8_public_base_url($config); } catch(Throwable) { return false; }
@@ -548,7 +550,9 @@ function bois_p8_readiness(array $config): array
     $checks=[
         'stripe_provider_selected'=>strtolower((string)($config['payment_provider'] ?? ''))==='stripe',
         'stripe_mode_valid'=>in_array($mode,['test','live'],true),
-        'stripe_secret_configured'=>$mode==='live'?str_starts_with($secret,'sk_live_'):str_starts_with($secret,'sk_test_'),
+        'stripe_secret_configured'=>$mode==='live'
+            ? (str_starts_with($secret,'sk_live_') || str_starts_with($secret,'rk_live_'))
+            : (str_starts_with($secret,'sk_test_') || str_starts_with($secret,'rk_test_')),
         'stripe_webhook_configured'=>str_starts_with($webhook,'whsec_'),
         'https_public_base_url'=>str_starts_with($base,'https://'),
         'seller_legal_name'=>$seller!=='',
