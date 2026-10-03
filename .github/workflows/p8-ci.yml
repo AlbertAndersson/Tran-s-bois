@@ -7,6 +7,7 @@ on:
       - "server/p6_payment.php"
       - "server/p8_stripe.php"
       - "server/p8-migrate.php"
+      - "server/stripe-webhook.php"
       - "server/commerce-api.php"
       - "server/p3-config.example.php"
       - "tests/p8-stripe-smoke.php"
@@ -15,6 +16,7 @@ on:
       - "docs/P8-*.md"
       - "data/p8-*.json"
       - ".github/workflows/p8-ci.yml"
+      - ".github/workflows/simply-deploy-bois-stripe-sandbox.yml"
       - ".github/workflows/simply-deploy-bois-p8-readiness.yml"
       - ".github/workflows/simply-validate-bois-p8-production.yml"
   pull_request:
@@ -51,6 +53,7 @@ jobs:
         run: |
           php -l server/p8_stripe.php
           php -l server/p8-migrate.php
+          php -l server/stripe-webhook.php
           php -l server/p6_payment.php
           php -l server/commerce-api.php
           php -l tests/p8-stripe-smoke.php

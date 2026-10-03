@@ -221,11 +221,35 @@ $readiness=bois_p8_readiness($config);
 if(!$readiness['ready_for_stripe_test']) throw new RuntimeException('Stripe test readiness should be true.');
 if($readiness['ready_for_production_launch']) throw new RuntimeException('Production launch became ready without approvals.');
 
+$restricted=$config;
+$restricted['stripe_secret_key']='rk_test_'.str_repeat('r',32);
+if(!bois_p8_stripe_runtime_ready($restricted)) throw new RuntimeException('Restricted test key was rejected.');
+$restrictedCalls=[];
+$restrictedTransport=function(string $method,string $url,array $params,array $headers) use (&$restrictedCalls): array {
+    $restrictedCalls[]=$headers;
+    return [
+        'id'=>'cs_test_p8restricted123',
+        'object'=>'checkout.session',
+        'url'=>'https://checkout.stripe.com/c/pay/cs_test_p8restricted123',
+        'livemode'=>false,
+        'payment_intent'=>null,
+    ];
+};
+$restrictedOrder=p8_order($pdo,'p8-restricted-key');
+bois_p6_checkout($pdo,$restricted,$restrictedOrder['public_id'],$restrictedOrder['public_token'],'card',$restrictedTransport);
+if(!str_starts_with((string)($restrictedCalls[0]['Authorization']??''),'Bearer rk_test_')){
+    throw new RuntimeException('Restricted key was not used for Stripe API auth.');
+}
+
 $badKey=$config;
 $badKey['stripe_secret_key']='sk_live_'.str_repeat('x',32);
 if(bois_p8_stripe_runtime_ready($badKey)) throw new RuntimeException('Live key accepted in Stripe test mode.');
+$badRestricted=$config;
+$badRestricted['stripe_secret_key']='rk_live_'.str_repeat('x',32);
+if(bois_p8_stripe_runtime_ready($badRestricted)) throw new RuntimeException('Restricted live key accepted in Stripe test mode.');
 
 echo "P8_STRIPE_CONTRACT: pass\n";
+echo "RESTRICTED_TEST_KEY: pass\n";
 echo "STRIPE_CHECKOUT_SERVER_TOTAL: pass\n";
 echo "STRIPE_SIGNATURE: pass\n";
 echo "STRIPE_EVENT_IDEMPOTENCY: pass\n";
