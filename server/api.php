@@ -14,7 +14,7 @@ function respond(array $data, int $status=200): never
 
 function body_json(): array
 {
-    $raw=file_get_contents('php://input');
+    $raw=bois_security_body();
     if(!is_string($raw)||$raw==='') return [];
     $data=json_decode($raw,true,64,JSON_THROW_ON_ERROR);
     if(!is_array($data)) throw new InvalidArgumentException('Ogiltigt JSON-underlag.');
@@ -90,6 +90,16 @@ function output_summary_csv(array $orders): never
 try {
     $config=bois_load_config();
     bois_prepare_storage($config);
+    bois_security_gate($config,(string)($_GET['action']??'health'),[
+        'health'=>['GET'],
+        'orders'=>['POST'],
+        'order'=>['GET'],
+        'cancel_order'=>['POST'],
+        'admin_orders'=>['GET'],
+        'admin_order'=>['PATCH'],
+        'admin_export'=>['GET'],
+        'admin_summary_export'=>['GET'],
+    ]);
     check_origin($config);
 
     if(($_SERVER['REQUEST_METHOD']??'')==='OPTIONS'){
@@ -188,6 +198,6 @@ try {
 } catch (JsonException) {
     respond(['error'=>'Ogiltigt JSON-underlag.'],400);
 } catch (Throwable $e) {
-    error_log('bois-api: '.$e->getMessage());
+    error_log('bois-api: internal_error');
     respond(['error'=>'Ett internt fel uppstod.'],500);
 }

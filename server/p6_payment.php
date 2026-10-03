@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+require_once __DIR__ . "/security.php";
 
 require_once __DIR__ . '/p3_db.php';
 require_once __DIR__ . '/p5_batch.php';

@@ -22,7 +22,7 @@ function commerce_respond(array $data, int $status=200): never
 
 function commerce_body(): array
 {
-    $raw=file_get_contents('php://input');
+    $raw=bois_security_body();
     if(!is_string($raw)||$raw==='') return [];
     $data=json_decode($raw,true,64,JSON_THROW_ON_ERROR);
     if(!is_array($data)) throw new InvalidArgumentException('Ogiltigt JSON-underlag.');
@@ -75,6 +75,40 @@ function commerce_output_batch_csv(PDO $pdo, string $batchId): never
 
 try {
     $config=bois_p3_load_config();
+    $action=(string)($_GET['action']??'health');
+    $method=(string)($_SERVER['REQUEST_METHOD']??'GET');
+    bois_security_gate($config,$action,[
+        'consent'=>['GET','POST'],
+        'health'=>['GET'],
+        'sales_event'=>['POST'],
+        'sales_recommendations'=>['POST'],
+        'catalog'=>['GET'],
+        'checkout'=>['POST'],
+        'checkout_status'=>['GET'],
+        'mock_payment_event'=>['POST'],
+        'payment_webhook'=>['POST'],
+        'orders'=>['POST'],
+        'order'=>['GET'],
+        'admin_orders'=>['GET'],
+        'admin_catalog'=>['GET'],
+        'admin_p7'=>['GET'],
+        'admin_p4'=>['GET'],
+        'admin_verify_existing_member'=>['POST'],
+        'admin_benefit_status'=>['POST'],
+        'admin_nordic_export'=>['GET'],
+        'admin_sales'=>['GET'],
+        'admin_p8_readiness'=>['GET'],
+        'admin_stripe_refund'=>['POST'],
+        'admin_payments'=>['GET'],
+        'admin_retry_payment_outbox'=>['POST'],
+        'admin_run_payment_outbox'=>['POST'],
+        'admin_batches'=>['GET'],
+        'admin_simulate_paid'=>['POST'],
+        'admin_batch_now'=>['POST'],
+        'admin_batch_csv'=>['GET'],
+        'admin_retry_outbox'=>['POST'],
+        'admin_run_worker'=>['POST'],
+    ]);
     $pdo=bois_p3_pdo($config);
     bois_p5_apply_schema($pdo);
     bois_p4_apply_schema($pdo);
@@ -178,7 +212,7 @@ try {
     }
 
     if($action==='payment_webhook'&&$method==='POST'){
-        $raw=file_get_contents('php://input');
+        $raw=bois_security_body(1048576);
         if(!is_string($raw)||$raw==='') throw new InvalidArgumentException('Webhook-underlag saknas.');
 
         if(bois_p6_provider($config)==='stripe'){
@@ -403,6 +437,6 @@ try {
 } catch (JsonException) {
     commerce_respond(['error'=>'Ogiltigt JSON-underlag.'],400);
 } catch (Throwable $e) {
-    error_log('bois-commerce-api: '.$e->getMessage());
+    error_log('bois-commerce-api: internal_error');
     commerce_respond(['error'=>'Ett internt fel uppstod.'],500);
 }

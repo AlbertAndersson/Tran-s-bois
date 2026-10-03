@@ -104,7 +104,7 @@ jobs:
           mkdir -p "$out/assets"
           for f in index.html membership.html match-kit.html order.html admin.html payment.html assortment-preview.html cookies.html; do cp "bois-src/site/commerce/$f" "$out/$f"; done
           for f in common.js membership.js matchkit.js order.js admin.js payment.js assortment-preview.js commerce.css p5.css; do cp "bois-src/site/commerce/assets/$f" "$out/assets/$f"; done
-          for f in commerce-api.php consent.php p3_db.php p5_batch.php p5-migrate.php p5-worker.php p4_membership.php p4-migrate.php p6_payment.php p6-migrate.php p7_assortment.php p7-migrate.php p8_stripe.php p8-migrate.php p9_sales.php p9-migrate.php stripe-webhook.php; do cp "bois-src/server/$f" "$out/$f"; done
+          for f in security.php commerce-api.php consent.php p3_db.php p5_batch.php p5-migrate.php p5-worker.php p4_membership.php p4-migrate.php p6_payment.php p6-migrate.php p7_assortment.php p7-migrate.php p8_stripe.php p8-migrate.php p9_sales.php p9-migrate.php stripe-webhook.php; do cp "bois-src/server/$f" "$out/$f"; done
 
           cat > "$out/config.js" <<'JS'
           window.BOIS_COMMERCE_CONFIG = Object.freeze({
@@ -127,10 +127,11 @@ jobs:
           AuthName "BoIS Stripe sandbox"
           AuthUserFile $private_path/.bois-demo-auth/demo.htpasswd
           Require valid-user
-          <FilesMatch "^(consent|p3_db|p5_batch|p5-migrate|p5-worker|p4_membership|p4-migrate|p6_payment|p6-migrate|p7_assortment|p7-migrate|p8_stripe|p8-migrate|p9_sales|p9-migrate|stripe-webhook)\.php$">
+          <FilesMatch "^(security|consent|p3_db|p5_batch|p5-migrate|p5-worker|p4_membership|p4-migrate|p6_payment|p6-migrate|p7_assortment|p7-migrate|p8_stripe|p8-migrate|p9_sales|p9-migrate|stripe-webhook)\.php$">
             Require all denied
           </FilesMatch>
           HT
+          cat bois-src/ops/security-headers.conf >> "$out/.htaccess"
 
           enc(){ printf '%s' "$1" | base64 -w0; }
           cat > "$RUNNER_TEMP/config.php" <<PHP

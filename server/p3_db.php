@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+require_once __DIR__ . "/security.php";
 
 function bois_p3_load_config(): array
 {
@@ -31,6 +32,7 @@ function bois_p3_load_config(): array
     }
 
     $config['allowed_origins'] = array_values(array_filter($config['allowed_origins'] ?? [], 'is_string'));
+    $config["_security_dir"] = dirname($path) . "/security-rate";
     return $config;
 }
 
