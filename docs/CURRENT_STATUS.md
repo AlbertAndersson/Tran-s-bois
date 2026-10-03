@@ -1,3 +1,16 @@
+## P13 DONE – P12-verifiering uppskjuten enligt beslut
+
+Användaren har uttryckligen valt att fortsätta med P13 eftersom återstående
+P12-verifiering inte kan genomföras nu. P12 är inte DONE; dess kvarvarande
+flödes-/hostverifiering är uppskjuten (SKIPPED BY DECISION för dessa kontroller).
+BoIS production ligger på den dedikerade Simply-produkten socen.se, staging och
+Stripe-sandbox ligger kvar på separat alberiq.se-produkt med separata credentials.
+Den skyddade production-kandidaten behåller launch/checkout/betalning/mail av.
+P13 gäller backup/restore: isolerad syntetisk MySQL- och filrestore, privat
+read-only integritetskontroll samt runbook. Se docs/P13-BACKUP-RESTORE.md och
+PR #31; restore-CI 37154604007 är success på kod-SHA 02ac9557c42017e3d166d54a012f347d9d4a2421. P14 är nästa etapp och har inte startats. Ingen ny productiondeploy, DNS-cutover eller Stripe-live-aktivering.
+Äldre P12-status nedan är historisk och ersätter inte detta beslut.
+
 ## P12 – skyddad production-kandidat installerad och HTTPS-verifierad
 
 2026-10-03: aktuell app-main `020446867dcf29b7ebe63a060f8594e8f8da8aff` är

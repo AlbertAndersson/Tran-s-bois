@@ -1,8 +1,8 @@
 # P13 – Backup, restore och disaster recovery
 
-Status: IN PROGRESS. Baslinje main `56c2d8ba6455fa385c02867922ec12308a26ae4b`.
+Status: DONE. Baslinje main `56c2d8ba6455fa385c02867922ec12308a26ae4b`.
 PR [#31](https://github.com/AlbertAndersson/Tran-s-bois/pull/31).
-Återställningsbevis registreras efter godkänd CI; ingen produktionsrestore utförs.
+Faktisk restore-CI [37154604007](https://github.com/AlbertAndersson/Tran-s-bois/actions/runs/37154604007), jobb 111295310209: success på kod-SHA `02ac9557c42017e3d166d54a012f347d9d4a2421`. SQL-import, filrestore, alla schema/radkontroller, ledger, relationer, avsiktlig korruptionsdetektering, SELECT-only-CLI och oförändrad source/sentinel passerade. Ingen produktionsrestore utförs.
 Användaren har uttryckligen beslutat att fortsätta P13 och skjuta upp återstående
 P12-verifiering. Detta är inte ett launch- eller Stripe-live-godkännande.
 
@@ -143,3 +143,19 @@ verifierade releasebackup. Före kunddrift behövs namngiven driftägare,
 godkända RPO/RTO/retention, kontrollerad offsiteåtkomst och larm vid misslyckad
 backup. Besluten markeras inte godkända i `production_decisions.backup_restore`.
 Ingen ny kostnad, leverantör eller cron införs genom denna dokumentation.
+
+## Verifieringsreferenser och nästa etapp
+
+På kod-SHA `02ac9557c42017e3d166d54a012f347d9d4a2421` passerade P13
+37154604007, P12 37154604022, P2 37154604006, P7 37154604021,
+P8 37154604039, P9 37154604010 och Security 37154604009.
+P13 mätte 1 sekund från backupstart till avslutade restore-/integritetskontroller
+för denna lilla fixture, exklusive runner, MySQL-start och fixtureuppbyggnad.
+Det är inte ett produktions-RTO.
+
+P13 ändrar inga runtimeflags och gör ingen Simply-deploy. Ny extern kostnad:
+0 kr. Riktiga betalningar/refunds, mail/SMS, analytics och DNS-cutover: nej.
+Inga blockerare för den isolerade P13-acceptansen. Uppskjuten P12-verifiering,
+verksamhetsgodkända backupmål/retention och offsite-DR är kvar inför go-live.
+Nästa etapp är P14 – personlig adminåtkomst, roller och MFA-readiness;
+den har inte startats i P13.
