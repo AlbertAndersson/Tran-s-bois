@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+require_once __DIR__.'/p15_observability.php';
 
 function bois_p14_personal(array $config): bool {return ($config['mode']??'')==='production'||($config['personal_admin']['enabled']??false)===true;}
 function bois_p14_permissions(string $role): array
