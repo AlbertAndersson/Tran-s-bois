@@ -67,7 +67,7 @@ const delay=ms=>new Promise(r=>setTimeout(r,ms));
     await fillCard('4242424242424242');
     const paidOrder=await waitState(paid,'PAID');
     const paidSession=await stripe(paid.checkout.session_ref);assert.equal(paidSession.payment_status,'paid');assert.equal(paidSession.livemode,false);
-    const payments=(await json('admin_payments',null,true)).payments;
+    const payments=await json('admin_payments',null,true);
     const delivery=payments.events.find(e=>e.provider_ref===paid.checkout.session_ref&&e.event_type==='payment.succeeded'&&e.status==='PROCESSED');
     assert.ok(delivery&&delivery.event_id.startsWith('evt_'),'Real Stripe event recorded before synthetic callback checks');
     console.log('P11_HOSTED_TEST_CARD_SIGNED_STRIPE_WEBHOOK_PAID: pass');
