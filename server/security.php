@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+require_once __DIR__.'/p15_observability.php';
 
 // HTTP controls also run on failures before runtime/DB initialization.
 function bois_security_headers(): void

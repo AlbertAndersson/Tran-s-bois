@@ -69,4 +69,6 @@ function bois_production_http_gate(array $config, string $action): void
         ||in_array(false,bois_production_decision_checks($config),true)){
         bois_security_reject(503,'Butiken är inte öppen.');
     }
+    // An approved launch must also have private operational logging available.
+    bois_p15_storage($config);
 }

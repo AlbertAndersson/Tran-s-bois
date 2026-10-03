@@ -98,12 +98,12 @@ function bois_p14_login(array $config,array $input): array
         $matched=null;$step=intdiv($now,30);
         if($account&&$passwordOk&&$account['enabled'])foreach([$step-1,$step,$step+1] as $n)
             if($n>($s['totp'][$id]??-1)&&hash_equals(bois_p14_totp($account['totp_secret'],$n),$otp)){$matched=$n;break;}
-        if($matched===null){bois_p14_audit($dir,$account?$id:'unknown','none','admin_login','denied',bin2hex(random_bytes(12)));return ['denied'=>true];}
+        if($matched===null){bois_p14_audit($dir,$account?$id:'unknown','none','admin_login','denied',bois_p15_id());return ['denied'=>true];}
         if(count($s['sessions'])>=256)throw new RuntimeException('Admin session capacity reached.');
         $s['totp'][$id]=$matched;unset($s['attempts'][$bucket]);
         $token=bin2hex(random_bytes(32));$csrf=bin2hex(random_bytes(32));
         $s['sessions'][hash('sha256',$token)]=['id'=>$id,'epoch'=>$account['epoch'],'credential'=>hash('sha256',$account['password_hash'].'|'.$account['totp_secret']),'revocation'=>$s['epochs'][$id]??0,'role'=>$account['role'],'csrf'=>$csrf,'last'=>$now,'expires'=>$now+28800];
-        bois_p14_audit($dir,$id,$account['role'],'admin_login','success',bin2hex(random_bytes(12)));
+        bois_p14_audit($dir,$id,$account['role'],'admin_login','success',bois_p15_id());
         return ['token'=>$token,'csrf'=>$csrf,'id'=>$id,'role'=>$account['role'],'permissions'=>bois_p14_permissions($account['role'])];
     });
     if(isset($result['denied']))throw new DomainException('Inloggningen misslyckades.');return $result;
@@ -118,10 +118,10 @@ function bois_p14_authorize(array $config,string $action,string $token,string $c
             ($row['credential']??null)!==hash('sha256',$user['password_hash'].'|'.$user['totp_secret'])||$row['revocation']!==($s['epochs'][$row['id']]??0))throw new DomainException('Sessionen har gått ut.');
         if($write&&(!preg_match('/^[a-f0-9]{64}$/D',$csrf)||!hash_equals($row['csrf'],$csrf)))throw new DomainException('Ogiltigt sessionsskydd.');
         if(!in_array($action,['admin_session','admin_logout'],true)&&!in_array($action,bois_p14_permissions($user['role']),true)){
-            bois_p14_audit($dir,$row['id'],$user['role'],$action,'denied',bin2hex(random_bytes(12)));throw new DomainException('Ej behörig för åtgärden.');
+            bois_p14_audit($dir,$row['id'],$user['role'],$action,'denied',bois_p15_id());throw new DomainException('Ej behörig för åtgärden.');
         }
         $s['sessions'][$key]['last']=$now;
-        $request=bin2hex(random_bytes(12));bois_p14_audit($dir,$row['id'],$user['role'],$action,$write?'intent':'read',$request);
+        $request=bois_p15_id();bois_p14_audit($dir,$row['id'],$user['role'],$action,$write?'intent':'read',$request);
         return ['id'=>$row['id'],'role'=>$user['role'],'csrf'=>$row['csrf'],'permissions'=>bois_p14_permissions($user['role']),'dir'=>$dir,'request'=>$request,'action'=>$action];
     });
 }

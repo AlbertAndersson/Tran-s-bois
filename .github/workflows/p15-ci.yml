@@ -1,0 +1,32 @@
+name: P15 Observability Operations
+on:
+  pull_request:
+  push:
+    branches: [main]
+    paths: ['server/**', 'ops/p15-*', 'tests/p15-*', '.github/workflows/p15-ci.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  operations:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: bois_p15_ci
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+    steps:
+      - uses: actions/checkout@v5
+      - name: Syntax
+        run: |
+          for file in server/*.php ops/p15-*.php tests/p15-*.php; do php -l "$file"; done
+          node --check tests/p15-observability.test.cjs
+      - name: Real HTTP, SELECT-only MySQL, privacy and storage failures
+        run: node tests/p15-observability.test.cjs
+      # No log/data/account artifact upload. Fixtures remain disposable.

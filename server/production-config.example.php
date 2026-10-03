@@ -20,6 +20,8 @@ return [
     'admin_token' => '', // Future break-glass secret; not the P14 personal identity model.
     // No real personal accounts are seeded. Production never accepts admin_token.
     'personal_admin' => ['enabled'=>false,'users_file'=>'','state_dir'=>'','public_root'=>''],
+    // Provision an existing 0700 directory outside the existing public root.
+    'observability' => ['enabled'=>false,'log_dir'=>'','public_root'=>''],
     'allowed_origins' => [],
     'public_base_url' => '', // Final URL requires a business decision.
     'seller_legal_name' => '',

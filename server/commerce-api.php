@@ -81,8 +81,21 @@ function commerce_output_batch_csv(PDO $pdo, string $batchId): never
 }
 
 try {
+    header('X-Request-ID: '.bois_p15_id());
+    $action=is_string($_GET['action']??null)?$_GET['action']:'health';
+    if($action==='liveness'){
+        bois_security_headers();bois_p15_begin([],$action);
+        if(($_SERVER['REQUEST_METHOD']??'GET')!=='GET')commerce_respond(['ok'=>false],405);
+        commerce_respond(['ok'=>true]);
+    }
     $config=bois_p3_load_config();
-    $action=(string)($_GET['action']??'health');
+    bois_p15_begin($config,$action);
+    if($action==='readiness'){
+        bois_security_headers();bois_security_gate($config,$action,['readiness'=>['GET']]);
+        bois_security_rate($config,'readiness',30);
+        $ready=bois_p15_readiness($config)['ready'];
+        commerce_respond(['ready'=>$ready],$ready?200:503);
+    }
     bois_production_http_gate($config,$action);
     $method=(string)($_SERVER['REQUEST_METHOD']??'GET');
     bois_security_gate($config,$action,[
@@ -465,6 +478,6 @@ try {
 } catch (JsonException) {
     commerce_respond(['error'=>'Ogiltigt JSON-underlag.'],400);
 } catch (Throwable $e) {
-    error_log('bois-commerce-api: internal_error');
+    bois_p15_error();
     commerce_respond(['error'=>'Ett internt fel uppstod.'],500);
 }
