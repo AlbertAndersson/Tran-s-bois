@@ -2,14 +2,23 @@
   'use strict';
 
   const c=window.BOIS_COMMERCE,$=id=>document.getElementById(id);
-  let token=sessionStorage.getItem('boisP3Admin')||'';
+  const personal=c.cfg.adminAuth==='personal'||/production/i.test(c.cfg.environmentLabel||'');
+  let token=personal?'':sessionStorage.getItem('boisP3Admin')||'',identity=null;
   let orders=[];
 
-  function auth(){return {'X-Bois-Admin-Token':token};}
+  function auth(){return personal?(identity?{'X-Bois-CSRF':identity.csrf}:{}):{'X-Bois-Admin-Token':token};}
+  function may(action){return !personal||identity?.permissions?.includes(action);}
+  function signedOut(message=''){
+    identity=null;token='';sessionStorage.removeItem('boisP3Admin');
+    $('dashboard').hidden=true;$('login').hidden=false;
+    $('password').value='';$('otp').value='';
+    $('loginError').textContent=message;$('loginError').hidden=!message;
+  }
 
   async function api(action, options={}) {
     if(!c.cfg.apiBase) return demo(action,options);
-    return c.api(action,{...options,headers:{...(options.headers||{}),...auth()}});
+    try{return await c.api(action,{...options,credentials:'same-origin',headers:{...(options.headers||{}),...auth()}});}
+    catch(error){if(personal&&/behörig|Sessionen|sessionsskydd/.test(error.message))signedOut(error.message);throw error;}
   }
 
   function demo(action) {
@@ -89,7 +98,7 @@
         '<td>'+esc(b.status)+'</td>'+
         '<td>'+esc(b.outbox_status||'–')+'<div class="small">försök: '+esc(b.attempts??0)+'</div>'+retry+'</td>'+
         '<td>'+esc(b.created_at||'')+'</td>'+
-        '<td><button class="btn ghost p5-csv" data-batch="'+esc(b.public_id)+'">CSV</button></td>'+
+        '<td>'+(may('admin_batch_csv')?'<button class="btn ghost p5-csv" data-batch="'+esc(b.public_id)+'">CSV</button>':'–')+'</td>'+
       '</tr>';
     }).join('') : '<tr><td colspan="7">Inga batcher ännu.</td></tr>';
 
@@ -278,8 +287,9 @@
   function showP4Error(message){$('p4Error').textContent=message;$('p4Error').hidden=false;}
 
   async function load() {
+    const read=action=>may(action)?api(action):Promise.resolve({});
     const [ordersBody,catalogBody,batchesBody,p4Body,paymentBody,p7Body,salesBody]=await Promise.all([
-      api('admin_orders'),api('admin_catalog'),api('admin_batches'),api('admin_p4'),api('admin_payments'),api('admin_p7'),api('admin_sales')
+      read('admin_orders'),read('admin_catalog'),read('admin_batches'),read('admin_p4'),read('admin_payments'),read('admin_p7'),read('admin_sales')
     ]);
     orders=ordersBody.orders||[];
     const products=catalogBody.products||[],stats=catalogBody.stats||{};
@@ -294,6 +304,10 @@
     renderP7(p7Body.assortment||[]);
     renderSales(salesBody);
     $('login').hidden=true;$('dashboard').hidden=false;
+    if(personal){
+      $('personalIdentity').textContent=identity.id+' · '+identity.role;
+      for(const [id,action] of [['batchNow','admin_batch_now'],['runWorker','admin_run_worker'],['nordicExport','admin_nordic_export'],['admin-membership','admin_p4'],['admin-payments','admin_payments'],['admin-sales','admin_sales']])if($(id))$(id).hidden=!may(action);
+    }
   }
 
   async function post(action,payload={}) {
@@ -354,15 +368,28 @@
   function showError(message){$('batchError').textContent=message;$('batchError').hidden=false;}
 
   $('loginForm').addEventListener('submit',async e=>{
-    e.preventDefault();token=$('token').value.trim();$('loginError').hidden=true;
+    e.preventDefault();$('loginError').hidden=true;
+    if(personal){
+      try{identity=(await post('admin_login',{username:$('username').value,password:$('password').value,otp:$('otp').value})).session;$('password').value='';$('otp').value='';await load();}
+      catch(err){signedOut(err.message);}return;
+    }
+    token=$('token').value.trim();
     try{await load();sessionStorage.setItem('boisP3Admin',token);$('token').value='';}
     catch(err){token='';sessionStorage.removeItem('boisP3Admin');$('loginError').textContent=err.message;$('loginError').hidden=false;}
   });
-  $('logout').addEventListener('click',()=>{token='';sessionStorage.removeItem('boisP3Admin');$('dashboard').hidden=true;$('login').hidden=false;});
+  $('logout').addEventListener('click',async()=>{
+    if(personal){try{await post('admin_logout');signedOut();}catch(err){$('loginError').textContent='Logout kunde inte bekräftas. Försök igen.';$('loginError').hidden=false;}return;}
+    signedOut();
+  });
   $('batchNow').addEventListener('click',createBatchNow);
   $('runWorker').addEventListener('click',runWorker);
   $('nordicExport').addEventListener('click',downloadNordicCsv);
   $('buildCampaignLink').addEventListener('click',buildCampaignLink);
 
-  if(!c.cfg.apiBase){load();} else if(token){load().catch(()=>{});}
+  if(personal){
+    sessionStorage.removeItem('boisP3Admin');$('token').parentElement.hidden=true;$('token').required=false;
+    $('personalFields').hidden=false;for(const id of ['username','password','otp'])$(id).required=true;
+    $('loginHelp').textContent='Logga in med ditt personliga konto, lösenord och kod från autentiseringsappen. Kontakta föreningens kontoansvarige om du behöver åtkomst.';
+    if(c.cfg.apiBase)api('admin_session').then(body=>{identity=body.session;return load();}).catch(()=>signedOut());
+  }else if(!c.cfg.apiBase){load();} else if(token){load().catch(()=>{});}
 })();

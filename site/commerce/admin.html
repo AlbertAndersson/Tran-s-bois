@@ -20,9 +20,14 @@
   <section id="login" class="form-card" style="max-width:520px;margin:25px auto">
     <span class="tag">ADMIN</span>
     <h1>BoIS Shopadmin</h1>
-    <p class="sub">Staging kräver den separata adminnyckeln som delas privat med behöriga testare. Den är inte samma som demolösenordet.</p>
+    <p class="sub" id="loginHelp">Staging kräver den separata adminnyckeln som delas privat med behöriga testare. Den är inte samma som demolösenordet.</p>
     <form id="loginForm">
       <div class="field"><label for="token">Adminnyckel</label><input id="token" type="password" autocomplete="off" required></div>
+      <div id="personalFields" hidden>
+        <div class="field"><label for="username">Användarnamn</label><input id="username" autocomplete="username"></div>
+        <div class="field"><label for="password">Lösenord</label><input id="password" type="password" autocomplete="current-password"></div>
+        <div class="field"><label for="otp">Kod från autentiseringsappen</label><input id="otp" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6"></div>
+      </div>
       <div id="loginError" class="error" hidden></div>
       <button class="btn block" type="submit">Öppna admin</button>
     </form>
@@ -32,6 +37,7 @@
     <div class="section-head">
       <div><h2>Commerce Core + betalning</h2><p>MySQL-order, medlemskap, betalhändelser, matchställsbatcher och outbox.</p></div>
       <button class="btn ghost" id="logout">Logga ut</button>
+      <span id="personalIdentity" aria-live="polite"></span>
     </div>
 
     <div class="notice blue">
