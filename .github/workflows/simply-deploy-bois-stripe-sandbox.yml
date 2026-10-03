@@ -56,6 +56,7 @@ jobs:
           node --check bois-src/site/commerce/assets/payment.js
           [[ ${#DEMO_PASSWORD} -ge 8 ]]
           [[ ${#STAGING_ADMIN_TOKEN} -ge 12 ]]
+          command -v htpasswd >/dev/null || { echo "::error::htpasswd is required"; exit 1; }
           [[ "$STRIPE_TEST_API_KEY" == rk_test_* || "$STRIPE_TEST_API_KEY" == sk_test_* ]] || { echo "::error::BOIS_STRIPE_TEST_API_KEY must be a sandbox/test key"; exit 1; }
           [[ "$STRIPE_TEST_API_KEY" != rk_live_* && "$STRIPE_TEST_API_KEY" != sk_live_* ]]
           [[ "$STRIPE_TEST_WEBHOOK_SECRET" == whsec_* ]] || { echo "::error::BOIS_STRIPE_TEST_WEBHOOK_SECRET is missing"; exit 1; }
@@ -183,10 +184,31 @@ jobs:
         run: |
           set -euo pipefail
           SSH_OPTS=(-4 -F /dev/null -T -p 22 -i "$SSH_DIR/identity" -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$SSH_DIR/known_hosts" -o GlobalKnownHostsFile=/dev/null -o ConnectTimeout=12 -o LogLevel=ERROR)
-          ssh "${SSH_OPTS[@]}" -l "$SIMPLY_SSH_USER" "$SIMPLY_HOST" 'mkdir -p "$HOME/.bois-stripe-sandbox"; chmod 700 "$HOME/.bois-stripe-sandbox"'
+          ssh "${SSH_OPTS[@]}" -l "$SIMPLY_SSH_USER" "$SIMPLY_HOST" 'mkdir -p "$HOME/.bois-stripe-sandbox" "$HOME/.bois-demo-auth"; chmod 700 "$HOME/.bois-stripe-sandbox"; chmod 755 "$HOME/.bois-demo-auth"'
           cat "$RUNNER_TEMP/config.php" | ssh "${SSH_OPTS[@]}" -l "$SIMPLY_SSH_USER" "$SIMPLY_HOST" 'umask 077; cat > "$HOME/.bois-stripe-sandbox/config.php"; chmod 600 "$HOME/.bois-stripe-sandbox/config.php"'
-          target="$HOME/public_html/$BOIS_PUBLIC_PATH"
-          tar -C "$RUNNER_TEMP/bois-stripe-public" -czf - . | ssh "${SSH_OPTS[@]}" -l "$SIMPLY_SSH_USER" "$SIMPLY_HOST" "set -eu; rm -rf \"$target.new\"; mkdir -p \"$target.new\"; tar -xzf - -C \"$target.new\"; find \"$target.new\" -type d -exec chmod 755 {} +; find \"$target.new\" -type f -exec chmod 644 {} +; if [ -e \"$target\" ]; then rm -rf \"$target.prev\"; mv \"$target\" \"$target.prev\"; fi; mv \"$target.new\" \"$target\"; rm -rf \"$target.prev\""
+          cat "$RUNNER_TEMP/bois-demo.htpasswd" | ssh "${SSH_OPTS[@]}" -l "$SIMPLY_SSH_USER" "$SIMPLY_HOST" 'umask 077; cat > "$HOME/.bois-demo-auth/demo.htpasswd.next"; chmod 644 "$HOME/.bois-demo-auth/demo.htpasswd.next"; mv "$HOME/.bois-demo-auth/demo.htpasswd.next" "$HOME/.bois-demo-auth/demo.htpasswd"'
+
+          target_rel="public_html/$BOIS_PUBLIC_PATH"
+          tar -C "$RUNNER_TEMP/bois-stripe-public" -czf - . | ssh "${SSH_OPTS[@]}" -l "$SIMPLY_SSH_USER" "$SIMPLY_HOST" 'sh -s' -- "$target_rel" <<'REMOTE'
+          set -eu
+          target="$HOME/$1"
+          next="$target.next"
+          prev="$target.prev"
+          rm -rf -- "$next"
+          mkdir -p "$next"
+          tar -xzf - -C "$next"
+          find "$next" -type d -exec chmod 755 {} +
+          find "$next" -type f -exec chmod 644 {} +
+          test -s "$next/.htaccess"
+          rm -rf -- "$prev"
+          if [ -e "$target" ]; then mv "$target" "$prev"; fi
+          if ! mv "$next" "$target"; then
+            if [ -e "$prev" ]; then mv "$prev" "$target"; fi
+            exit 1
+          fi
+          rm -rf -- "$prev"
+          REMOTE
+
           cat "$RUNNER_TEMP/webhook-wrapper.php" | ssh "${SSH_OPTS[@]}" -l "$SIMPLY_SSH_USER" "$SIMPLY_HOST" 'umask 022; cat > "$HOME/public_html/bois-stripe-sandbox-webhook.php"; chmod 644 "$HOME/public_html/bois-stripe-sandbox-webhook.php"'
           ssh "${SSH_OPTS[@]}" -l "$SIMPLY_SSH_USER" "$SIMPLY_HOST" 'export BOIS_P3_CONFIG_PATH="$HOME/.bois-stripe-sandbox/config.php"; php "$HOME/public_html/bois-shop-stripe-sandbox/p5-migrate.php"; php "$HOME/public_html/bois-shop-stripe-sandbox/p4-migrate.php"; php "$HOME/public_html/bois-shop-stripe-sandbox/p6-migrate.php"; php "$HOME/public_html/bois-shop-stripe-sandbox/p8-migrate.php"; php "$HOME/public_html/bois-shop-stripe-sandbox/p9-migrate.php"'
 
@@ -210,7 +232,7 @@ jobs:
           webhook_bad="$(command curl --silent --output /dev/null --write-out '%{http_code}' -X POST -H 'Content-Type: application/json' --data '{}' "$BOIS_WEBHOOK_URL")"
           [[ "$webhook_bad" == 400 ]]
 
-          ssh -4 -F /dev/null -T -p 22 -i "$SSH_DIR/identity" -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$SSH_DIR/known_hosts" -o GlobalKnownHostsFile=/dev/null -o ConnectTimeout=12 -l "$SIMPLY_SSH_USER" "$SIMPLY_HOST" 'export BOIS_P3_CONFIG_PATH="$HOME/.bois-stripe-sandbox/config.php"; php -r '\''$c=require getenv("BOIS_P3_CONFIG_PATH"); require "$HOME/public_html/bois-shop-stripe-sandbox/p8_stripe.php"; $r=bois_p8_stripe_request($c,"POST","/v1/checkout/sessions",["mode"=>"payment","success_url"=>"https://alberiq.se/bois-shop-stripe-sandbox/order.html?provider_test=success","cancel_url"=>"https://alberiq.se/bois-shop-stripe-sandbox/payment.html?provider_test=cancel","payment_method_types"=>["card"],"line_items"=>[["quantity"=>1,"price_data"=>["currency"=>"sek","unit_amount"=>100,"product_data"=>["name"=>"BoIS Stripe sandbox preflight"]]]],"metadata"=>["bois_purpose"=>"simply_sandbox_preflight"]],"bois-sandbox-preflight-".time()); if(($r["livemode"]??true)!==false || !str_starts_with((string)($r["id"]??""),"cs_test_") || !str_starts_with((string)($r["url"]??""),"https://checkout.stripe.com/")) exit(1); echo "STRIPE_TEST_API_CALL: pass\n";'\'''
+          ssh -4 -F /dev/null -T -p 22 -i "$SSH_DIR/identity" -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$SSH_DIR/known_hosts" -o GlobalKnownHostsFile=/dev/null -o ConnectTimeout=12 -l "$SIMPLY_SSH_USER" "$SIMPLY_HOST" 'export BOIS_P3_CONFIG_PATH="$HOME/.bois-stripe-sandbox/config.php"; php -r '\''$c=require getenv("BOIS_P3_CONFIG_PATH"); require getenv("HOME")."/public_html/bois-shop-stripe-sandbox/p8_stripe.php"; $r=bois_p8_stripe_request($c,"POST","/v1/checkout/sessions",["mode"=>"payment","success_url"=>"https://alberiq.se/bois-shop-stripe-sandbox/order.html?provider_test=success","cancel_url"=>"https://alberiq.se/bois-shop-stripe-sandbox/payment.html?provider_test=cancel","payment_method_types"=>["card"],"line_items"=>[["quantity"=>1,"price_data"=>["currency"=>"sek","unit_amount"=>100,"product_data"=>["name"=>"BoIS Stripe sandbox preflight"]]]],"metadata"=>["bois_purpose"=>"simply_sandbox_preflight"]],"bois-sandbox-preflight-".time()); if(($r["livemode"]??true)!==false || !str_starts_with((string)($r["id"]??""),"cs_test_") || !str_starts_with((string)($r["url"]??""),"https://checkout.stripe.com/")) exit(1); echo "STRIPE_TEST_API_CALL: pass\n";'\'''
 
           {
             echo "STRIPE_SANDBOX_DEPLOY: pass"
