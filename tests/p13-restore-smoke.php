@@ -25,7 +25,12 @@ if($mode==='seed'&&$name==='bois_p13_source') {
     echo "P13_SNAPSHOT: pass\n";
 } elseif($mode==='verify'&&$name==='bois_p13_restore') {
     $before=json_decode(file_get_contents($path),true,512,JSON_THROW_ON_ERROR);
-    $after=bois_p13_snapshot($pdo);bois_p13_equal($before,$after);
+    $after=bois_p13_snapshot($pdo);
+    if($before!==$after) {
+        echo "SYNTHETIC_LEDGER_DDL_SOURCE: ".$before['tables']['bois_schema_migrations']['schema_sql']."\n";
+        echo "SYNTHETIC_LEDGER_DDL_RESTORE: ".$after['tables']['bois_schema_migrations']['schema_sql']."\n";
+    }
+    bois_p13_equal($before,$after);
     foreach(['bois_orders','bois_order_items','bois_memberships','bois_members','bois_benefit_entitlements','bois_payments','bois_payment_events'] as $table)
         if($after['tables'][$table]['rows']===0) throw new RuntimeException('Missing nonempty business fixture.');
     $joined=(int)$pdo->query('SELECT COUNT(*) FROM bois_members m JOIN bois_memberships ms ON ms.id=m.source_membership_id JOIN bois_order_items i ON i.id=ms.order_item_id JOIN bois_orders o ON o.id=i.order_id JOIN bois_payments p ON p.order_id=o.id')->fetchColumn();

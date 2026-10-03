@@ -20,7 +20,7 @@ function bois_p13_snapshot(PDO $pdo): array
             $rows=$pdo->query('SELECT * FROM `'.$table.'`')->fetchAll(PDO::FETCH_ASSOC);
             $encoded=array_map(fn($row)=>json_encode($row,JSON_THROW_ON_ERROR|JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES),$rows);
             sort($encoded,SORT_STRING);
-            $result['tables'][$table]=['schema_sha256'=>hash('sha256',$ddl),'rows'=>count($rows),
+            $result['tables'][$table]=['schema_sql'=>$ddl,'schema_sha256'=>hash('sha256',$ddl),'rows'=>count($rows),
                 'data_sha256'=>hash('sha256',json_encode($encoded,JSON_THROW_ON_ERROR))];
         }
         // The current BoIS manifest has single-column FKs. Fail if that changes.
