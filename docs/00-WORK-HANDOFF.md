@@ -1,3 +1,37 @@
+## P12 – kod verifierad, produktionsmiljö blockerad
+
+**BLOCKED.** Produktionskonfiguration, idempotent bootstrap, SELECT-only readiness,
+launch-preflight och cutover/rollback-runbook är implementerade i PR #30.
+Slutlig kod-SHA `7c90987bb75ee4a661ed48aed8fbdf1b081ae1bf`, merge
+`b8590e4566f77ed4a2f630c256c2e2626cbe43d3`. Baslinje före P12:
+`9d866c436543c0874061ca244915a3327b40041b`.
+
+P12 CI [37136439541](https://github.com/AlbertAndersson/Tran-s-bois/actions/runs/37136439541)
+och P2–P9/Security är success på slutlig PR-head. P12 merge-main 37136549149 och
+Security 37136549167 samt tillämplig fasregression är success. Isolerad MySQL
+bevisar upprepad bootstrap utan ändring, skrivskyddad readiness, databas- och
+credentialseparering, oförändrad syntetisk staging, HTTP 503 före DB, saknade
+secrets/beslut och vägran vid kunddata/främmande tabeller/schema-drift.
+
+Faktisk driftkontroll [37136579981](https://github.com/AlbertAndersson/Tran-s-bois/actions/runs/37136579981)
+stannade före DB vid saknade `BOIS_PROD_DB_HOST`, `BOIS_PROD_DB_NAME`,
+`BOIS_PROD_DB_USER`, `BOIS_PROD_DB_PASSWORD` och `BOIS_PROD_ADMIN_TOKEN`.
+Separat kostnadsfri databasplats hos Simply är ännu inte verifierad. Ingen
+produktionsdatabas eller privata produktionscredentials har skapats, ingen
+Simply-appdeploy eller DNS-ändring har gjorts. CI-resultatet ersätter inte
+verifiering av faktisk hostmiljö. Se `P12-PRODUCTION-CUTOVER.md` för exakt runbook.
+
+Nästa arbete: lös P12:s separata DB/credentials inom befintlig plan utan extra
+kostnad, kör privat host-bootstrap och readonly readiness och registrera bevis.
+P12 får därefter markeras DONE. P13 har inte startats; fortsätt inte automatiskt
+förbi blockeraren.
+
+Live Stripe/riktiga pengar/refund/mail/SMS/extern analytics/annonser/produktion:
+NEJ. `production_launch_enabled=false`. Ny extern kostnad: 0 kr. Work Capture,
+BoIS stagingdatabas och befintliga skyddade mock/sandboxdeploys bevarade.
+
+## Historiskt läge före P12
+
 ## P11 – verifierad Stripe sandbox E2E
 
 **DONE.** Skyddad separat sandbox är publicerad med app-SHA `6d13f811d9bce8ebcefec421ab6d360642353bce`. PR #29 mergeades som `636feb7870ac2212363400f81afa6952dbde1463`.

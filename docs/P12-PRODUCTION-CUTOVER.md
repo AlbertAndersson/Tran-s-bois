@@ -2,8 +2,10 @@
 
 ## Status
 
-IN PROGRESS. Baslinje main: `9d866c436543c0874061ca244915a3327b40041b`.
-Produktionsverktygen verifieras på isolerad MySQL i CI. Faktisk Simply-miljö kan
+**BLOCKED – kod klar och verifierad; faktisk produktions-DB/credentials saknas.**
+
+Baslinje main: `9d866c436543c0874061ca244915a3327b40041b`.
+Produktionsverktygen är verifierade på isolerad MySQL i CI. Faktisk Simply-miljö kan
 ännu inte verifieras: repository secrets för separat produktionsdatabas saknas.
 
 GitHub Settings inventerades utan att läsa hemliga värden. `BOIS_DB_*`,
@@ -13,6 +15,52 @@ stagingadmin/demo och Stripe testsecrets finns. `BOIS_PROD_DB_HOST`,
 Ingen kostnadsfri andra databas eller nya credentials har provisionerats;
 befintlig Simply-plans tillgängliga databasplatser/kostnad är inte verifierad.
 Detta är en driftblockerare, inte en anledning att återanvända staging.
+
+## Verifieringsreferenser
+
+PR [#30](https://github.com/AlbertAndersson/Tran-s-bois/pull/30), slutlig kod-SHA
+`7c90987bb75ee4a661ed48aed8fbdf1b081ae1bf`, merge
+`b8590e4566f77ed4a2f630c256c2e2626cbe43d3`. Ingen Simply-appdeploy i P12.
+
+| Kontroll på slutlig PR-head | Run | Resultat |
+| --- | --- | --- |
+| P12, isolerad MySQL/HTTP/P3–P9 | [37136439541](https://github.com/AlbertAndersson/Tran-s-bois/actions/runs/37136439541), jobb 111241823291 | success |
+| Security controls | 37136439556 | success |
+| P2 / P3 / P4 | 37136439563 / 37136439555 / 37136439543 | success |
+| P5 / P6 / P7 | 37136439542 / 37136439537 / 37136439535 | success |
+| P8 / P9 | 37136439613 / 37136439544 | success |
+| P12 push | 37136436493 | success |
+| P12 merge-main | [37136549149](https://github.com/AlbertAndersson/Tran-s-bois/actions/runs/37136549149) | success |
+| Security merge-main | 37136549167 | success |
+
+Merge-main P2/P3/P4/P5/P6/P8/P9: 37136549156 / 37136549115 /
+37136549222 / 37136549132 / 37136549163 / 37136549166 / 37136549210,
+alla success. P7 var success på PR-head; ingen ny P7 push-trigger på merge.
+Lokalt: diff-check, YAML-parse och 21 browser-säkerhetstester passerade.
+PHP/MySQL verifierades på CI-runner, inte i den lokala miljön.
+
+P12-loggen bevisar fail-closed config, idempotent bootstrap med oförändrat schema
+och alla radvärden efter andra körningen, SELECT-only readiness utan DB-ändring,
+staging-sentinel/schema/rader oförändrade, separata DB-konton, HTTP 503 utan
+skrivningar, nekad ensam launch-flagga, saknade beslut/secrets samt vägran vid
+främmande tabell, kunddata och schema-drift. Inga transportfunktioner var tillåtna
+under testerna. Detta är ingen P13 backup/restoreövning eller faktisk Simply-DB.
+
+Manuell driftinventering på merge-main:
+[37136579981](https://github.com/AlbertAndersson/Tran-s-bois/actions/runs/37136579981),
+jobb 111242229807, **failure vid secret-spärren**. Samtliga fem BOIS_PROD-secrets
+rapporterades som saknade. Privat configbyggande och DB-readiness hoppades över;
+ingen DB-anslutning, bootstrap eller deploy gjordes. Secretvärden exponerades inte
+ och live Stripe-secrets lästes inte. Det är en verifierad blockerare, inte grön
+produktionsreadiness.
+
+Ett tidigare säkerhetstest förväntade order/health 200 i stängd produktion och
+checkout 401. Det uppdaterades till P12:s starkare 503 och verifierar fortfarande
+oförändrad order-, betal- och statistikdata. Slutlig security-run ovan passerade.
+
+P12 återupptas när separat kostnadsfri produktionsdatabas och begränsade credentials
+finns. Kör då runbookens host-bootstrap/readiness och registrera faktiska bevis innan
+status DONE. P13 startas inte automatiskt medan P12 är blockerad.
 
 ## Implementerat
 
