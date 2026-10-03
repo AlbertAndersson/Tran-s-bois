@@ -92,8 +92,8 @@ if(($checkout['provider']??'')!=='stripe' || ($checkout['redirect_url']??'')==='
 if(count($calls)!==1 || $calls[0]['method']!=='POST' || !str_ends_with($calls[0]['url'],'/v1/checkout/sessions')){
     throw new RuntimeException('Unexpected Stripe Checkout API request.');
 }
-if(($calls[0]['params']['payment_method_types'][0]??'')!=='card'){
-    throw new RuntimeException('Card was not constrained as requested payment method.');
+if(isset($calls[0]['params']['payment_method_types'])){
+    throw new RuntimeException('Hosted Checkout must use Dashboard-managed dynamic methods.');
 }
 if(($calls[0]['params']['line_items'][0]['price_data']['unit_amount']??0)!==(int)$order['total_ore']){
     throw new RuntimeException('Stripe amount differs from server order total.');
@@ -162,7 +162,7 @@ if(!$swishBlocked) throw new RuntimeException('Swish was enabled without explici
 $swishConfig=$config;
 $swishConfig['stripe_swish_enabled']=true;
 $swishTransport=function(string $method,string $url,array $params,array $headers): array {
-    if(($params['payment_method_types'][0]??'')!=='swish') throw new RuntimeException('Swish request not configured.');
+    if(isset($params['payment_method_types'])) throw new RuntimeException('Checkout must use dynamic methods.');
     return [
         'id'=>'cs_test_p8swish123',
         'object'=>'checkout.session',

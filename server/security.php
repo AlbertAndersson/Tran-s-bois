@@ -111,7 +111,7 @@ if(PHP_SAPI!=='cli'){
     bois_security_headers();
     // Internal includes and maintenance scripts cannot be requested directly,
     // even on a PHP server which does not honor Apache .htaccess.
-    if(!in_array(basename((string)($_SERVER['SCRIPT_FILENAME']??'')),['api.php','commerce-api.php','stripe-webhook.php'],true)){
+    if(!in_array(basename((string)($_SERVER['SCRIPT_FILENAME']??'')),['api.php','commerce-api.php','stripe-webhook.php','bois-stripe-sandbox-webhook.php'],true)){
         bois_security_reject(403,'Ej behörig.');
     }
 }
