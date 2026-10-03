@@ -1,5 +1,11 @@
 # P12 – stängd produktionsmiljö och cutover-readiness
 
+Hostingbeslut 2026-10-03: production ska ligga på den dedikerade Simply-produkten
+`socen.se`, skild från stagingprodukten `alberiq.se`. Se `P12-SOCEN-HOSTING.md` för
+backupkrav, credential boundaries och aktuell blockerare. Nedanstående historiska
+P12-bevis kompletteras av faktisk privat SOCen-bootstrap/readiness i hostingrapporten.
+Begränsade DB-konton och offentlig appverifiering återstår; P12 är fortsatt BLOCKED.
+
 ## Status
 
 **BLOCKED – kod klar och verifierad; faktisk produktions-DB/credentials saknas.**

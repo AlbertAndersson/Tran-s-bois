@@ -1,3 +1,22 @@
+## P12 – SOCen backup och privat production verifierad; DB-grants blockerar
+
+2026-10-03: `socen.se` är beslutad som dedikerad BoIS production-produkt,
+skild från staging/sandbox på `alberiq.se`. Inga andra system får installeras där.
+Main `1906b1f055b2709c1c9cbaab4d8d600f2caa8e5c` är privat installerad på Simply.
+SOCen-filarkiv, full MySQL-dump och konfiguration är privat säkerhetskopierade;
+lokal/server SHA-256 och läsbarhet verifierade. Inget legacy-material är raderat.
+Ny production-DB skapad utan ny kostnad. P12-bootstrap/readiness är gröna,
+upprepad bootstrap och CLI 503-grindar lämnar schema/rader oförändrade.
+Production-kontot nekas åtkomst till staging. Launch och externa funktioner är av.
+
+**BLOCKED:** Simply delar produktens DB-användare mellan legacy och production;
+kontot saknar CREATE USER. Separat production-only bootstrapkonto och SELECT-only
+hostkonto behöver ordnas av Simply. Publik appinstallation, HTTPS/app-E2E,
+loggningsacceptans och legacy-nedtagning återstår. GitHub productionsecrets är
+inte installerade. Inga DNS-/Stripe-live-/stagingändringar. Se
+`P12-SOCEN-HOSTING.md` för backupplatser/hashar, verifieringsgränser och manuell åtgärd.
+
+## Historiskt P12-läge före SOCen-provisionering
 ## P12 – kod verifierad, produktionsmiljö blockerad
 
 **BLOCKED.** Produktionskonfiguration, idempotent bootstrap, SELECT-only readiness,

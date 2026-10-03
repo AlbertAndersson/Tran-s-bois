@@ -1,5 +1,11 @@
 # Tranås BoIS – webshop
 
+**P12 hostingbeslut 2026-10-03:** Simply-produkten `socen.se` är reserverad för
+dedikerad BoIS production. Staging och Stripe-sandbox ligger kvar på `alberiq.se`;
+production ska ha separat produkt, SSH-nyckel, databas och credentials. Lamport
+eller andra system får inte placeras i SOCen-miljön. Backup är verifierad, separat DB och privat stängd release är installerade. P12 är fortsatt BLOCKED på begränsade MySQL-konton; publik appinstallation återstår. Se `docs/P12-SOCEN-HOSTING.md`.
+Stripe live och slutlig publik DNS-cutover kräver separat godkännande.
+
 Fristående BoIS-webshop med medlemskap, Nordic Wellness-förmån, matchställ och förberett supporter-/merchsortiment.
 
 **Aktuellt: PROTECTED STAGING / LIVE VERIFIED / READY FOR LIMITED SYNTHETIC DEMO.** Run [36623915463](https://github.com/AlbertAndersson/Tran-s-bois/actions/runs/36623915463), job `109595921802`, avslutades med **success**. Workflow/main vid körningen var `4918cef10bcc213ef9c756d407ca88d4990971fa`; publicerad applikationsref är `c49ebcd9af9f7081e1764d28419d92dd05b4fd48`. Obehörig direktåtkomst nekades med 401 och behöriga P4–P9-/samtyckes-/adminflöden passerade bakom Basic Auth över HTTPS. Chromium headless testade 375/390/1280 px. 10 PNG i artifact `bois-p9-synthetic-browser-36623915463`, ID `11059388459`, till 2026-10-06 20:08:02 UTC. Ingen permanent bildkopia har skapats i dokumentationscloseouten. Fysisk iPhone/Safari och faktisk återkoppling från Erik/BoIS återstår.
