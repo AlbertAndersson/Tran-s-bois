@@ -1,5 +1,8 @@
 # Tranås BoIS – webshop
 
+P13 DONE, PR #31 och restore-CI 37154604007: isolerad backup/restore och DR-runbook. Återstående P12-verifiering är uppskjuten enligt användarens beslut; P12 är inte DONE och production förblir stängd. Se [P13-runbook](docs/P13-BACKUP-RESTORE.md).
+
+
 **P12 hostingbeslut 2026-10-03:** Simply-produkten `socen.se` är reserverad för
 dedikerad BoIS production. Staging och Stripe-sandbox ligger kvar på `alberiq.se`;
 production ska ha separat produkt, SSH-nyckel, databas och credentials. Lamport

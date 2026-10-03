@@ -1,0 +1,73 @@
+name: P13 Isolated Backup Restore
+on:
+  pull_request:
+  push:
+    branches: [main]
+    paths: ['ops/p13-*', 'tests/p13-*', '.github/workflows/p13-ci.yml', 'server/**']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  restore:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+    env:
+      BOIS_P3_TEST_DB_HOST: 127.0.0.1
+      BOIS_P3_TEST_DB_USER: root
+      BOIS_P3_TEST_DB_PASSWORD: root
+      BOIS_P13_DISPOSABLE: 'YES'
+    steps:
+      - uses: actions/checkout@v5
+      - name: PHP syntax
+        run: for file in ops/p13-*.php tests/p13-*.php; do php -l "$file"; done
+      - name: Actual isolated dump, files restore, checksums and relations
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          tmp=$(mktemp -d)
+          trap 'rm -rf -- "$tmp"' EXIT
+          printf '[client]\nhost=127.0.0.1\nuser=root\npassword=root\n' > "$tmp/mysql.cnf"
+          mysql --defaults-extra-file="$tmp/mysql.cnf" <<'SQL'
+          CREATE DATABASE bois_p13_source;
+          CREATE DATABASE bois_p13_restore;
+          CREATE DATABASE bois_p13_sentinel;
+          CREATE TABLE bois_p13_sentinel.keep_me(id INT PRIMARY KEY, value VARCHAR(40));
+          INSERT INTO bois_p13_sentinel.keep_me VALUES(1,'preserve-staging-sentinel');
+          SQL
+          export BOIS_P3_TEST_DB_NAME=bois_p13_source
+          php -d disable_functions=curl_init,curl_exec,mail tests/p13-restore-smoke.php seed
+          php tests/p13-restore-smoke.php snapshot "$tmp/source.json"
+          php tests/p13-restore-smoke.php cli-check "$tmp"
+          start=$(date +%s)
+          mysqldump --defaults-extra-file="$tmp/mysql.cnf" --no-tablespaces --single-transaction --routines --triggers --events --set-gtid-purged=OFF bois_p13_source > "$tmp/database.sql"
+          grep -q 'Dump completed' "$tmp/database.sql"
+          mkdir "$tmp/files" "$tmp/restored-files"
+          cp -a server ops "$tmp/files/"
+          printf 'synthetic-private-config; launch=false; payment=disabled; mail=disabled\n' > "$tmp/files/private-config.txt"
+          (cd "$tmp/files" && find . -type f -print0 | sort -z | xargs -0 sha256sum > "$tmp/files.sha256")
+          tar -czf "$tmp/files.tar.gz" -C "$tmp/files" .
+          (cd "$tmp" && sha256sum database.sql files.tar.gz > archive.sha256 && sha256sum -c archive.sha256)
+          test "$(mysql --defaults-extra-file="$tmp/mysql.cnf" -Nse 'SELECT COUNT(*) FROM information_schema.tables WHERE table_schema="bois_p13_restore"')" = 0
+          mysql --defaults-extra-file="$tmp/mysql.cnf" bois_p13_restore < "$tmp/database.sql"
+          tar -xzf "$tmp/files.tar.gz" -C "$tmp/restored-files"
+          (cd "$tmp/restored-files" && sha256sum -c "$tmp/files.sha256" > /dev/null)
+          echo 'P13_FILE_RESTORE_CHECKSUMS: pass'
+          export BOIS_P3_TEST_DB_NAME=bois_p13_restore
+          php tests/p13-restore-smoke.php verify "$tmp/source.json"
+          export BOIS_P3_TEST_DB_NAME=bois_p13_source
+          php tests/p13-restore-smoke.php snapshot "$tmp/source-after.json"
+          cmp "$tmp/source.json" "$tmp/source-after.json"
+          test "$(mysql --defaults-extra-file="$tmp/mysql.cnf" -Nse 'SELECT value FROM bois_p13_sentinel.keep_me WHERE id=1')" = preserve-staging-sentinel
+          echo 'P13_SOURCE_AND_SENTINEL_UNCHANGED: pass'
+          echo "P13_EXERCISE_SECONDS: $(($(date +%s)-start))"
+          # No upload-artifact: dumps, config and row hashes stay ephemeral/private.
