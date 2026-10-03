@@ -35,8 +35,9 @@ if($mode==='seed'&&$name==='bois_p13_source') {
     $pdo->beginTransaction();$pdo->exec("UPDATE bois_orders SET payment_status='P13_CORRUPT' LIMIT 1");$pdo->commit();
     $refused=false;try{bois_p13_equal($before,bois_p13_snapshot($pdo));}catch(RuntimeException){$refused=true;}
     if(!$refused) throw new RuntimeException('Data corruption was accepted.');
+    $corruptedDataBaseline=bois_p13_snapshot($pdo);
     $pdo->exec('ALTER TABLE bois_orders ADD COLUMN p13_corruption INT NULL');
-    $refused=false;try{bois_p13_equal($before,bois_p13_snapshot($pdo));}catch(RuntimeException){$refused=true;}
+    $refused=false;try{bois_p13_equal($corruptedDataBaseline,bois_p13_snapshot($pdo));}catch(RuntimeException){$refused=true;}
     if(!$refused) throw new RuntimeException('Schema corruption was accepted.');
     echo "P13_RESTORE_SCHEMA_LEDGER_DATA_FKS: pass\nP13_CORRUPTION_REJECTED: pass\nREAL_PAYMENT_EMAIL_PRODUCTION_ACCESS: no\n";
 } elseif($mode==='cli-check'&&$name==='bois_p13_source') {
