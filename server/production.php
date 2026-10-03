@@ -35,6 +35,24 @@ function bois_production_require_checks(array $checks): void
     if($missing) throw new RuntimeException('Blocked checks: '.implode(',',$missing));
 }
 
+function bois_production_decision_keys(): array
+{
+    return ['go_live','p18_release','backup_restore','personal_admin_mfa','seller_merchant_bank',
+        'legal_policies','product_partner_prices','membership_period','support_mail','domain_dns_tls',
+        'privacy_retention','final_smoke_rollback'];
+}
+
+function bois_production_decision_checks(array $config): array
+{
+    $checks=[];
+    foreach(bois_production_decision_keys() as $decision){
+        $value=$config['production_decisions'][$decision]??null;
+        $checks['decision_'.$decision]=is_array($value)&&($value['approved']??null)===true
+            &&is_string($value['reference']??null)&&trim($value['reference'])!=='';
+    }
+    return $checks;
+}
+
 // A closed production runtime denies all commerce traffic before a DB connection.
 // Signed notifications for earlier payments remain available through the existing
 // payment_webhook route when a future approved runtime closes new sales.
@@ -46,4 +64,9 @@ function bois_production_http_gate(array $config, string $action): void
         bois_security_reject(503,'Butiken är inte öppen.');
     }
     bois_production_require_checks(bois_production_config_checks($config,false));
+    if(($config['checkout_enabled']??false)!==true||!function_exists('bois_p8_readiness')
+        ||bois_p8_readiness($config)['ready_for_production_launch']!==true
+        ||in_array(false,bois_production_decision_checks($config),true)){
+        bois_security_reject(503,'Butiken är inte öppen.');
+    }
 }

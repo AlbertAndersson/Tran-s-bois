@@ -73,6 +73,10 @@ try{
         p12_assert(p12_http('http://'.$address.'/commerce-api.php?action='.$action,$method)===503,'Closed HTTP traffic accepted: '.$action);
     }
     p12_assert($before===p12_snapshot($pdo),'HTTP requests changed target.');
+    $accidentallyOpen=$config;$accidentallyOpen['production_launch_enabled']=true;
+    file_put_contents($path,'<?php return '.var_export($accidentallyOpen,true).';');
+    p12_assert(p12_http('http://'.$address.'/commerce-api.php?action=orders','POST')===503,'Launch flag alone accepted orders.');
+    file_put_contents($path,'<?php return '.var_export($config,true).';');
     // Complete synthetic approvals validate only the checker, never business approval.
     $approved=$config;
     $approved=array_replace($approved,['admin_token'=>str_repeat('synthetic-future-',4),'checkout_enabled'=>true,

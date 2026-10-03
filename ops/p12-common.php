@@ -129,9 +129,5 @@ function bois_p12_launch_checks(array $candidate,array $approved): array
     $checks['launch_real_url']=($url['scheme']??'')==='https'&&$host!==''&&!str_ends_with($host,'.invalid')&&!str_ends_with($host,'.test')&&$host!=='localhost'&&!isset($url['user'])&&!isset($url['pass'])&&!isset($url['query'])&&!isset($url['fragment'])&&!str_contains($base,'bois-shop-p3')&&!str_contains($base,'bois-shop-stripe-sandbox');
     $origin='https://'.$host.(isset($url['port'])?':'.$url['port']:'');
     $checks['launch_origin']=($approved['allowed_origins']??null)===[$origin];
-    foreach(['go_live','p18_release','backup_restore','personal_admin_mfa','seller_merchant_bank','legal_policies','product_partner_prices','membership_period','support_mail','domain_dns_tls','privacy_retention','final_smoke_rollback'] as $decision){
-        $value=$approved['production_decisions'][$decision]??null;
-        $checks['decision_'.$decision]=is_array($value)&&($value['approved']??null)===true&&trim((string)($value['reference']??''))!=='';
-    }
-    return $checks;
+    return $checks+bois_production_decision_checks($approved);
 }
