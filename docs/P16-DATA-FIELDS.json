@@ -1,0 +1,1575 @@
+{
+  "bois_batch_items": {
+    "purpose": "Koppling orderrad–batch",
+    "retention": "TBD",
+    "action": "protected",
+    "fields": {
+      "batch_id": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Relations/identifier: Koppling orderrad–batch"
+      },
+      "created_at": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Koppling orderrad–batch"
+      },
+      "order_item_id": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Relations/identifier: Koppling orderrad–batch"
+      }
+    }
+  },
+  "bois_benefit_entitlements": {
+    "purpose": "Gymförmån och partnerstatus",
+    "retention": "TBD",
+    "action": "protected",
+    "fields": {
+      "activated_at": {
+        "source": "server/p4_membership.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Gymförmån och partnerstatus"
+      },
+      "benefit_key": {
+        "source": "server/p4_membership.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Gymförmån och partnerstatus"
+      },
+      "created_at": {
+        "source": "server/p4_membership.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Gymförmån och partnerstatus"
+      },
+      "customer_id": {
+        "source": "server/p4_membership.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Relations/identifier: Gymförmån och partnerstatus"
+      },
+      "eligible_at": {
+        "source": "server/p4_membership.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Gymförmån och partnerstatus"
+      },
+      "entitlement_uuid": {
+        "source": "server/p4_membership.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Relations/identifier: Gymförmån och partnerstatus"
+      },
+      "id": {
+        "source": "server/p4_membership.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Relations/identifier: Gymförmån och partnerstatus"
+      },
+      "member_id": {
+        "source": "server/p4_membership.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Relations/identifier: Gymförmån och partnerstatus"
+      },
+      "notes": {
+        "source": "server/p4_membership.php",
+        "classification": "direct personal/contact or free-text data",
+        "purpose": "Gymförmån och partnerstatus; arbitrary content must not carry unnecessary personal data/secrets"
+      },
+      "order_item_id": {
+        "source": "server/p4_membership.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Relations/identifier: Gymförmån och partnerstatus"
+      },
+      "partner": {
+        "source": "server/p4_membership.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Gymförmån och partnerstatus"
+      },
+      "partner_ref": {
+        "source": "server/p4_membership.php",
+        "classification": "direct personal/contact or free-text data",
+        "purpose": "Gymförmån och partnerstatus"
+      },
+      "ready_for_pickup_at": {
+        "source": "server/p4_membership.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Gymförmån och partnerstatus"
+      },
+      "rejected_at": {
+        "source": "server/p4_membership.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Gymförmån och partnerstatus"
+      },
+      "sent_to_partner_at": {
+        "source": "server/p4_membership.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Gymförmån och partnerstatus"
+      },
+      "status": {
+        "source": "server/p4_membership.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Gymförmån och partnerstatus"
+      },
+      "updated_at": {
+        "source": "server/p4_membership.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Gymförmån och partnerstatus"
+      }
+    }
+  },
+  "bois_consent_choices": {
+    "purpose": "Statistikval och återkallelse",
+    "retention": "TBD",
+    "action": "configurable inactive-token deletion",
+    "fields": {
+      "decided_at": {
+        "source": "server/consent.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Statistikval och återkallelse"
+      },
+      "expires_at": {
+        "source": "server/consent.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Statistikval och återkallelse"
+      },
+      "policy_version": {
+        "source": "server/consent.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Statistikval och återkallelse"
+      },
+      "revoked_at": {
+        "source": "server/consent.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Statistikval och återkallelse"
+      },
+      "statistics": {
+        "source": "server/consent.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Statistikval och återkallelse"
+      },
+      "token_hash": {
+        "source": "server/consent.php",
+        "classification": "capability or pseudonymous security identifier",
+        "purpose": "Statistikval och återkallelse"
+      }
+    }
+  },
+  "bois_customers": {
+    "purpose": "Kundkontakt för order och kvitto",
+    "retention": "TBD",
+    "action": "protected",
+    "fields": {
+      "created_at": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Kundkontakt för order och kvitto"
+      },
+      "customer_uuid": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Relations/identifier: Kundkontakt för order och kvitto"
+      },
+      "email": {
+        "source": "server/p3_db.php",
+        "classification": "direct personal/contact or free-text data",
+        "purpose": "Kundkontakt för order och kvitto"
+      },
+      "id": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Relations/identifier: Kundkontakt för order och kvitto"
+      },
+      "name": {
+        "source": "server/p3_db.php",
+        "classification": "direct personal/contact or free-text data",
+        "purpose": "Kundkontakt för order och kvitto"
+      },
+      "phone": {
+        "source": "server/p3_db.php",
+        "classification": "direct personal/contact or free-text data",
+        "purpose": "Kundkontakt för order och kvitto"
+      },
+      "updated_at": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Kundkontakt för order och kvitto"
+      }
+    }
+  },
+  "bois_email_outbox": {
+    "purpose": "Leverantörs-/ordermail och retry",
+    "retention": "TBD",
+    "action": "protected",
+    "fields": {
+      "attempts": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Leverantörs-/ordermail och retry"
+      },
+      "batch_id": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Relations/identifier: Leverantörs-/ordermail och retry"
+      },
+      "cc_email": {
+        "source": "server/p3_db.php",
+        "classification": "direct personal/contact or free-text data",
+        "purpose": "Leverantörs-/ordermail och retry"
+      },
+      "created_at": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Leverantörs-/ordermail och retry"
+      },
+      "id": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Relations/identifier: Leverantörs-/ordermail och retry"
+      },
+      "last_error": {
+        "source": "server/p3_db.php",
+        "classification": "potential personal data in structured/free-text content",
+        "purpose": "Leverantörs-/ordermail och retry; arbitrary content must not carry unnecessary personal data/secrets"
+      },
+      "message_key": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Leverantörs-/ordermail och retry"
+      },
+      "not_before": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Leverantörs-/ordermail och retry"
+      },
+      "order_id": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Relations/identifier: Leverantörs-/ordermail och retry"
+      },
+      "payload_json": {
+        "source": "server/p3_db.php",
+        "classification": "potential personal data in structured/free-text content",
+        "purpose": "Leverantörs-/ordermail och retry; arbitrary content must not carry unnecessary personal data/secrets"
+      },
+      "sent_at": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Leverantörs-/ordermail och retry"
+      },
+      "status": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Leverantörs-/ordermail och retry"
+      },
+      "subject": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Leverantörs-/ordermail och retry"
+      },
+      "to_email": {
+        "source": "server/p3_db.php",
+        "classification": "direct personal/contact or free-text data",
+        "purpose": "Leverantörs-/ordermail och retry"
+      },
+      "updated_at": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Leverantörs-/ordermail och retry"
+      }
+    }
+  },
+  "bois_events": {
+    "purpose": "Affärshändelser och felsökning",
+    "retention": "TBD",
+    "action": "protected",
+    "fields": {
+      "created_at": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Affärshändelser och felsökning"
+      },
+      "event_type": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Affärshändelser och felsökning"
+      },
+      "id": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Relations/identifier: Affärshändelser och felsökning"
+      },
+      "order_id": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Relations/identifier: Affärshändelser och felsökning"
+      },
+      "payload_json": {
+        "source": "server/p3_db.php",
+        "classification": "potential personal data in structured/free-text content",
+        "purpose": "Affärshändelser och felsökning; arbitrary content must not carry unnecessary personal data/secrets"
+      }
+    }
+  },
+  "bois_fulfillment_rules": {
+    "purpose": "Leveransregler",
+    "retention": "TBD",
+    "action": "protected",
+    "fields": {
+      "config_json": {
+        "source": "server/p3_db.php",
+        "classification": "potential personal data in structured/free-text content",
+        "purpose": "Leveransregler; arbitrary content must not carry unnecessary personal data/secrets"
+      },
+      "created_at": {
+        "source": "server/p3_db.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Leveransregler"
+      },
+      "direct_send": {
+        "source": "server/p3_db.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Leveransregler"
+      },
+      "enabled": {
+        "source": "server/p3_db.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Leveransregler"
+      },
+      "fulfillment_type": {
+        "source": "server/p3_db.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Leveransregler"
+      },
+      "id": {
+        "source": "server/p3_db.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Relations/identifier: Leveransregler"
+      },
+      "max_wait_hours": {
+        "source": "server/p3_db.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Leveransregler"
+      },
+      "product_id": {
+        "source": "server/p3_db.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Relations/identifier: Leveransregler"
+      },
+      "rule_key": {
+        "source": "server/p3_db.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Leveransregler"
+      },
+      "supplier_id": {
+        "source": "server/p3_db.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Relations/identifier: Leveransregler"
+      },
+      "threshold_qty": {
+        "source": "server/p3_db.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Leveransregler"
+      },
+      "updated_at": {
+        "source": "server/p3_db.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Leveransregler"
+      }
+    }
+  },
+  "bois_members": {
+    "purpose": "Medlemsregister och verifiering",
+    "retention": "TBD",
+    "action": "protected",
+    "fields": {
+      "created_at": {
+        "source": "server/p4_membership.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Medlemsregister och verifiering"
+      },
+      "customer_id": {
+        "source": "server/p4_membership.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Relations/identifier: Medlemsregister och verifiering"
+      },
+      "external_member_ref": {
+        "source": "server/p4_membership.php",
+        "classification": "direct personal/contact or free-text data",
+        "purpose": "Medlemsregister och verifiering"
+      },
+      "id": {
+        "source": "server/p4_membership.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Relations/identifier: Medlemsregister och verifiering"
+      },
+      "member_name": {
+        "source": "server/p4_membership.php",
+        "classification": "direct personal/contact or free-text data",
+        "purpose": "Medlemsregister och verifiering"
+      },
+      "member_uuid": {
+        "source": "server/p4_membership.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Relations/identifier: Medlemsregister och verifiering"
+      },
+      "membership_type": {
+        "source": "server/p4_membership.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Medlemsregister och verifiering"
+      },
+      "notes": {
+        "source": "server/p4_membership.php",
+        "classification": "direct personal/contact or free-text data",
+        "purpose": "Medlemsregister och verifiering; arbitrary content must not carry unnecessary personal data/secrets"
+      },
+      "source": {
+        "source": "server/p4_membership.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Medlemsregister och verifiering"
+      },
+      "source_membership_id": {
+        "source": "server/p4_membership.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Relations/identifier: Medlemsregister och verifiering"
+      },
+      "status": {
+        "source": "server/p4_membership.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Medlemsregister och verifiering"
+      },
+      "updated_at": {
+        "source": "server/p4_membership.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Medlemsregister och verifiering"
+      },
+      "valid_from": {
+        "source": "server/p4_membership.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Medlemsregister och verifiering"
+      },
+      "valid_to": {
+        "source": "server/p4_membership.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Medlemsregister och verifiering"
+      },
+      "verified_at": {
+        "source": "server/p4_membership.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Medlemsregister och verifiering"
+      },
+      "verified_by": {
+        "source": "server/p4_membership.php",
+        "classification": "direct personal/contact or free-text data",
+        "purpose": "Medlemsregister och verifiering"
+      }
+    }
+  },
+  "bois_memberships": {
+    "purpose": "Köpt medlemskap och giltighet",
+    "retention": "TBD",
+    "action": "protected",
+    "fields": {
+      "created_at": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Köpt medlemskap och giltighet"
+      },
+      "customer_id": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Relations/identifier: Köpt medlemskap och giltighet"
+      },
+      "id": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Relations/identifier: Köpt medlemskap och giltighet"
+      },
+      "member_name": {
+        "source": "server/p3_db.php",
+        "classification": "direct personal/contact or free-text data",
+        "purpose": "Köpt medlemskap och giltighet"
+      },
+      "membership_type": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Köpt medlemskap och giltighet"
+      },
+      "order_item_id": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Relations/identifier: Köpt medlemskap och giltighet"
+      },
+      "status": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Köpt medlemskap och giltighet"
+      },
+      "updated_at": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Köpt medlemskap och giltighet"
+      },
+      "valid_from": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Köpt medlemskap och giltighet"
+      },
+      "valid_to": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Köpt medlemskap och giltighet"
+      }
+    }
+  },
+  "bois_order_items": {
+    "purpose": "Orderrader och leverans",
+    "retention": "TBD",
+    "action": "protected",
+    "fields": {
+      "created_at": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Orderrader och leverans"
+      },
+      "fulfillment_status": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Orderrader och leverans"
+      },
+      "fulfillment_type": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Orderrader och leverans"
+      },
+      "id": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Relations/identifier: Orderrader och leverans"
+      },
+      "line_total_ore": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Orderrader och leverans"
+      },
+      "metadata_json": {
+        "source": "server/p3_db.php",
+        "classification": "potential personal data in structured/free-text content",
+        "purpose": "Orderrader och leverans; arbitrary content must not carry unnecessary personal data/secrets"
+      },
+      "order_id": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Relations/identifier: Orderrader och leverans"
+      },
+      "product_id": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Relations/identifier: Orderrader och leverans"
+      },
+      "product_name": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Orderrader och leverans"
+      },
+      "quantity": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Orderrader och leverans"
+      },
+      "sku": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Orderrader och leverans"
+      },
+      "unit_price_ore": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Orderrader och leverans"
+      },
+      "variant_id": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Relations/identifier: Orderrader och leverans"
+      },
+      "variant_name": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Orderrader och leverans"
+      }
+    }
+  },
+  "bois_orders": {
+    "purpose": "Order, åtkomst och ekonomiskt spår",
+    "retention": "TBD",
+    "action": "protected",
+    "fields": {
+      "created_at": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Order, åtkomst och ekonomiskt spår"
+      },
+      "currency": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Order, åtkomst och ekonomiskt spår"
+      },
+      "customer_id": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Relations/identifier: Order, åtkomst och ekonomiskt spår"
+      },
+      "fulfillment_status": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Order, åtkomst och ekonomiskt spår"
+      },
+      "id": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Relations/identifier: Order, åtkomst och ekonomiskt spår"
+      },
+      "idempotency_key": {
+        "source": "server/p3_db.php",
+        "classification": "capability or pseudonymous security identifier",
+        "purpose": "Order, åtkomst och ekonomiskt spår"
+      },
+      "metadata_json": {
+        "source": "server/p3_db.php",
+        "classification": "potential personal data in structured/free-text content",
+        "purpose": "Order, åtkomst och ekonomiskt spår; arbitrary content must not carry unnecessary personal data/secrets"
+      },
+      "payment_status": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Order, åtkomst och ekonomiskt spår"
+      },
+      "public_id": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Relations/identifier: Order, åtkomst och ekonomiskt spår"
+      },
+      "public_token": {
+        "source": "server/p3_db.php",
+        "classification": "capability or pseudonymous security identifier",
+        "purpose": "Order, åtkomst och ekonomiskt spår"
+      },
+      "source": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Order, åtkomst och ekonomiskt spår"
+      },
+      "status": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Order, åtkomst och ekonomiskt spår"
+      },
+      "subtotal_ore": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Order, åtkomst och ekonomiskt spår"
+      },
+      "total_ore": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Order, åtkomst och ekonomiskt spår"
+      },
+      "updated_at": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Order, åtkomst och ekonomiskt spår"
+      }
+    }
+  },
+  "bois_p7_assortment": {
+    "purpose": "Sortimentsunderlag",
+    "retention": "TBD",
+    "action": "protected",
+    "fields": {
+      "approved": {
+        "source": "server/p7_assortment.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Sortimentsunderlag"
+      },
+      "blockers_json": {
+        "source": "server/p7_assortment.php",
+        "classification": "potential personal data in structured/free-text content",
+        "purpose": "Sortimentsunderlag"
+      },
+      "created_at": {
+        "source": "server/p7_assortment.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Sortimentsunderlag"
+      },
+      "decoration_cost_ore": {
+        "source": "server/p7_assortment.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Sortimentsunderlag"
+      },
+      "image_url": {
+        "source": "server/p7_assortment.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Sortimentsunderlag"
+      },
+      "launch_date": {
+        "source": "server/p7_assortment.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Sortimentsunderlag"
+      },
+      "lead_time_days": {
+        "source": "server/p7_assortment.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Sortimentsunderlag"
+      },
+      "moq": {
+        "source": "server/p7_assortment.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Sortimentsunderlag"
+      },
+      "preview_copy": {
+        "source": "server/p7_assortment.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Sortimentsunderlag"
+      },
+      "preview_group": {
+        "source": "server/p7_assortment.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Sortimentsunderlag"
+      },
+      "price_status": {
+        "source": "server/p7_assortment.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Sortimentsunderlag"
+      },
+      "product_id": {
+        "source": "server/p7_assortment.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Relations/identifier: Sortimentsunderlag"
+      },
+      "purchase_price_ore": {
+        "source": "server/p7_assortment.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Sortimentsunderlag"
+      },
+      "return_class": {
+        "source": "server/p7_assortment.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Sortimentsunderlag"
+      },
+      "sale_price_ex_vat_ore": {
+        "source": "server/p7_assortment.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Sortimentsunderlag"
+      },
+      "sale_price_ore": {
+        "source": "server/p7_assortment.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Sortimentsunderlag"
+      },
+      "shipping_handling_ore": {
+        "source": "server/p7_assortment.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Sortimentsunderlag"
+      },
+      "sku_status": {
+        "source": "server/p7_assortment.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Sortimentsunderlag"
+      },
+      "source_json": {
+        "source": "server/p7_assortment.php",
+        "classification": "potential personal data in structured/free-text content",
+        "purpose": "Sortimentsunderlag; arbitrary content must not carry unnecessary personal data/secrets"
+      },
+      "stock_strategy": {
+        "source": "server/p7_assortment.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Sortimentsunderlag"
+      },
+      "supplier_candidate": {
+        "source": "server/p7_assortment.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Sortimentsunderlag"
+      },
+      "supplier_id": {
+        "source": "server/p7_assortment.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Relations/identifier: Sortimentsunderlag"
+      },
+      "supplier_sku": {
+        "source": "server/p7_assortment.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Sortimentsunderlag"
+      },
+      "supplier_status": {
+        "source": "server/p7_assortment.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Sortimentsunderlag"
+      },
+      "updated_at": {
+        "source": "server/p7_assortment.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Sortimentsunderlag"
+      },
+      "verification_status": {
+        "source": "server/p7_assortment.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Sortimentsunderlag"
+      },
+      "verified_at": {
+        "source": "server/p7_assortment.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Sortimentsunderlag"
+      }
+    }
+  },
+  "bois_p7_variants": {
+    "purpose": "Sortimentsvariant",
+    "retention": "TBD",
+    "action": "protected",
+    "fields": {
+      "color_label": {
+        "source": "server/p7_assortment.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Sortimentsvariant"
+      },
+      "created_at": {
+        "source": "server/p7_assortment.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Sortimentsvariant"
+      },
+      "id": {
+        "source": "server/p7_assortment.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Relations/identifier: Sortimentsvariant"
+      },
+      "product_id": {
+        "source": "server/p7_assortment.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Relations/identifier: Sortimentsvariant"
+      },
+      "sale_price_ore": {
+        "source": "server/p7_assortment.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Sortimentsvariant"
+      },
+      "size_label": {
+        "source": "server/p7_assortment.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Sortimentsvariant"
+      },
+      "source_json": {
+        "source": "server/p7_assortment.php",
+        "classification": "potential personal data in structured/free-text content",
+        "purpose": "Sortimentsvariant; arbitrary content must not carry unnecessary personal data/secrets"
+      },
+      "supplier_sku": {
+        "source": "server/p7_assortment.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Sortimentsvariant"
+      },
+      "updated_at": {
+        "source": "server/p7_assortment.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Sortimentsvariant"
+      },
+      "variant_key": {
+        "source": "server/p7_assortment.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Sortimentsvariant"
+      },
+      "verification_status": {
+        "source": "server/p7_assortment.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Sortimentsvariant"
+      }
+    }
+  },
+  "bois_payment_events": {
+    "purpose": "Signerade betalningshändelser och idempotens",
+    "retention": "TBD",
+    "action": "protected",
+    "fields": {
+      "attempts": {
+        "source": "server/p6_payment.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Signerade betalningshändelser och idempotens"
+      },
+      "created_at": {
+        "source": "server/p6_payment.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Signerade betalningshändelser och idempotens"
+      },
+      "event_id": {
+        "source": "server/p6_payment.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Relations/identifier: Signerade betalningshändelser och idempotens"
+      },
+      "event_type": {
+        "source": "server/p6_payment.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Signerade betalningshändelser och idempotens"
+      },
+      "id": {
+        "source": "server/p6_payment.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Relations/identifier: Signerade betalningshändelser och idempotens"
+      },
+      "last_error": {
+        "source": "server/p6_payment.php",
+        "classification": "potential personal data in structured/free-text content",
+        "purpose": "Signerade betalningshändelser och idempotens; arbitrary content must not carry unnecessary personal data/secrets"
+      },
+      "order_id": {
+        "source": "server/p6_payment.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Relations/identifier: Signerade betalningshändelser och idempotens"
+      },
+      "payload_hash": {
+        "source": "server/p6_payment.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Signerade betalningshändelser och idempotens"
+      },
+      "payment_id": {
+        "source": "server/p6_payment.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Relations/identifier: Signerade betalningshändelser och idempotens"
+      },
+      "processed_at": {
+        "source": "server/p6_payment.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Signerade betalningshändelser och idempotens"
+      },
+      "provider": {
+        "source": "server/p6_payment.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Signerade betalningshändelser och idempotens"
+      },
+      "provider_ref": {
+        "source": "server/p6_payment.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Signerade betalningshändelser och idempotens"
+      },
+      "signature_verified": {
+        "source": "server/p6_payment.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Signerade betalningshändelser och idempotens"
+      },
+      "status": {
+        "source": "server/p6_payment.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Signerade betalningshändelser och idempotens"
+      },
+      "updated_at": {
+        "source": "server/p6_payment.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Signerade betalningshändelser och idempotens"
+      }
+    }
+  },
+  "bois_payment_outbox": {
+    "purpose": "Betalningskvittomail och retry",
+    "retention": "TBD",
+    "action": "protected",
+    "fields": {
+      "attempts": {
+        "source": "server/p6_payment.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Betalningskvittomail och retry"
+      },
+      "created_at": {
+        "source": "server/p6_payment.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Betalningskvittomail och retry"
+      },
+      "id": {
+        "source": "server/p6_payment.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Relations/identifier: Betalningskvittomail och retry"
+      },
+      "kind": {
+        "source": "server/p6_payment.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Betalningskvittomail och retry"
+      },
+      "last_error": {
+        "source": "server/p6_payment.php",
+        "classification": "potential personal data in structured/free-text content",
+        "purpose": "Betalningskvittomail och retry; arbitrary content must not carry unnecessary personal data/secrets"
+      },
+      "message_key": {
+        "source": "server/p6_payment.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Betalningskvittomail och retry"
+      },
+      "not_before": {
+        "source": "server/p6_payment.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Betalningskvittomail och retry"
+      },
+      "order_id": {
+        "source": "server/p6_payment.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Relations/identifier: Betalningskvittomail och retry"
+      },
+      "payload_json": {
+        "source": "server/p6_payment.php",
+        "classification": "potential personal data in structured/free-text content",
+        "purpose": "Betalningskvittomail och retry; arbitrary content must not carry unnecessary personal data/secrets"
+      },
+      "payment_id": {
+        "source": "server/p6_payment.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Relations/identifier: Betalningskvittomail och retry"
+      },
+      "sent_at": {
+        "source": "server/p6_payment.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Betalningskvittomail och retry"
+      },
+      "status": {
+        "source": "server/p6_payment.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Betalningskvittomail och retry"
+      },
+      "subject": {
+        "source": "server/p6_payment.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Betalningskvittomail och retry"
+      },
+      "to_email": {
+        "source": "server/p6_payment.php",
+        "classification": "direct personal/contact or free-text data",
+        "purpose": "Betalningskvittomail och retry"
+      },
+      "updated_at": {
+        "source": "server/p6_payment.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Betalningskvittomail och retry"
+      }
+    }
+  },
+  "bois_payments": {
+    "purpose": "Betalning, avstämning och refund",
+    "retention": "TBD",
+    "action": "protected",
+    "fields": {
+      "amount_ore": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Betalning, avstämning och refund"
+      },
+      "cancelled_at": {
+        "source": "server/p6_payment.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Betalning, avstämning och refund"
+      },
+      "checkout_session_ref": {
+        "source": "server/p6_payment.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Betalning, avstämning och refund"
+      },
+      "checkout_token_hash": {
+        "source": "server/p6_payment.php",
+        "classification": "capability or pseudonymous security identifier",
+        "purpose": "Betalning, avstämning och refund"
+      },
+      "checkout_url": {
+        "source": "server/p8_stripe.php",
+        "classification": "capability or pseudonymous security identifier",
+        "purpose": "Betalning, avstämning och refund"
+      },
+      "created_at": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Betalning, avstämning och refund"
+      },
+      "currency": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Betalning, avstämning och refund"
+      },
+      "effects_status": {
+        "source": "server/p6_payment.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Betalning, avstämning och refund"
+      },
+      "failed_at": {
+        "source": "server/p6_payment.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Betalning, avstämning och refund"
+      },
+      "id": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Relations/identifier: Betalning, avstämning och refund"
+      },
+      "last_event_id": {
+        "source": "server/p6_payment.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Relations/identifier: Betalning, avstämning och refund"
+      },
+      "method": {
+        "source": "server/p6_payment.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Betalning, avstämning och refund"
+      },
+      "order_id": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Relations/identifier: Betalning, avstämning och refund"
+      },
+      "paid_at": {
+        "source": "server/p6_payment.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Betalning, avstämning och refund"
+      },
+      "paid_ore": {
+        "source": "server/p6_payment.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Betalning, avstämning och refund"
+      },
+      "provider": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Betalning, avstämning och refund"
+      },
+      "provider_payment_ref": {
+        "source": "server/p8_stripe.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Betalning, avstämning och refund"
+      },
+      "provider_ref": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Betalning, avstämning och refund"
+      },
+      "refunded_at": {
+        "source": "server/p6_payment.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Betalning, avstämning och refund"
+      },
+      "refunded_ore": {
+        "source": "server/p6_payment.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Betalning, avstämning och refund"
+      },
+      "status": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Betalning, avstämning och refund"
+      },
+      "updated_at": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Betalning, avstämning och refund"
+      }
+    }
+  },
+  "bois_products": {
+    "purpose": "Produktkatalog",
+    "retention": "TBD",
+    "action": "protected",
+    "fields": {
+      "active_from": {
+        "source": "server/p3_db.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Produktkatalog"
+      },
+      "active_to": {
+        "source": "server/p3_db.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Produktkatalog"
+      },
+      "category": {
+        "source": "server/p3_db.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Produktkatalog"
+      },
+      "created_at": {
+        "source": "server/p3_db.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Produktkatalog"
+      },
+      "currency": {
+        "source": "server/p3_db.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Produktkatalog"
+      },
+      "description": {
+        "source": "server/p3_db.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Produktkatalog"
+      },
+      "fulfillment_type": {
+        "source": "server/p3_db.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Produktkatalog"
+      },
+      "id": {
+        "source": "server/p3_db.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Relations/identifier: Produktkatalog"
+      },
+      "is_orderable": {
+        "source": "server/p3_db.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Produktkatalog"
+      },
+      "is_public": {
+        "source": "server/p3_db.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Produktkatalog"
+      },
+      "metadata_json": {
+        "source": "server/p3_db.php",
+        "classification": "potential personal data in structured/free-text content",
+        "purpose": "Produktkatalog; arbitrary content must not carry unnecessary personal data/secrets"
+      },
+      "name": {
+        "source": "server/p3_db.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Produktkatalog"
+      },
+      "price_ore": {
+        "source": "server/p3_db.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Produktkatalog"
+      },
+      "product_key": {
+        "source": "server/p3_db.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Produktkatalog"
+      },
+      "supplier_id": {
+        "source": "server/p3_db.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Relations/identifier: Produktkatalog"
+      },
+      "updated_at": {
+        "source": "server/p3_db.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Produktkatalog"
+      }
+    }
+  },
+  "bois_sales_events": {
+    "purpose": "Valfri funnelstatistik",
+    "retention": "TBD",
+    "action": "configurable analytics deletion",
+    "fields": {
+      "created_at": {
+        "source": "server/p9_sales.php",
+        "classification": "pseudonymous analytics/linkage or potentially identifying attribution",
+        "purpose": "Valfri funnelstatistik"
+      },
+      "event_key": {
+        "source": "server/p9_sales.php",
+        "classification": "pseudonymous analytics/linkage or potentially identifying attribution",
+        "purpose": "Valfri funnelstatistik"
+      },
+      "event_type": {
+        "source": "server/p9_sales.php",
+        "classification": "pseudonymous analytics/linkage or potentially identifying attribution",
+        "purpose": "Valfri funnelstatistik"
+      },
+      "id": {
+        "source": "server/p9_sales.php",
+        "classification": "pseudonymous analytics/linkage or potentially identifying attribution",
+        "purpose": "Relations/identifier: Valfri funnelstatistik"
+      },
+      "page_path": {
+        "source": "server/p9_sales.php",
+        "classification": "pseudonymous analytics/linkage or potentially identifying attribution",
+        "purpose": "Valfri funnelstatistik"
+      },
+      "product_key": {
+        "source": "server/p9_sales.php",
+        "classification": "pseudonymous analytics/linkage or potentially identifying attribution",
+        "purpose": "Valfri funnelstatistik"
+      },
+      "session_id": {
+        "source": "server/p9_sales.php",
+        "classification": "pseudonymous analytics/linkage or potentially identifying attribution",
+        "purpose": "Relations/identifier: Valfri funnelstatistik"
+      }
+    }
+  },
+  "bois_sales_order_links": {
+    "purpose": "Valfri koppling statistik–order",
+    "retention": "TBD",
+    "action": "configurable analytics deletion",
+    "fields": {
+      "created_at": {
+        "source": "server/p9_sales.php",
+        "classification": "pseudonymous analytics/linkage or potentially identifying attribution",
+        "purpose": "Valfri koppling statistik–order"
+      },
+      "order_id": {
+        "source": "server/p9_sales.php",
+        "classification": "pseudonymous analytics/linkage or potentially identifying attribution",
+        "purpose": "Relations/identifier: Valfri koppling statistik–order"
+      },
+      "session_id": {
+        "source": "server/p9_sales.php",
+        "classification": "pseudonymous analytics/linkage or potentially identifying attribution",
+        "purpose": "Relations/identifier: Valfri koppling statistik–order"
+      }
+    }
+  },
+  "bois_sales_sessions": {
+    "purpose": "Valfri kampanjattribution",
+    "retention": "TBD",
+    "action": "configurable analytics deletion",
+    "fields": {
+      "campaign": {
+        "source": "server/p9_sales.php",
+        "classification": "pseudonymous analytics/linkage or potentially identifying attribution",
+        "purpose": "Valfri kampanjattribution"
+      },
+      "event_count": {
+        "source": "server/p9_sales.php",
+        "classification": "pseudonymous analytics/linkage or potentially identifying attribution",
+        "purpose": "Valfri kampanjattribution"
+      },
+      "first_seen_at": {
+        "source": "server/p9_sales.php",
+        "classification": "pseudonymous analytics/linkage or potentially identifying attribution",
+        "purpose": "Valfri kampanjattribution"
+      },
+      "landing_path": {
+        "source": "server/p9_sales.php",
+        "classification": "pseudonymous analytics/linkage or potentially identifying attribution",
+        "purpose": "Valfri kampanjattribution"
+      },
+      "last_seen_at": {
+        "source": "server/p9_sales.php",
+        "classification": "pseudonymous analytics/linkage or potentially identifying attribution",
+        "purpose": "Valfri kampanjattribution"
+      },
+      "medium": {
+        "source": "server/p9_sales.php",
+        "classification": "pseudonymous analytics/linkage or potentially identifying attribution",
+        "purpose": "Valfri kampanjattribution"
+      },
+      "ref_code": {
+        "source": "server/p9_sales.php",
+        "classification": "pseudonymous analytics/linkage or potentially identifying attribution",
+        "purpose": "Valfri kampanjattribution"
+      },
+      "session_id": {
+        "source": "server/p9_sales.php",
+        "classification": "pseudonymous analytics/linkage or potentially identifying attribution",
+        "purpose": "Relations/identifier: Valfri kampanjattribution"
+      },
+      "source": {
+        "source": "server/p9_sales.php",
+        "classification": "pseudonymous analytics/linkage or potentially identifying attribution",
+        "purpose": "Valfri kampanjattribution"
+      }
+    }
+  },
+  "bois_schema_migrations": {
+    "purpose": "Schema- och migrationskontroll",
+    "retention": "TBD",
+    "action": "protected",
+    "fields": {
+      "applied_at": {
+        "source": "server/p3_db.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Schema- och migrationskontroll"
+      },
+      "version": {
+        "source": "server/p3_db.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Schema- och migrationskontroll"
+      }
+    }
+  },
+  "bois_supplier_batches": {
+    "purpose": "Leverantörsbatch och skickad sammanställning",
+    "retention": "TBD",
+    "action": "protected",
+    "fields": {
+      "config_json": {
+        "source": "server/p5_batch.php",
+        "classification": "potential personal data in structured/free-text content",
+        "purpose": "Leverantörsbatch och skickad sammanställning; arbitrary content must not carry unnecessary personal data/secrets"
+      },
+      "created_at": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Leverantörsbatch och skickad sammanställning"
+      },
+      "csv_sha256": {
+        "source": "server/p5_batch.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Leverantörsbatch och skickad sammanställning"
+      },
+      "fulfillment_type": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Leverantörsbatch och skickad sammanställning"
+      },
+      "id": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Relations/identifier: Leverantörsbatch och skickad sammanställning"
+      },
+      "item_count": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Leverantörsbatch och skickad sammanställning"
+      },
+      "locked_at": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Leverantörsbatch och skickad sammanställning"
+      },
+      "max_wait_hours": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Leverantörsbatch och skickad sammanställning"
+      },
+      "order_count": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Leverantörsbatch och skickad sammanställning"
+      },
+      "public_id": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Relations/identifier: Leverantörsbatch och skickad sammanställning"
+      },
+      "sent_at": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Leverantörsbatch och skickad sammanställning"
+      },
+      "status": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Leverantörsbatch och skickad sammanställning"
+      },
+      "supplier_id": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Relations/identifier: Leverantörsbatch och skickad sammanställning"
+      },
+      "threshold_qty": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Leverantörsbatch och skickad sammanställning"
+      },
+      "trigger_reason": {
+        "source": "server/p5_batch.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Leverantörsbatch och skickad sammanställning"
+      },
+      "updated_at": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Leverantörsbatch och skickad sammanställning"
+      }
+    }
+  },
+  "bois_suppliers": {
+    "purpose": "Leverantörskontakt och orderdistribution",
+    "retention": "TBD",
+    "action": "protected",
+    "fields": {
+      "active": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Leverantörskontakt och orderdistribution"
+      },
+      "cc_email": {
+        "source": "server/p3_db.php",
+        "classification": "direct personal/contact or free-text data",
+        "purpose": "Leverantörskontakt och orderdistribution"
+      },
+      "config_json": {
+        "source": "server/p3_db.php",
+        "classification": "potential personal data in structured/free-text content",
+        "purpose": "Leverantörskontakt och orderdistribution; arbitrary content must not carry unnecessary personal data/secrets"
+      },
+      "created_at": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Leverantörskontakt och orderdistribution"
+      },
+      "email": {
+        "source": "server/p3_db.php",
+        "classification": "direct personal/contact or free-text data",
+        "purpose": "Leverantörskontakt och orderdistribution"
+      },
+      "id": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Relations/identifier: Leverantörskontakt och orderdistribution"
+      },
+      "name": {
+        "source": "server/p3_db.php",
+        "classification": "direct personal/contact or free-text data",
+        "purpose": "Leverantörskontakt och orderdistribution"
+      },
+      "supplier_key": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Leverantörskontakt och orderdistribution"
+      },
+      "updated_at": {
+        "source": "server/p3_db.php",
+        "classification": "linkable business/operational data",
+        "purpose": "Leverantörskontakt och orderdistribution"
+      }
+    }
+  },
+  "bois_variants": {
+    "purpose": "Produktvarianter",
+    "retention": "TBD",
+    "action": "protected",
+    "fields": {
+      "active": {
+        "source": "server/p3_db.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Produktvarianter"
+      },
+      "created_at": {
+        "source": "server/p3_db.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Produktvarianter"
+      },
+      "id": {
+        "source": "server/p3_db.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Relations/identifier: Produktvarianter"
+      },
+      "metadata_json": {
+        "source": "server/p3_db.php",
+        "classification": "potential personal data in structured/free-text content",
+        "purpose": "Produktvarianter; arbitrary content must not carry unnecessary personal data/secrets"
+      },
+      "name": {
+        "source": "server/p3_db.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Produktvarianter"
+      },
+      "price_ore": {
+        "source": "server/p3_db.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Produktvarianter"
+      },
+      "product_id": {
+        "source": "server/p3_db.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Relations/identifier: Produktvarianter"
+      },
+      "sku": {
+        "source": "server/p3_db.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Produktvarianter"
+      },
+      "updated_at": {
+        "source": "server/p3_db.php",
+        "classification": "catalog/schema; no intended individual data",
+        "purpose": "Produktvarianter"
+      }
+    }
+  }
+}

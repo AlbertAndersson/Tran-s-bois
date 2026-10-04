@@ -1,5 +1,7 @@
 # Tranås BoIS – webshop
 
+P16 IN PROGRESS: datainventering och konfigurerbar retention med privat dry-run. Alla juridiska tider TBD; ingen production-/staginggallring. Se [P16-runbook](docs/P16-PRIVACY-RETENTION.md). P12-verifiering uppskjuten; P17 har inte startats.
+
 P15 DONE, PR #33: minimal liveness/readiness, privat JSON-loggning med request-ID, read-only driftkontroller och incidentrunbook. P15/P14 och alla regressioner är gröna. Se [P15-runbook](docs/P15-OPERATIONS.md). Ingen Simply-deploy eller productionaktivering; P12-verifiering är uppskjuten och P16 har inte startats.
 
 P14 DONE: personlig adminåtkomst med lösenord+TOTP, roller, serversessioner och audit implementerad i PR #32. Ingen productionaktivering eller riktiga konton. Se [P14-runbook](docs/P14-PERSONAL-ADMIN.md).
