@@ -1,0 +1,117 @@
+name: P0 protected staging read-only diagnosis
+on:
+  push:
+    branches: ["chatgpt/p0-shopadmin-regression"]
+    paths: [".github/workflows/p0-staging-diagnose.yml"]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: simply-tranas-bois-p9-staging
+  cancel-in-progress: false
+jobs:
+  diagnose:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      SIMPLY_HOST: ssh.simply.com
+      EXPECTED_FINGERPRINT: ${{ vars.SIMPLY_HOST_FINGERPRINT }}
+      SIMPLY_SSH_USER: ${{ secrets.SIMPLY_SSH_USER }}
+      SIMPLY_SSH_PRIVATE_KEY: ${{ secrets.SIMPLY_SSH_PRIVATE_KEY }}
+      DB_HOST: ${{ secrets.BOIS_DB_HOST }}
+      DB_NAME: ${{ secrets.BOIS_DB_NAME }}
+      DB_USER: ${{ secrets.BOIS_DB_USER }}
+      DB_PASSWORD: ${{ secrets.BOIS_DB_PASSWORD }}
+      DB_PORT: ${{ vars.BOIS_DB_PORT }}
+      DEMO_PASSWORD: ${{ secrets.BOIS_STAGING_DEMO_PASSWORD }}
+      STAGING_ADMIN_TOKEN: ${{ secrets.BOIS_STAGING_ADMIN_TOKEN }}
+    steps:
+      - uses: actions/checkout@v5
+      - name: Prepare settings and strict SSH
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          [[ -n "$DB_HOST" && -n "$DB_NAME" && -n "$DB_USER" && -n "$DB_PASSWORD" ]] || { echo "::error::BOIS_DB_* secrets are incomplete"; exit 1; }
+          [[ ${#DEMO_PASSWORD} -ge 8 ]] || { echo "::error::BOIS_STAGING_DEMO_PASSWORD must be configured (at least 8 characters) before deployment"; exit 1; }
+          python3 - <<'PY'
+          import os
+          token=os.environ.get("STAGING_ADMIN_TOKEN","")
+          demo=os.environ.get("DEMO_PASSWORD","")
+          if not 12 <= len(token) <= 128:
+              raise SystemExit("BOIS_STAGING_ADMIN_TOKEN must be configured (12-128 characters) before deployment")
+          if not all(33 <= ord(ch) <= 126 for ch in token):
+              raise SystemExit("BOIS_STAGING_ADMIN_TOKEN must use printable ASCII without spaces")
+          if token == demo:
+              raise SystemExit("Demo password and admin token must be different")
+          PY
+          echo "::add-mask::$STAGING_ADMIN_TOKEN"
+          command -v htpasswd >/dev/null || { echo "::error::apache2-utils htpasswd is required on the runner"; exit 1; }
+          if [[ -z "${DB_PORT:-}" ]]; then DB_PORT=3306; fi
+          echo "DB_PORT=$DB_PORT" >> "$GITHUB_ENV"
+          [[ "$EXPECTED_FINGERPRINT" =~ ^SHA256:[A-Za-z0-9+/]{43}$ ]] || exit 1
+
+          SSH_DIR="$(mktemp -d "$RUNNER_TEMP/bois-p6-ssh.XXXXXX")"
+          export SSH_DIR
+          echo "SSH_DIR=$SSH_DIR" >> "$GITHUB_ENV"
+          printf '%s\n' "$SIMPLY_SSH_PRIVATE_KEY" | tr -d '\r' > "$SSH_DIR/identity"
+          chmod 600 "$SSH_DIR/identity"
+          ssh-keygen -y -P '' -f "$SSH_DIR/identity" >/dev/null 2>&1
+          timeout 40s ssh-keyscan -4 -T 8 -p 22 -t ed25519,ecdsa,rsa "$SIMPLY_HOST" > "$SSH_DIR/scan" 2>/dev/null
+
+          python3 - <<'PY'
+          import base64,hashlib,os
+          from pathlib import Path
+          expected=os.environ["EXPECTED_FINGERPRINT"].strip()
+          root=Path(os.environ["SSH_DIR"])
+          selected=None
+          for line in (root/"scan").read_text(encoding="ascii").splitlines():
+              parts=line.split()
+              if len(parts)!=3: continue
+              host,kind,encoded=parts
+              fp="SHA256:"+base64.b64encode(hashlib.sha256(base64.b64decode(encoded)).digest()).decode().rstrip("=")
+              if fp==expected:
+                  selected=f"{host} {kind} {encoded}\n"; break
+          if selected is None: raise SystemExit("host key mismatch")
+          (root/"known_hosts").write_text(selected,encoding="ascii")
+          PY
+
+      - name: Read-only runtime, source and HTTP diagnosis
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PYTHON'
+          import os,json,subprocess,shlex,hashlib,urllib.request,urllib.error,base64
+          env=os.environ
+          files=['commerce-api.php','security.php','p3_db.php','p4_membership.php','p5_batch.php','p6_payment.php','p7_assortment.php','p9_sales.php','assets/admin.js','assets/common.js','admin.html']
+          ref='f355ff5c26ce11ad20815e2f48b35ec2f4bbc064'
+          hashes={f:hashlib.sha256(subprocess.check_output(['git','show',ref+':'+('server/'+f if f.endswith('.php') else 'site/commerce/'+f)])).hexdigest() for f in files}
+          php=r"""$input=json_decode(stream_get_contents(STDIN),true,512,JSON_THROW_ON_ERROR);$home=getenv('HOME');$p=$home.'/.bois-p3/config.php';$r=['config_exists'=>is_file($p)];if(is_file($p)){$c=require $p;$r['config_permissions']=substr(sprintf('%o',fileperms($p)),-3);$r['token_matches_repository_secret']=is_string($c['admin_token']??null)&&hash_equals($input['token'],$c['admin_token']);$r['mode']=$c['mode']??null;$r['provider']=$c['payment_provider']??null;$r['mail_disabled']=($c['mail_transport']??null)==='disabled';$r['payment_mail_disabled']=($c['payment_mail_transport']??null)==='disabled';$r['production_disabled']=($c['production_launch_enabled']??null)===false;}foreach($input['hashes'] as $f=>$h){$app=$home.'/public_html/bois-shop-p3/'.$f;$r['source_match'][$f]=is_file($app)&&hash_equals($h,hash_file('sha256',$app));}$r['config_http_readable']=is_readable($p);echo json_encode($r,JSON_THROW_ON_ERROR);"""
+          opts=['-4','-F','/dev/null','-T','-p','22','-i',env['SSH_DIR']+'/identity','-o','BatchMode=yes','-o','IdentitiesOnly=yes','-o','IdentityAgent=none','-o','StrictHostKeyChecking=yes','-o','UserKnownHostsFile='+env['SSH_DIR']+'/known_hosts','-o','GlobalKnownHostsFile=/dev/null','-o','UpdateHostKeys=no','-o','PasswordAuthentication=no','-o','KbdInteractiveAuthentication=no','-o','ForwardAgent=no','-o','ClearAllForwardings=yes','-o','ConnectTimeout=12','-o','LogLevel=ERROR']
+          result=subprocess.run(['ssh']+opts+['-l',env['SIMPLY_SSH_USER'],env['SIMPLY_HOST'],'php -r '+shlex.quote(php)],input=json.dumps({'token':env['STAGING_ADMIN_TOKEN'],'hashes':hashes}),text=True,capture_output=True,timeout=60)
+          if result.returncode: raise SystemExit('Private runtime diagnosis failed; remote details suppressed')
+          print('P0_RUNTIME '+json.dumps(json.loads(result.stdout),sort_keys=True))
+          basic='Basic '+base64.b64encode(('bois-demo:'+env['DEMO_PASSWORD']).encode()).decode()
+          def check(label,path,auth=False,token=None):
+              headers={'User-Agent':'AlberIQ-BoIS-P9-Check/1.0','Accept':'application/json'}
+              if auth:headers['Authorization']=basic
+              if token is not None:headers['X-Bois-Admin-Token']=token
+              try:
+                  with urllib.request.urlopen(urllib.request.Request('https://alberiq.se/bois-shop-p3/'+path,headers=headers),timeout=25) as r:status=r.status;body=r.read();ct=r.headers.get('Content-Type','')
+              except urllib.error.HTTPError as e:status=e.code;body=e.read();ct=e.headers.get('Content-Type','')
+              except Exception:print('P0_HTTP '+label+' transport_failure');return
+              out={'check':label,'status':status,'json':False}
+              try:
+                  data=json.loads(body);out['json']=True;out['keys']=sorted(data) if isinstance(data,dict) else []
+              except Exception:pass
+              print('P0_HTTP '+json.dumps(out,sort_keys=True))
+          check('basic_missing','admin.html')
+          check('basic_valid','admin.html',True)
+          check('health','commerce-api.php?action=health',True)
+          check('admin_wrong','commerce-api.php?action=admin_orders',True,'p0-invalid-fixture')
+          for action in ['admin_orders','admin_catalog','admin_batches','admin_p4','admin_payments','admin_p7','admin_sales']:
+              check(action,'commerce-api.php?action='+action,True,env['STAGING_ADMIN_TOKEN'])
+          PYTHON
+      - name: Cleanup credentials
+        if: always()
+        run: rm -rf -- "$SSH_DIR"
