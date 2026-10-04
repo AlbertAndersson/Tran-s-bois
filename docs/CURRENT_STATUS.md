@@ -1,3 +1,45 @@
+## Staging inför nästa P-etapp – verifierad 2026-10-04
+
+**READY FOR NEXT DEVELOPMENT PHASE (P17); NOT PRODUCTION READY.**
+Skyddad staging: [37219659212](https://github.com/AlbertAndersson/Tran-s-bois/actions/runs/37219659212),
+jobb `111487249492`: **success**, alla steg inklusive browseracceptans.
+Verifierad workflowref: `ed81259c6f725589ecc7acd4b962c69b418a39d4`.
+Faktiskt publicerad app-/browserref: `276558e9b187aeea7d0324b662ab20c6513d125b`.
+PR #38 innehåller rättningen. Main före rättningen: `fbd3f07b000f419ad05acfaa59eaeed0e47c6d14`.
+
+Root cause för run `37216249742`: ordertestet förutsatte obegränsade gymkort.
+Live-diagnos visade limit 20, sold 31, reserved 0, remaining 0; äldre syntetiska
+PAID-order från före kvotregeln förbrukar hela stagingkvoten. Servern nekade
+korrekt nya gymorder med DomainException, som befintligt API mappar till 401.
+Detta var inte en felaktig adminnyckel. Inga secrets roterades eller visades.
+
+Browser-gaten hittade dessutom att `refreshGymAvailability()` aldrig startades:
+anropet låg inuti funktionen efter refresh, i stället för vid sidans initiering.
+Anropet har flyttats till initieringen. Live Chromium verifierar Slutsåld,
+disabled/unchecked gymval på 375/390/1280 px. Kvoten 20 och tidigare order bevaras.
+
+Live verifierat: Basic Auth accepterar korrekt credential och nekar obehöriga/fel
+credential; fel/saknad adminnyckel nekas; rätt nyckel fungerar på
+admin_orders/catalog/P4/payments/P7/sales. P10 headers/grindar,
+serverns slutsåltspärr, medlemsorder → signerad mock-PAID/idempotens,
+samtycke/attribution/återkallelse samt browserköp, misslyckad/avbruten betalning,
+nytt försök, matchställskö och mockrefund passerar. Befintlig-medlem+gym och
+Nordic-aktivering kan inte köpas i denna förbrukade hostkvot; deras funktionella
+regression körs i isolerade CI-fixturer. Browserloggen redovisar denna gräns.
+Matchbatch körs bara när testets egna väntande rad är ensam; andra rader bevaras.
+
+12 startade CI-workflows på kod-head `ed81259c6f725589ecc7acd4b962c69b418a39d4`
+är **success**: P2, P3, P6, P7, P8, P9, P12, P13, P14, P15, P16 och Security.
+P3 omfattar 20-gränsen och nekad 21:a order; P8/P16 inkluderar tidigare fasregressioner.
+YAML, samtliga Bash-steg och browser-JavaScript har även syntaxkontrollerats.
+
+Nästa utveckling är P17 enligt befintlig kö; P17 har inte startats.
+P12:s kvarvarande host-/flödesverifiering är fortfarande uppskjuten enligt beslut.
+Denna stagingcloseout ersätter inte P12, produktionsacceptans, fysisk iPhone/Safari
+eller föreningens godkännande. Produktion, Stripe live, extern mail och nya kostnader
+har inte aktiverats. Tekniskt kvarstående API-förbättring: skilj kvotkonflikt från
+autentiseringsfel i HTTP-status; det ingår inte i denna verifieringsfix.
+
 ## P16 – DONE, privacy och konfigurerbar retention verifierade
 
 Main före P16: `df6c80a68945a9b6fe7b103a28a66399cf25ea42`. PR #34 är mergad;

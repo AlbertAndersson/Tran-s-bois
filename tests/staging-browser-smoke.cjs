@@ -10,6 +10,7 @@ const demoPassword=process.env.DEMO_PASSWORD;
 if(!base||!adminToken||!demoPassword)throw Error('Synthetic staging URL and private credentials required.');
 const output=process.env.RUNNER_TEMP?path.join(process.env.RUNNER_TEMP,'bois-browser-evidence'):path.join('/tmp','bois-browser-evidence');
 fs.mkdirSync(output,{recursive:true});
+const gymEnabled=process.env.BOIS_TEST_GYM_ENABLED!=='false';
 const key=()=>Math.random().toString(36).slice(2,12);
 
 (async()=>{
@@ -39,10 +40,19 @@ const key=()=>Math.random().toString(36).slice(2,12);
       }
       await page.goto(base+'/membership.html');
       await page.locator('#membershipForm').waitFor();
+      await page.locator('#gymStock').filter({hasNotText:'Kontrollerar'}).waitFor();
+      if(!gymEnabled){
+        if((await page.locator('#gymStock').innerText()).includes('Slutsåld')){
+          assert.equal(await page.locator('#addGym').isDisabled(),true,'sold-out gym choice disabled');
+          assert.equal(await page.locator('#addGym').isChecked(),false,'sold-out gym choice unchecked');
+          console.log('NORDIC_SOLD_OUT_BROWSER_'+width+': pass');
+        }else await page.locator('#addGym').uncheck();
+      }
       assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2),true,'horizontal overflow on membership '+width);
       await page.screenshot({path:path.join(output,'membership-'+width+'.png')});
       if(width===390){
-        await page.locator('#existingMember').check();
+        if(gymEnabled) await page.locator('#existingMember').check();
+        else await page.locator('#memberName').fill('Bo Test');
         await page.locator('#buyerName').fill('Bo Test');
         await page.locator('#email').fill('bo-'+key()+'@example.invalid');
         await page.locator('#consent').check();
@@ -61,7 +71,7 @@ const key=()=>Math.random().toString(36).slice(2,12);
         await page.locator('#orderLink').click();
         await page.locator('#payment').getByText('PAID').waitFor();
         assert.equal(await page.locator('#retryPayment').isVisible(),false);
-        await page.locator('#p4StatusBody').getByText('PENDING_MEMBER_VERIFICATION').waitFor();
+        await page.locator('#p4StatusBody').getByText(gymEnabled?'PENDING_MEMBER_VERIFICATION':'ACTIVE',{exact:true}).waitFor();
         await page.screenshot({path:path.join(output,'existing-member-retry-390.png')});
         await context.close();continue;
       }
@@ -144,10 +154,12 @@ const key=()=>Math.random().toString(36).slice(2,12);
       if(dialog.type()==='prompt')await dialog.accept(dialog.message().startsWith('Medlemmens')?'Bo Test':dialog.message().startsWith('Medlemstyp')?'adult':'');
       else await dialog.dismiss();
     };
+    if(gymEnabled){
     admin.on('dialog',answerMemberPrompt);
     await pending.getByRole('button',{name:'Verifiera medlem'}).click();
     await admin.locator('#entitlements tr').filter({hasText:existingOrderId}).getByRole('button',{name:'Skickad till Nordic'}).waitFor();
     admin.off('dialog',answerMemberPrompt);
+    }else console.log('NORDIC_MEMBER_VERIFICATION: unavailable annual quota; P3 CI coverage');
     assert.ok((await admin.locator('#orders').innerText()).includes(matchOrderId));
     assert.ok(Number(await admin.locator('#waitingItems').innerText())>=1);
     await admin.locator('#salesCampaigns').getByText('synthetic').waitFor();
@@ -173,10 +185,10 @@ const key=()=>Math.random().toString(36).slice(2,12);
     await context.close();
     console.log('CHROMIUM_HEADLESS_VIEWPORTS: 375,390,1280');
     console.log('MOBILE_NO_CHOICE_REJECT_PURCHASE_MOCK_PAID: pass');
-    console.log('EXISTING_MEMBER_FAILED_CANCELLED_RETRY: pass');
+    console.log(gymEnabled?'EXISTING_MEMBER_FAILED_CANCELLED_RETRY: pass':'MEMBER_ONLY_FAILED_CANCELLED_RETRY: pass');
     console.log('CONSENT_ACCEPT_ATTRIBUTION_WITHDRAWAL: pass');
     console.log('ADMIN_SECTIONS_WITH_PRIVATE_STAGING_TOKEN: pass');
-    console.log('ADMIN_MEMBER_VERIFICATION_MATCH_QUEUE_MOCK_REFUND: pass');
+    console.log(gymEnabled?'ADMIN_MEMBER_VERIFICATION_MATCH_QUEUE_MOCK_REFUND: pass':'ADMIN_MATCH_QUEUE_MOCK_REFUND: pass; Nordic member verification covered in isolated CI');
     console.log('DEMO_ORDER_REFS: '+JSON.stringify({existingOrderId,matchOrderId,refundOrderId}));
     console.log('SCREENSHOTS: '+output);
   }finally{await browser.close();}

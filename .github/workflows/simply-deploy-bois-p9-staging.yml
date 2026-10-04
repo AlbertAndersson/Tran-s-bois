@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     env:
-      BOIS_SOURCE_REF: 338a76252aa17ad75b55b0bf76c9d104ac8d1547
+      BOIS_SOURCE_REF: 276558e9b187aeea7d0324b662ab20c6513d125b
       BOIS_PUBLIC_PATH: bois-shop-p3
       BOIS_BASE_URL: https://alberiq.se/bois-shop-p3
       SIMPLY_HOST: ssh.simply.com
@@ -315,7 +315,18 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          curl(){ command curl --user "bois-demo:$DEMO_PASSWORD" "$@"; }
+          curl(){
+            local endpoint=static arg rc
+            for arg in "$@"; do
+              if [[ "$arg" == "$BOIS_BASE_URL/commerce-api.php?action="* ]]; then
+                endpoint="${arg#*action=}"; endpoint="${endpoint%%&*}"
+              fi
+            done
+            echo "STAGING_HTTP_CHECK: $endpoint"
+            command curl --user "bois-demo:$DEMO_PASSWORD" "$@" || {
+              rc=$?; echo "::error::Staging HTTP check failed: $endpoint (curl exit $rc)"; return "$rc";
+            }
+          }
           UA="AlberIQ-BoIS-P9-Check/1.0"
           API="$BOIS_BASE_URL/commerce-api.php"
 
@@ -354,8 +365,29 @@ jobs:
           curl --fail --silent --show-error -A "$UA" -X POST "$API?action=sales_recommendations"             -H "Origin: https://alberiq.se" -H "Content-Type: application/json"             --data '{"skus":["MEM-ADULT"],"existing_member":false}'             -o "$RUNNER_TEMP/recommendations.json"
           php -r '$d=json_decode(file_get_contents($argv[1]),true); $r=$d["recommendations"][0]??[]; if(($r["product_key"]??"")!=="nordic-gym" || (int)($r["discount_ore"]??-1)!==0) exit(1);' "$RUNNER_TEMP/recommendations.json"
 
+          curl --fail --silent --show-error -A "$UA" "$API?action=catalog" -o "$RUNNER_TEMP/quota-catalog.json"
+          BOIS_TEST_GYM_ENABLED="$(php -r '$d=json_decode(file_get_contents($argv[1]),true);foreach($d["products"]??[] as $p){if(($p["product_key"]??"")==="nordic-gym"){$a=$p["availability"];echo ((int)$a["remaining"]>=4)?"true":"false";exit;}}exit(1);' "$RUNNER_TEMP/quota-catalog.json")"
+          echo "BOIS_TEST_GYM_ENABLED=$BOIS_TEST_GYM_ENABLED" >> "$GITHUB_ENV"
+          php -r '$d=json_decode(file_get_contents($argv[1]),true);foreach($d["products"]??[] as $p){if(($p["product_key"]??"")==="nordic-gym"){echo "NORDIC_QUOTA: ".json_encode($p["availability"]).PHP_EOL;}}' "$RUNNER_TEMP/quota-catalog.json"
+          if [[ "$BOIS_TEST_GYM_ENABLED" == false ]]; then
+            echo 'NORDIC_LIVE_PURCHASE: unavailable quota; membership-only E2E, quota covered by P3 CI' >> "$GITHUB_STEP_SUMMARY"
+          fi
+          if php -r '$d=json_decode(file_get_contents($argv[1]),true);foreach($d["products"]??[] as $p){if(($p["product_key"]??"")==="nordic-gym")exit(($p["availability"]["sold_out"]??false)?0:1);}exit(1);' "$RUNNER_TEMP/quota-catalog.json"; then
+            status="$(command curl --silent --show-error -A "$UA" --user "bois-demo:$DEMO_PASSWORD" -o "$RUNNER_TEMP/quota-denied.json" -w '%{http_code}' -X POST "$API?action=orders" -H "Origin: https://alberiq.se" -H 'Content-Type: application/json' --data '{"customer":{"name":"Quota Test","email":"quota-check@example.invalid"},"items":[{"sku":"NW-GYM-ANNUAL","quantity":1,"metadata":{}}],"existing_member":true,"consent":true,"website":"","idempotency_key":"quota-denied-'$GITHUB_RUN_ID'"}')"
+            [[ "$status" == 401 ]]
+            php -r '$d=json_decode(file_get_contents($argv[1]),true);if(!str_contains($d["error"]??"","gymkorten är slutsålda"))exit(1);' "$RUNNER_TEMP/quota-denied.json"
+            echo 'NORDIC_SOLD_OUT_SERVER_GATE: pass' >> "$GITHUB_STEP_SUMMARY"
+          fi
+          for action in admin_orders admin_catalog admin_p4 admin_payments admin_p7 admin_sales; do
+            curl --fail --silent --show-error -A "$UA" "$API?action=$action" -H "X-Bois-Admin-Token: $BOIS_ADMIN_TOKEN" -o "$RUNNER_TEMP/admin-check.json"
+            php -r '$d=json_decode(file_get_contents($argv[1]),true);if(($d["ok"]??false)!==true)exit(1);' "$RUNNER_TEMP/admin-check.json"
+          done
+          echo 'STAGING_ADMIN_READ_ENDPOINTS: pass' >> "$GITHUB_STEP_SUMMARY"
+          gym_item=''
+          if [[ "$BOIS_TEST_GYM_ENABLED" == true ]]; then gym_item=',{"sku":"NW-GYM-ANNUAL","quantity":1,"metadata":{}}'; fi
+
           new_email="p9-new-$GITHUB_RUN_ID@example.invalid"
-          curl --fail --silent --show-error -A "$UA" -b "$RUNNER_TEMP/consent-cookies.txt" -X POST "$API?action=orders"             -H "Origin: https://alberiq.se" -H "Content-Type: application/json"             --data "{\"customer\":{\"name\":\"P9 Syntetisk Medlem\",\"email\":\"$new_email\",\"phone\":\"070-900 00 01\"},\"items\":[{\"sku\":\"MEM-ADULT\",\"quantity\":1,\"metadata\":{\"member_name\":\"P9 Syntetisk Medlem\"}},{\"sku\":\"NW-GYM-ANNUAL\",\"quantity\":1,\"metadata\":{}}],\"existing_member\":false,\"consent\":true,\"website\":\"\",\"idempotency_key\":\"p9-new-$GITHUB_RUN_ID\",\"sales_session_id\":\"$sales_session\",\"sales_attribution\":{\"source\":\"github\",\"medium\":\"staging\",\"campaign\":\"p9-readiness\",\"ref\":\"ci\",\"landing_path\":\"/bois-shop-p3/\"}}"             -o "$RUNNER_TEMP/order.json"
+          curl --fail --silent --show-error -A "$UA" -b "$RUNNER_TEMP/consent-cookies.txt" -X POST "$API?action=orders"             -H "Origin: https://alberiq.se" -H "Content-Type: application/json"             --data "{\"customer\":{\"name\":\"P9 Syntetisk Medlem\",\"email\":\"$new_email\",\"phone\":\"070-900 00 01\"},\"items\":[{\"sku\":\"MEM-ADULT\",\"quantity\":1,\"metadata\":{\"member_name\":\"P9 Syntetisk Medlem\"}}$gym_item],\"existing_member\":false,\"consent\":true,\"website\":\"\",\"idempotency_key\":\"p9-new-$GITHUB_RUN_ID\",\"sales_session_id\":\"$sales_session\",\"sales_attribution\":{\"source\":\"github\",\"medium\":\"staging\",\"campaign\":\"p9-readiness\",\"ref\":\"ci\",\"landing_path\":\"/bois-shop-p3/\"}}"             -o "$RUNNER_TEMP/order.json"
 
           order_id="$(php -r '$d=json_decode(file_get_contents($argv[1]),true);echo $d["order"]["public_id"]??"";' "$RUNNER_TEMP/order.json")"
           order_token="$(php -r '$d=json_decode(file_get_contents($argv[1]),true);echo $d["order"]["public_token"]??"";' "$RUNNER_TEMP/order.json")"
@@ -372,7 +404,7 @@ jobs:
 
           curl --fail --silent --show-error -A "$UA" -X POST "$API?action=mock_payment_event" -H "Origin: https://alberiq.se" -H "Content-Type: application/json"             --data "{\"session_ref\":\"$session_ref\",\"session_token\":\"$session_token\",\"outcome\":\"paid\"}"             -o "$RUNNER_TEMP/paid.json"
           grep -q '"status":"PAID"' "$RUNNER_TEMP/paid.json"
-          grep -q '"status":"ELIGIBLE"' "$RUNNER_TEMP/paid.json"
+          if [[ "$BOIS_TEST_GYM_ENABLED" == true ]]; then grep -q '"status":"ELIGIBLE"' "$RUNNER_TEMP/paid.json"; fi
 
           curl --fail --silent --show-error -A "$UA" -X POST "$API?action=mock_payment_event" -H "Origin: https://alberiq.se" -H "Content-Type: application/json"             --data "{\"session_ref\":\"$session_ref\",\"session_token\":\"$session_token\",\"outcome\":\"paid\"}"             -o "$RUNNER_TEMP/paid-again.json"
           grep -q '"already_applied":true' "$RUNNER_TEMP/paid-again.json"
@@ -380,7 +412,7 @@ jobs:
           curl --fail --silent --show-error -A "$UA" "$API?action=order&id=$order_id&token=$order_token" -o "$RUNNER_TEMP/public.json"
           grep -q '"payment_status":"PAID"' "$RUNNER_TEMP/public.json"
           grep -q '"status":"ACTIVE"' "$RUNNER_TEMP/public.json"
-          grep -q '"status":"ELIGIBLE"' "$RUNNER_TEMP/public.json"
+          if [[ "$BOIS_TEST_GYM_ENABLED" == true ]]; then grep -q '"status":"ELIGIBLE"' "$RUNNER_TEMP/public.json"; fi
 
           cp "$RUNNER_TEMP/consent-cookies.txt" "$RUNNER_TEMP/old-consent-cookies.txt"
           curl --fail --silent --show-error -A "$UA" -b "$RUNNER_TEMP/consent-cookies.txt" \
@@ -434,7 +466,7 @@ jobs:
             echo "SIGNED_WEBHOOK_PATH: pass"
             echo "DOWNSTREAM_EFFECT_IDEMPOTENCY: pass"
             echo "MEMBERSHIP_AFTER_PAID: pass"
-            echo "NORDIC_AFTER_PAID: pass"
+            echo "NORDIC_AFTER_PAID: $BOIS_TEST_GYM_ENABLED (live purchase enabled)"
             echo "PAYMENT_MAIL_TRANSPORT_DISABLED: pass"
             echo "P5_BATCH_CONFIG_PRESERVED: pass"
             echo "P7_ADMIN_PREVIEW: pass"
