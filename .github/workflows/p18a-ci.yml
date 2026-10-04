@@ -56,6 +56,11 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Complete packaged purchase and denial flows
         run: node tests/p18-browser.test.cjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bois-p18-browser-${{ github.sha }}
+          path: ${{ runner.temp }}/bois-browser-evidence/*.png
+          retention-days: 14
       - name: Build and verify the closed delivery artifact
         run: |
           node scripts/p18-release.cjs build . "$RUNNER_TEMP/bois-release" "$GITHUB_SHA"

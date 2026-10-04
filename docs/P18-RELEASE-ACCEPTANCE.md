@@ -2,7 +2,11 @@
 
 Beställd av Albert 2026-10-04. Baseline main:
 `fd36b6ad3e70010bad73aa5b9dae3a1432df48f1` (P17, PR39).
-P18A verifieras i PR; P18B hostacceptans återstår. P18 är IN PROGRESS.
+P18A levereras via PR40. Kod-head `b165c67a1cbdb2d98e8ca2c7f2f91a03d7b487e8`
+har 16/16 gröna PR-kontroller; P18-run
+[37235765983](https://github.com/AlbertAndersson/Tran-s-bois/actions/runs/37235765983)
+är success. Slutlig PR-head och main verifieras på nytt före closeout.
+P18B hostacceptans återstår. P18 är IN PROGRESS.
 
 ## Konkreta rättningar
 
@@ -10,6 +14,9 @@ P18A verifieras i PR; P18B hostacceptans återstår. P18 är IN PROGRESS.
   kopierar nu den och dess worker om den valda apprevisionen innehåller dem,
   samt http-errors och supporterpreview. Oförändrade äldre apppinnar stöds.
   Statisk PHP-beroendekontroll körs både på byggt och slutligt transportpaket.
+  Senare moduler, inklusive consent, är villkorliga för äldre pinnar som föregår
+  modulerna; saknat krävt beroende nekas ändå. CI hämtar de faktiska P8/P9/sandbox-
+  pinnarna och bygger deras PHP-fillistor från nuvarande workflowdefinitioner.
 - Commerce API skiljer autentisering (401), origin/roll/CSRF/aktiveringsförbud
   (403), och affärskonflikt (409). Slutsålt och återanvänt event-ID med annat
   innehåll är konflikter. Fel kundtoken och okänt order-ID ger båda generiskt
@@ -37,7 +44,8 @@ P14-regressionen provar även inloggad otillräcklig roll och saknad CSRF som 40
 betalningar, backup/restore, säkerhet, drift och retention. Inga hostsecrets
 används; PHP mail/curl är avstängda i nya integrationstester.
 
-CI:s stängda artifact har samma SHA som workflow-checkouten och sparas 14 dagar.
+CI:s stängda artifact och syntetiska browser-PNG sparas 14 dagar. Paketet har
+samma SHA som workflow-checkouten.
 PR-körningar använder GitHubs testmerge-SHA; main-körningens artifact följer main-SHA.
 Efter nedladdning: `node scripts/p18-release.cjs verify /absolut/paket`.
 Byggning/acceptans ändrar aldrig runtimeflaggor. Dynamisk privat configväg,

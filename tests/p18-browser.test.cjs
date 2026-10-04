@@ -49,6 +49,7 @@ const order=key=>({customer:{name:'P18 Synthetic',email:'p18@example.invalid'},i
       // The same public API client used by forms preserves the business message.
       const uiError=await page.evaluate(async input=>{try{await window.BOIS_COMMERCE.api('orders',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(input)});return '';}catch(e){return e.message;}},order('p18-ui-'+width));
       assert.match(uiError,/slutsålda/);assert.doesNotMatch(uiError,/behörig|inlogg/i);
+      await page.screenshot({path:path.join(process.env.RUNNER_TEMP||os.tmpdir(),'bois-browser-evidence','p18-sold-out-'+width+'.png')});
       await page.goto(base+'/supporter-preview.html');
       assert.equal(await page.locator('form').count(),0,'2027 preview cannot submit orders');
       assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2),true);
