@@ -48,10 +48,10 @@ final class BoisDisabledPaymentProvider implements BoisPaymentProviderAdapter
 {
     public function name(): string { return 'disabled'; }
     public function enabled(array $config): bool { return false; }
-    public function checkoutSession(): array { throw new DomainException('Betalprovider är avstängd.'); }
+    public function checkoutSession(): array { throw new BoisForbiddenException('Betalprovider är avstängd.'); }
     public function verifyWebhook(array $config,string $raw,string $timestamp,string $signature): void
     {
-        throw new DomainException('Betalprovider är avstängd.');
+        throw new BoisForbiddenException('Betalprovider är avstängd.');
     }
 }
 
@@ -159,7 +159,7 @@ function bois_p6_payment_enabled(array $config): bool
 function bois_p6_require_mock(array $config): void
 {
     if(($config['mode'] ?? '')==='production' || bois_p6_provider($config)!=='mock'){
-        throw new DomainException('Mockbetalning är inte tillåten i denna miljö.');
+        throw new BoisForbiddenException('Mockbetalning är inte tillåten i denna miljö.');
     }
 }
 
@@ -193,7 +193,7 @@ function bois_p6_checkout(PDO $pdo,array $config,string $publicId,string $public
         return bois_p8_stripe_checkout($pdo,$config,$publicId,$publicToken,$method,$stripeTransport);
     }
     if(!bois_p6_payment_enabled($config)){
-        throw new DomainException('Betalning är inte aktiverad i denna miljö.');
+        throw new BoisForbiddenException('Betalning är inte aktiverad i denna miljö.');
     }
     $method=strtolower(trim($method));
     if(!in_array($method,['swish','card'],true)){
@@ -215,7 +215,7 @@ function bois_p6_checkout(PDO $pdo,array $config,string $publicId,string $public
         $stmt->execute([$publicId]);
         $row=$stmt->fetch();
         if(!$row || $publicToken==='' || !hash_equals((string)$row['public_token'],$publicToken)){
-            throw new DomainException('Ej behörig.');
+            throw new BoisAuthenticationException('Ej behörig.');
         }
 
         $current=(string)$row['payment_status_row'];
@@ -283,7 +283,7 @@ function bois_p6_session(PDO $pdo,string $sessionRef,string $token): array
     $stmt->execute([$sessionRef]);
     $row=$stmt->fetch();
     if(!$row || $token==='' || !hash_equals((string)$row['checkout_token_hash'],hash('sha256',$token))){
-        throw new DomainException('Ogiltig betalningssession.');
+        throw new BoisAuthenticationException('Ogiltig betalningssession.');
     }
     unset($row['checkout_token_hash'],$row['public_token']);
     return $row;
@@ -297,15 +297,15 @@ function bois_p6_signature(array $config,string $raw,string $timestamp): string
 function bois_p6_verify_signature(array $config,string $raw,string $timestamp,string $signature,int $tolerance=300): void
 {
     if(!preg_match('/^\d{10}$/',$timestamp)){
-        throw new DomainException('Ogiltig webhook-tidsstämpel.');
+        throw new BoisAuthenticationException('Ogiltig webhook-tidsstämpel.');
     }
     if(abs(time()-(int)$timestamp)>$tolerance){
-        throw new DomainException('Webhook-tidsstämpeln ligger utanför tillåtet intervall.');
+        throw new BoisAuthenticationException('Webhook-tidsstämpeln ligger utanför tillåtet intervall.');
     }
     $signature=preg_replace('/^sha256=/','',$signature) ?? '';
     $expected=bois_p6_signature($config,$raw,$timestamp);
     if($signature==='' || !hash_equals($expected,$signature)){
-        throw new DomainException('Ogiltig webhook-signatur.');
+        throw new BoisAuthenticationException('Ogiltig webhook-signatur.');
     }
 }
 
@@ -712,7 +712,7 @@ function bois_p6_process_verified_event(PDO $pdo,array $config,array $event,stri
     }
     if((string)$event['provider']!==bois_p6_provider($config) ||
        !bois_p6_payment_enabled($config)){
-        throw new DomainException('Betalprovider är inte aktiverad.');
+        throw new BoisForbiddenException('Betalprovider är inte aktiverad.');
     }
 
     // Serialize all events for one payment across the event claim and downstream effects.

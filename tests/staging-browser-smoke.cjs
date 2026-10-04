@@ -175,7 +175,7 @@ const key=()=>Math.random().toString(36).slice(2,12);
     }
     const refund=await admin.request.post(base+'/commerce-api.php?action=mock_payment_event',{
       data:{session_ref:refundSession.session_ref,session_token:refundSession.session_token,outcome:'refunded',refund_ore:refundSession.amount_ore},
-      headers:{Origin:'https://alberiq.se'}
+      headers:{Origin:new URL(base).origin}
     });
     assert.equal(refund.ok(),true,'synthetic mock refund endpoint');
     await admin.reload();

@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 require_once __DIR__.'/p15_observability.php';
+require_once __DIR__.'/http-errors.php';
 
 function bois_p14_personal(array $config): bool {return ($config['mode']??'')==='production'||($config['personal_admin']['enabled']??false)===true;}
 function bois_p14_permissions(string $role): array
@@ -18,7 +19,7 @@ function bois_p14_permissions(string $role): array
 function bois_p14_paths(array $config): array
 {
     $p=$config['personal_admin']??[];
-    if(($p['enabled']??false)!==true) throw new DomainException('Personlig adminåtkomst är inte aktiverad.');
+    if(($p['enabled']??false)!==true) throw new BoisForbiddenException('Personlig adminåtkomst är inte aktiverad.');
     $root=realpath($p['public_root']??'');$dir=realpath($p['state_dir']??'');$users=realpath($p['users_file']??'');
     if(!$root||!$dir||!$users||is_link($p['state_dir'])||is_link($p['users_file'])) throw new RuntimeException('Private admin paths required.');
     foreach([$dir,dirname($users)] as $path)
@@ -86,7 +87,7 @@ function bois_p14_audit(string $dir,string $actor,string $role,string $action,st
 function bois_p14_login(array $config,array $input): array
 {
     $id=$input['username']??'';$password=$input['password']??'';$otp=$input['otp']??'';
-    if(!is_string($id)||!is_string($password)||strlen($password)>256||!is_string($otp)||!preg_match('/^[0-9]{6}$/D',$otp))throw new DomainException('Inloggningen misslyckades.');
+    if(!is_string($id)||!is_string($password)||strlen($password)>256||!is_string($otp)||!preg_match('/^[0-9]{6}$/D',$otp))throw new BoisAuthenticationException('Inloggningen misslyckades.');
     // Persist both successful OTP consumption and failed attempts under one lock.
     $result=bois_p14_locked($config,function(&$s,$users,$dir,$now)use($id,$password,$otp){
         $account=preg_match('/^[a-z0-9][a-z0-9._-]{2,79}$/D',$id)?($users[$id]??null):null;
@@ -107,19 +108,19 @@ function bois_p14_login(array $config,array $input): array
         bois_p14_audit($dir,$id,$account['role'],'admin_login','success',bois_p15_id());
         return ['token'=>$token,'csrf'=>$csrf,'id'=>$id,'role'=>$account['role'],'permissions'=>bois_p14_permissions($account['role'])];
     });
-    if(isset($result['denied']))throw new DomainException('Inloggningen misslyckades.');return $result;
+    if(isset($result['denied']))throw new BoisAuthenticationException('Inloggningen misslyckades.');return $result;
 }
 
 function bois_p14_authorize(array $config,string $action,string $token,string $csrf='',bool $write=false): array
 {
-    if(!preg_match('/^[a-f0-9]{64}$/D',$token))throw new DomainException('Ej behörig.');
+    if(!preg_match('/^[a-f0-9]{64}$/D',$token))throw new BoisAuthenticationException('Ej behörig.');
     return bois_p14_locked($config,function(&$s,$users,$dir,$now)use($action,$token,$csrf,$write){
         $key=hash('sha256',$token);$row=$s['sessions'][$key]??null;$user=$row?($users[$row['id']]??null):null;
         if(!$row||!$user||!$user['enabled']||$row['epoch']!==$user['epoch']||$row['role']!==$user['role']||
-            ($row['credential']??null)!==hash('sha256',$user['password_hash'].'|'.$user['totp_secret'])||$row['revocation']!==($s['epochs'][$row['id']]??0))throw new DomainException('Sessionen har gått ut.');
-        if($write&&(!preg_match('/^[a-f0-9]{64}$/D',$csrf)||!hash_equals($row['csrf'],$csrf)))throw new DomainException('Ogiltigt sessionsskydd.');
+            ($row['credential']??null)!==hash('sha256',$user['password_hash'].'|'.$user['totp_secret'])||$row['revocation']!==($s['epochs'][$row['id']]??0))throw new BoisAuthenticationException('Sessionen har gått ut.');
+        if($write&&(!preg_match('/^[a-f0-9]{64}$/D',$csrf)||!hash_equals($row['csrf'],$csrf)))throw new BoisForbiddenException('Ogiltigt sessionsskydd.');
         if(!in_array($action,['admin_session','admin_logout'],true)&&!in_array($action,bois_p14_permissions($user['role']),true)){
-            bois_p14_audit($dir,$row['id'],$user['role'],$action,'denied',bois_p15_id());throw new DomainException('Ej behörig för åtgärden.');
+            bois_p14_audit($dir,$row['id'],$user['role'],$action,'denied',bois_p15_id());throw new BoisForbiddenException('Ej behörig för åtgärden.');
         }
         $s['sessions'][$key]['last']=$now;
         $request=bois_p15_id();bois_p14_audit($dir,$row['id'],$user['role'],$action,$write?'intent':'read',$request);
@@ -147,9 +148,9 @@ function bois_p14_cookie(string $token): void
 }
 function bois_p14_request_authorize(array $config,string $action): void
 {
-    if(($config['mode']??'')==='production'&&($_SERVER['HTTPS']??'')!=='on')throw new DomainException('HTTPS krävs.');
+    if(($config['mode']??'')==='production'&&($_SERVER['HTTPS']??'')!=='on')throw new BoisForbiddenException('HTTPS krävs.');
     $write=($_SERVER['REQUEST_METHOD']??'GET')!=='GET';
-    if($write&&(!is_string($_SERVER['HTTP_ORIGIN']??null)||!in_array($_SERVER['HTTP_ORIGIN'],$config['allowed_origins']??[],true)))throw new DomainException('Otillåtet ursprung.');
+    if($write&&(!is_string($_SERVER['HTTP_ORIGIN']??null)||!in_array($_SERVER['HTTP_ORIGIN'],$config['allowed_origins']??[],true)))throw new BoisForbiddenException('Otillåtet ursprung.');
     $context=bois_p14_authorize($config,$action,(string)($_COOKIE['__Host-BoISAdmin']??''),(string)($_SERVER['HTTP_X_BOIS_CSRF']??''),$write);
     $GLOBALS['bois_p14_actor']=$context;
 }

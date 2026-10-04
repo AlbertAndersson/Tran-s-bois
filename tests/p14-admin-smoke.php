@@ -44,7 +44,7 @@ p14_ok(!str_contains($audit,$secret)&&!str_contains($audit,'synthetic-password')
 $socket=stream_socket_server('tcp://127.0.0.1:0');$address=stream_socket_get_name($socket,false);fclose($socket);
 $origin='http://'.$address;$cfg['allowed_origins']=[$origin];
 $cfg['db']=['host'=>'127.0.0.1','port'=>1,'database'=>'must_not_connect','user'=>'none','password'=>'none'];
-$cfg['mode']='test';$users['http-user']=$users['club'];$users['http-tech']=$users['tech'];$users['http-tech']['password_hash']=password_hash('http-secret',PASSWORD_BCRYPT,['cost'=>12]);$save();
+$cfg['mode']='test';$users['http-user']=$users['club'];$users['http-tech']=$users['tech'];$users['http-tech']['password_hash']=password_hash('http-secret',PASSWORD_BCRYPT,['cost'=>12]);$users['http-reader']=$users['reader'];$save();
 $cp=$tmp.'/private/config.php';file_put_contents($cp,'<?php return '.var_export($cfg,true).';');chmod($cp,0600);
 file_put_contents($tmp.'/public/commerce-api.php',"<?php putenv('BOIS_P3_CONFIG_PATH=".$cp."'); require ".var_export(dirname(__DIR__).'/server/commerce-api.php',true).";");
 $server=proc_open([PHP_BINARY,'-S',$address,'-t',$tmp.'/public'],[0=>['file','/dev/null','r'],1=>['file',$tmp.'/private/http.log','a'],2=>['file',$tmp.'/private/http.log','a']],$pipes);
@@ -57,13 +57,17 @@ $http=function(string $action,string $method='GET',array $body=[],array $extra=[
 try{
     for($i=0;$i<30;$i++){if($http('admin_session')[0]!==0)break;usleep(100000);}
     p14_ok($http('admin_orders','GET',[],['X-Bois-Admin-Token: '.$cfg['admin_token']])[0]===401,'Shared key bypassed personal auth.');
+    [$readerStatus,$readerBody,$readerHeaders]=$http('admin_login','POST',['username'=>'http-reader','password'=>'synthetic-password-reader','otp'=>bois_p14_totp($secret,intdiv(time(),30))]);
+    p14_ok($readerStatus===200,'Reader login failed.');$readerCookie='';
+    foreach($readerHeaders as $h)if(preg_match('/__Host-BoISAdmin=([a-f0-9]{64})/',$h,$readerMatch))$readerCookie='Cookie: __Host-BoISAdmin='.$readerMatch[1];
+    p14_ok($http('admin_run_worker','POST',[],[$readerCookie,'X-Bois-CSRF: '.$readerBody['session']['csrf']])[0]===403,'Authenticated role denial must be 403.');
     [$status,$body,$headers]=$http('admin_login','POST',['username'=>'http-tech','password'=>'http-secret','otp'=>bois_p14_totp($secret,intdiv(time(),30))]);
     p14_ok($status===200&&!isset($body['session']['token']),'HTTP login failed/leaked session token.');
     $cookie='';foreach($headers as $h)if(str_starts_with(strtolower($h),'set-cookie:'))$cookie=$h;
     p14_ok(str_contains($cookie,'__Host-BoISAdmin=')&&str_contains(strtolower($cookie),'secure')&&str_contains(strtolower($cookie),'httponly')&&str_contains($cookie,'SameSite=Strict'),'Cookie flags missing.');
     preg_match('/__Host-BoISAdmin=([a-f0-9]{64})/',$cookie,$m);$auth=['Cookie: __Host-BoISAdmin='.$m[1],'X-Bois-CSRF: '.$body['session']['csrf']];
     p14_ok($http('admin_session','GET',[],$auth)[0]===200,'HTTP session failed.');
-    p14_ok($http('admin_logout','POST',[],[$auth[0]])[0]===401,'Logout without CSRF accepted.');
+    p14_ok($http('admin_logout','POST',[],[$auth[0]])[0]===403,'Logout without CSRF accepted.');
     p14_ok($http('admin_revoke','POST',['username'=>'http-user'],$auth)[0]===200,'HTTP revoke failed.');
     p14_ok($http('admin_logout','POST',[],$auth)[0]===200,'HTTP logout failed.');
     p14_ok($http('admin_session','GET',[],$auth)[0]===401,'Logged out session remained valid.');

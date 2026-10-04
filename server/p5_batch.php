@@ -75,7 +75,7 @@ function bois_p5_apply_verified_paid(PDO $pdo, array $config, string $publicId, 
     )->fetchColumn()>0;
     if($p6Installed){
         if($source!=='P6_VERIFIED_WEBHOOK' || !$providerRef){
-            throw new DomainException('Verifierad P6-betalning krävs.');
+            throw new BoisForbiddenException('Verifierad P6-betalning krävs.');
         }
         $verified=$pdo->prepare(
             "SELECT COUNT(*) FROM bois_payments p JOIN bois_orders o ON o.id=p.order_id
@@ -84,7 +84,7 @@ function bois_p5_apply_verified_paid(PDO $pdo, array $config, string $publicId, 
         );
         $verified->execute([$publicId,$providerRef]);
         if((int)$verified->fetchColumn()!==1){
-            throw new DomainException('Betalningen är inte verifierad av P6.');
+            throw new BoisForbiddenException('Betalningen är inte verifierad av P6.');
         }
     }
     $pdo->beginTransaction();
@@ -155,7 +155,7 @@ function bois_p5_apply_verified_paid(PDO $pdo, array $config, string $publicId, 
 function bois_p5_mark_order_paid(PDO $pdo, array $config, string $publicId): array
 {
     if (($config['mode'] ?? '') === 'production') {
-        throw new DomainException('Simulerad betalning är inte tillåten i produktion.');
+        throw new BoisForbiddenException('Simulerad betalning är inte tillåten i produktion.');
     }
 
     $result = bois_p5_apply_verified_paid($pdo, $config, $publicId, 'P5_STAGING_ADMIN', null);

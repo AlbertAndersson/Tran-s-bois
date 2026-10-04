@@ -102,7 +102,7 @@ function bois_p8_stripe_checkout_allowed(array $config): bool
 function bois_p8_require_stripe_checkout(array $config): void
 {
     if(!bois_p8_stripe_checkout_allowed($config)){
-        throw new DomainException('Nya Stripe-betalningar är spärrade i denna miljö.');
+        throw new BoisForbiddenException('Nya Stripe-betalningar är spärrade i denna miljö.');
     }
 }
 
@@ -217,7 +217,7 @@ function bois_p8_stripe_checkout(
     $read->execute([$publicId]);
     $row=$read->fetch();
     if(!$row || $publicToken==='' || !hash_equals((string)$row['public_token'],$publicToken)){
-        throw new DomainException('Ej behörig.');
+        throw new BoisAuthenticationException('Ej behörig.');
     }
     if(in_array((string)$row['payment_status_row'],['PAID','PARTIALLY_REFUNDED','REFUNDED','REFUND_PENDING'],true)){
         throw new InvalidArgumentException('Ordern är redan betald eller återbetalas.');
@@ -359,14 +359,14 @@ function bois_p8_stripe_verify_signature(
         if($key==='t' && ctype_digit($value)) $timestamp=(int)$value;
         if($key==='v1' && preg_match('/^[a-f0-9]{64}$/i',$value)) $signatures[]=strtolower($value);
     }
-    if($timestamp===null || !$signatures) throw new DomainException('Ogiltig Stripe-Signature.');
-    if(abs(time()-$timestamp)>$tolerance) throw new DomainException('Stripe-webhook ligger utanför tillåtet tidsintervall.');
+    if($timestamp===null || !$signatures) throw new BoisAuthenticationException('Ogiltig Stripe-Signature.');
+    if(abs(time()-$timestamp)>$tolerance) throw new BoisAuthenticationException('Stripe-webhook ligger utanför tillåtet tidsintervall.');
 
     $expected=hash_hmac('sha256',$timestamp.'.'.$raw,bois_p8_stripe_webhook_secret($config));
     foreach($signatures as $candidate){
         if(hash_equals($expected,$candidate)) return;
     }
-    throw new DomainException('Ogiltig Stripe-webhooksignatur.');
+    throw new BoisAuthenticationException('Ogiltig Stripe-webhooksignatur.');
 }
 
 function bois_p8_stripe_signature_for_test(array $config,string $raw,int $timestamp): string
@@ -481,7 +481,7 @@ function bois_p8_stripe_request_refund(
     int $amountOre=0,
     ?callable $transport=null
 ): array {
-    if(!bois_p8_stripe_runtime_ready($config)) throw new DomainException('Stripe är inte aktiverat.');
+    if(!bois_p8_stripe_runtime_ready($config)) throw new BoisForbiddenException('Stripe är inte aktiverat.');
 
     $stmt=$pdo->prepare(
         "SELECT p.*,o.public_id,o.currency,o.total_ore
