@@ -365,6 +365,16 @@ jobs:
           curl --fail --silent --show-error -A "$UA" -X POST "$API?action=sales_recommendations"             -H "Origin: https://alberiq.se" -H "Content-Type: application/json"             --data '{"skus":["MEM-ADULT"],"existing_member":false}'             -o "$RUNNER_TEMP/recommendations.json"
           php -r '$d=json_decode(file_get_contents($argv[1]),true); $r=$d["recommendations"][0]??[]; if(($r["product_key"]??"")!=="nordic-gym" || (int)($r["discount_ore"]??-1)!==0) exit(1);' "$RUNNER_TEMP/recommendations.json"
 
+          curl --fail --silent --show-error -A "$UA" "$API?action=catalog" -o "$RUNNER_TEMP/quota-catalog.json"
+          BOIS_TEST_GYM_ENABLED="$(php -r '$d=json_decode(file_get_contents($argv[1]),true);foreach($d["products"]??[] as $p){if(($p["product_key"]??"")==="nordic-gym"){$a=$p["availability"];echo ((int)$a["remaining"]>=4)?"true":"false";exit;}}exit(1);' "$RUNNER_TEMP/quota-catalog.json")"
+          echo "BOIS_TEST_GYM_ENABLED=$BOIS_TEST_GYM_ENABLED" >> "$GITHUB_ENV"
+          php -r '$d=json_decode(file_get_contents($argv[1]),true);foreach($d["products"]??[] as $p){if(($p["product_key"]??"")==="nordic-gym"){echo "NORDIC_QUOTA: ".json_encode($p["availability"]).PHP_EOL;}}' "$RUNNER_TEMP/quota-catalog.json"
+          if [[ "$BOIS_TEST_GYM_ENABLED" == false ]]; then
+            echo 'NORDIC_LIVE_PURCHASE: unavailable quota; membership-only E2E, quota covered by P3 CI' >> "$GITHUB_STEP_SUMMARY"
+          fi
+          gym_item=''
+          if [[ "$BOIS_TEST_GYM_ENABLED" == true ]]; then gym_item=',{\"sku\":\"NW-GYM-ANNUAL\",\"quantity\":1,\"metadata\":{}}'; fi
+
           new_email="p9-new-$GITHUB_RUN_ID@example.invalid"
           curl --fail --silent --show-error -A "$UA" -b "$RUNNER_TEMP/consent-cookies.txt" -X POST "$API?action=orders"             -H "Origin: https://alberiq.se" -H "Content-Type: application/json"             --data "{\"customer\":{\"name\":\"P9 Syntetisk Medlem\",\"email\":\"$new_email\",\"phone\":\"070-900 00 01\"},\"items\":[{\"sku\":\"MEM-ADULT\",\"quantity\":1,\"metadata\":{\"member_name\":\"P9 Syntetisk Medlem\"}},{\"sku\":\"NW-GYM-ANNUAL\",\"quantity\":1,\"metadata\":{}}],\"existing_member\":false,\"consent\":true,\"website\":\"\",\"idempotency_key\":\"p9-new-$GITHUB_RUN_ID\",\"sales_session_id\":\"$sales_session\",\"sales_attribution\":{\"source\":\"github\",\"medium\":\"staging\",\"campaign\":\"p9-readiness\",\"ref\":\"ci\",\"landing_path\":\"/bois-shop-p3/\"}}"             -o "$RUNNER_TEMP/order.json"
 
@@ -383,7 +393,7 @@ jobs:
 
           curl --fail --silent --show-error -A "$UA" -X POST "$API?action=mock_payment_event" -H "Origin: https://alberiq.se" -H "Content-Type: application/json"             --data "{\"session_ref\":\"$session_ref\",\"session_token\":\"$session_token\",\"outcome\":\"paid\"}"             -o "$RUNNER_TEMP/paid.json"
           grep -q '"status":"PAID"' "$RUNNER_TEMP/paid.json"
-          grep -q '"status":"ELIGIBLE"' "$RUNNER_TEMP/paid.json"
+          if [[ "$BOIS_TEST_GYM_ENABLED" == true ]]; then grep -q '"status":"ELIGIBLE"' "$RUNNER_TEMP/paid.json"; fi
 
           curl --fail --silent --show-error -A "$UA" -X POST "$API?action=mock_payment_event" -H "Origin: https://alberiq.se" -H "Content-Type: application/json"             --data "{\"session_ref\":\"$session_ref\",\"session_token\":\"$session_token\",\"outcome\":\"paid\"}"             -o "$RUNNER_TEMP/paid-again.json"
           grep -q '"already_applied":true' "$RUNNER_TEMP/paid-again.json"
@@ -391,7 +401,7 @@ jobs:
           curl --fail --silent --show-error -A "$UA" "$API?action=order&id=$order_id&token=$order_token" -o "$RUNNER_TEMP/public.json"
           grep -q '"payment_status":"PAID"' "$RUNNER_TEMP/public.json"
           grep -q '"status":"ACTIVE"' "$RUNNER_TEMP/public.json"
-          grep -q '"status":"ELIGIBLE"' "$RUNNER_TEMP/public.json"
+          if [[ "$BOIS_TEST_GYM_ENABLED" == true ]]; then grep -q '"status":"ELIGIBLE"' "$RUNNER_TEMP/public.json"; fi
 
           cp "$RUNNER_TEMP/consent-cookies.txt" "$RUNNER_TEMP/old-consent-cookies.txt"
           curl --fail --silent --show-error -A "$UA" -b "$RUNNER_TEMP/consent-cookies.txt" \
@@ -445,7 +455,7 @@ jobs:
             echo "SIGNED_WEBHOOK_PATH: pass"
             echo "DOWNSTREAM_EFFECT_IDEMPOTENCY: pass"
             echo "MEMBERSHIP_AFTER_PAID: pass"
-            echo "NORDIC_AFTER_PAID: pass"
+            echo "NORDIC_AFTER_PAID: $BOIS_TEST_GYM_ENABLED (live purchase enabled)"
             echo "PAYMENT_MAIL_TRANSPORT_DISABLED: pass"
             echo "P5_BATCH_CONFIG_PRESERVED: pass"
             echo "P7_ADMIN_PREVIEW: pass"
