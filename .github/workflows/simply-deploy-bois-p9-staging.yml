@@ -373,7 +373,7 @@ jobs:
             echo 'NORDIC_LIVE_PURCHASE: unavailable quota; membership-only E2E, quota covered by P3 CI' >> "$GITHUB_STEP_SUMMARY"
           fi
           gym_item=''
-          if [[ "$BOIS_TEST_GYM_ENABLED" == true ]]; then gym_item=',{\"sku\":\"NW-GYM-ANNUAL\",\"quantity\":1,\"metadata\":{}}'; fi
+          if [[ "$BOIS_TEST_GYM_ENABLED" == true ]]; then gym_item='$gym_item'; fi
 
           new_email="p9-new-$GITHUB_RUN_ID@example.invalid"
           curl --fail --silent --show-error -A "$UA" -b "$RUNNER_TEMP/consent-cookies.txt" -X POST "$API?action=orders"             -H "Origin: https://alberiq.se" -H "Content-Type: application/json"             --data "{\"customer\":{\"name\":\"P9 Syntetisk Medlem\",\"email\":\"$new_email\",\"phone\":\"070-900 00 01\"},\"items\":[{\"sku\":\"MEM-ADULT\",\"quantity\":1,\"metadata\":{\"member_name\":\"P9 Syntetisk Medlem\"}},{\"sku\":\"NW-GYM-ANNUAL\",\"quantity\":1,\"metadata\":{}}],\"existing_member\":false,\"consent\":true,\"website\":\"\",\"idempotency_key\":\"p9-new-$GITHUB_RUN_ID\",\"sales_session_id\":\"$sales_session\",\"sales_attribution\":{\"source\":\"github\",\"medium\":\"staging\",\"campaign\":\"p9-readiness\",\"ref\":\"ci\",\"landing_path\":\"/bois-shop-p3/\"}}"             -o "$RUNNER_TEMP/order.json"
