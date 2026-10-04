@@ -1,0 +1,73 @@
+name: P18A Complete Release
+on:
+  pull_request:
+  push:
+    branches: [main, 'chatgpt/**']
+    paths: ['server/**', 'ops/**', 'data/**', 'site/commerce/**', 'scripts/**', 'tests/**', '.github/workflows/p18a-ci.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+    env:
+      BOIS_P18_DISPOSABLE: 'YES'
+    steps:
+      - uses: actions/checkout@v5
+      - name: Complete syntax and manifest refusal cases
+        run: |
+          find server ops tests -name '*.php' -print0 | xargs -0 -n1 php -l
+          find site/commerce/assets scripts tests -name '*.cjs' -o -name '*.js' | xargs -n1 node --check
+          node tests/p18-release.test.cjs
+      - name: Two independent processes compete for the last card
+        run: |
+          mysql -h127.0.0.1 -uroot -proot -e 'CREATE DATABASE bois_p18_race; CREATE DATABASE bois_p18_ci'
+          php -d disable_functions=curl_init,curl_exec,mail tests/p18-quota-race.php
+      - uses: actions/checkout@v5
+        with:
+          ref: 818c262af23431be972986b9c79f70f319da90e2
+          path: pinned-p8
+      - uses: actions/checkout@v5
+        with:
+          ref: 276558e9b187aeea7d0324b662ab20c6513d125b
+          path: pinned-p9
+      - uses: actions/checkout@v5
+        with:
+          ref: 6d13f811d9bce8ebcefec421ab6d360642353bce
+          path: pinned-sandbox
+      - name: Actual historical source pins and current workflow file lists
+        run: |
+          node tests/p18-pinned-payload.test.cjs .github/workflows/simply-deploy-bois-p8-readiness.yml pinned-p8
+          node tests/p18-pinned-payload.test.cjs .github/workflows/simply-deploy-bois-p9-staging.yml pinned-p9
+          node tests/p18-pinned-payload.test.cjs .github/workflows/simply-deploy-bois-stripe-sandbox.yml pinned-sandbox
+      - name: Browser dependencies
+        run: |
+          npm install --no-save --package-lock=false playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Complete packaged purchase and denial flows
+        run: node tests/p18-browser.test.cjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bois-p18-browser-${{ github.sha }}
+          path: ${{ runner.temp }}/bois-browser-evidence/*.png
+          retention-days: 14
+      - name: Build and verify the closed delivery artifact
+        run: |
+          node scripts/p18-release.cjs build . "$RUNNER_TEMP/bois-release" "$GITHUB_SHA"
+          node scripts/p18-release.cjs verify "$RUNNER_TEMP/bois-release"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bois-closed-release-${{ github.sha }}
+          path: ${{ runner.temp }}/bois-release/
+          include-hidden-files: true
+          retention-days: 14

@@ -45,25 +45,25 @@ function commerce_auth_header(): ?string
 function commerce_require_admin(array $config): void
 {
     if(bois_p14_personal($config)){
-        if(!isset($GLOBALS['bois_p14_actor']))throw new DomainException('Ej behörig.');return;
+        if(!isset($GLOBALS['bois_p14_actor']))throw new BoisAuthenticationException('Ej behörig.');return;
     }
     $separate=$_SERVER['HTTP_X_BOIS_ADMIN_TOKEN']??null;
     if(is_string($separate)&&$separate!==''){
-        if(!hash_equals((string)$config['admin_token'],$separate)) throw new DomainException('Ej behörig.');
+        if(!hash_equals((string)$config['admin_token'],$separate)) throw new BoisAuthenticationException('Ej behörig.');
         return;
     }
     $header=commerce_auth_header();
     $prefix='Bearer ';
-    if(!is_string($header)||!str_starts_with($header,$prefix)) throw new DomainException('Ej behörig.');
+    if(!is_string($header)||!str_starts_with($header,$prefix)) throw new BoisAuthenticationException('Ej behörig.');
     $token=substr($header,strlen($prefix));
-    if($token===''||!hash_equals((string)$config['admin_token'],$token)) throw new DomainException('Ej behörig.');
+    if($token===''||!hash_equals((string)$config['admin_token'],$token)) throw new BoisAuthenticationException('Ej behörig.');
 }
 
 function commerce_check_origin(array $config): void
 {
     $origin=$_SERVER['HTTP_ORIGIN'] ?? '';
     if(!is_string($origin)||$origin==='') return;
-    if(!in_array($origin,$config['allowed_origins'],true)) throw new DomainException('Otillåtet ursprung.');
+    if(!in_array($origin,$config['allowed_origins'],true)) throw new BoisForbiddenException('Otillåtet ursprung.');
     header('Access-Control-Allow-Origin: '.$origin);
     header('Vary: Origin');
 }
@@ -135,7 +135,7 @@ try {
         'admin_run_worker'=>['POST'],
     ]);
     if(in_array($action,['admin_login','admin_session','admin_logout','admin_revoke'],true)){
-        if(!bois_p14_personal($config))throw new DomainException('Personlig inloggning är inte tillgänglig.');
+        if(!bois_p14_personal($config))throw new BoisForbiddenException('Personlig inloggning är inte tillgänglig.');
         if($action==='admin_login'){
             $login=bois_p14_login($config,commerce_body());bois_p14_cookie($login['token']);unset($login['token']);
             commerce_respond(['ok'=>true,'session'=>$login]);
@@ -470,7 +470,7 @@ try {
     commerce_respond(['error'=>'Okänd endpoint.'],404);
 
 } catch (DomainException $e) {
-    commerce_respond(['error'=>$e->getMessage()],401);
+    commerce_respond(['error'=>$e->getMessage()],bois_http_domain_status($e));
 } catch (OutOfBoundsException $e) {
     commerce_respond(['error'=>$e->getMessage()],404);
 } catch (InvalidArgumentException $e) {

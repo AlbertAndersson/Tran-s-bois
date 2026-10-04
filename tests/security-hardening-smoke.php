@@ -51,7 +51,7 @@ try{
     hardening_expect(hardening_request($base.'/commerce-api.php?action=consent','POST','{}',['Content-Type: application/json','Sec-Fetch-Site: cross-site']),403);
     hardening_expect(hardening_request($base.'/commerce-api.php?action=consent','POST',str_repeat('x',65537),['Content-Type: application/json']),413);
     hardening_expect(hardening_request($base.'/commerce-api.php?action=orders','OPTIONS',headers:['Origin: https://example.test']),204);
-    foreach(['p3-migrate.php','p5-worker.php','seed-demo.php','p3_db.php','consent.php','security.php'] as $path){
+    foreach(['p3-migrate.php','p5-worker.php','seed-demo.php','p3_db.php','consent.php','security.php','http-errors.php'] as $path){
         hardening_expect(hardening_request($base.'/'.$path),403);
     }
     // Forwarded IP spoofing cannot reset the counter.

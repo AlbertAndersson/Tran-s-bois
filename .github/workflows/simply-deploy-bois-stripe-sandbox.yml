@@ -46,6 +46,11 @@ jobs:
           ref: ${{ env.BOIS_SOURCE_REF }}
           path: bois-src
 
+      - name: Checkout current release verification tools
+        uses: actions/checkout@v5
+        with:
+          path: release-tools
+
       - name: Validate source and sandbox secrets
         shell: bash
         run: |
@@ -104,7 +109,15 @@ jobs:
           mkdir -p "$out/assets"
           for f in index.html membership.html match-kit.html order.html admin.html payment.html assortment-preview.html cookies.html; do cp "bois-src/site/commerce/$f" "$out/$f"; done
           for f in common.js membership.js matchkit.js order.js admin.js payment.js assortment-preview.js commerce.css p5.css; do cp "bois-src/site/commerce/assets/$f" "$out/assets/$f"; done
-          for f in security.php production.php p14_admin.php p15_observability.php commerce-api.php consent.php p3_db.php p5_batch.php p5-migrate.php p5-worker.php p4_membership.php p4-migrate.php p6_payment.php p6-migrate.php p7_assortment.php p7-migrate.php p8_stripe.php p8-migrate.php p9_sales.php p9-migrate.php stripe-webhook.php; do cp "bois-src/server/$f" "$out/$f"; done
+          for f in commerce-api.php consent.php p3_db.php p5_batch.php p5-migrate.php p5-worker.php p4_membership.php p4-migrate.php p6_payment.php p6-migrate.php p7_assortment.php p7-migrate.php p8_stripe.php p8-migrate.php p9-migrate.php stripe-webhook.php; do cp "bois-src/server/$f" "$out/$f"; done
+          for f in security.php production.php p14_admin.php p15_observability.php p9_sales.php; do
+            if [[ -f "bois-src/server/$f" ]]; then cp "bois-src/server/$f" "$out/$f"; fi
+          done
+          for f in http-errors.php p17_mail.php p17-worker.php; do
+            if [[ -f "bois-src/server/$f" ]]; then cp "bois-src/server/$f" "$out/$f"; fi
+          done
+          if [[ -f "bois-src/site/commerce/supporter-preview.html" ]]; then cp "bois-src/site/commerce/supporter-preview.html" "$out/"; fi
+          node release-tools/scripts/p18-release.cjs verify-dependencies "$out"
 
           cat > "$out/config.js" <<'JS'
           window.BOIS_COMMERCE_CONFIG = Object.freeze({
@@ -234,6 +247,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          node release-tools/scripts/p18-release.cjs verify-dependencies "$RUNNER_TEMP/bois-stripe-public"
           SSH_OPTS=(-4 -F /dev/null -T -p 22 -i "$SSH_DIR/identity" -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$SSH_DIR/known_hosts" -o GlobalKnownHostsFile=/dev/null -o ConnectTimeout=12 -o LogLevel=ERROR)
           ssh "${SSH_OPTS[@]}" -l "$SIMPLY_SSH_USER" "$SIMPLY_HOST" 'mkdir -p "$HOME/.bois-stripe-sandbox" "$HOME/.bois-demo-auth"; chmod 700 "$HOME/.bois-stripe-sandbox"; chmod 755 "$HOME/.bois-demo-auth"'
           cat "$RUNNER_TEMP/config.php" | ssh "${SSH_OPTS[@]}" -l "$SIMPLY_SSH_USER" "$SIMPLY_HOST" 'umask 077; cat > "$HOME/.bois-stripe-sandbox/config.php"; chmod 600 "$HOME/.bois-stripe-sandbox/config.php"'

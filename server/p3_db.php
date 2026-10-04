@@ -780,7 +780,7 @@ function bois_p3_public_order(PDO $pdo, string $publicId, string $token): array
     $order = $stmt->fetch();
 
     if (!$order || $token === '' || !hash_equals((string)$order['public_token'],$token)) {
-        throw new DomainException('Ej behörig.');
+        throw new BoisAuthenticationException('Ej behörig.');
     }
 
     $itemsStmt = $pdo->prepare(

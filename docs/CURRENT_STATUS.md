@@ -1,3 +1,32 @@
+# Aktuell status – P18A levererad via PR40
+
+P18A:s kompletta stängda releasepaket, API-felkoder och samlade regressioner är
+klara. Kod-head `b165c67a1cbdb2d98e8ca2c7f2f91a03d7b487e8`: 16/16 gröna PR-kontroller,
+inklusive [P18A 37235765983](https://github.com/AlbertAndersson/Tran-s-bois/actions/runs/37235765983).
+Slutlig PR-head och main-körning ska vara gröna vid closeout; exakta aktuella
+merge-/runreferenser finns i [PR40](https://github.com/AlbertAndersson/Tran-s-bois/pull/40).
+Se [releaseacceptans](P18-RELEASE-ACCEPTANCE.md) och [P19-utkast](P19-DECISIONS-DRAFT.md).
+
+**P18: IN PROGRESS. P18A: DONE. P18B: TODO. P19: TODO, utkast förberett. P20: BLOCKED.**
+P12 accepterades av Albert; det ersätter inte kvarstående hostbevis. P13–P18A
+är kod och isolerad verifiering. Inga P18-hostdeployer, runtimeaktiveringar, verkliga
+betalningar, externa mail eller nya betalda tjänster har utförts.
+
+Senast dokumenterad skyddad stagingapp: `276558e9b187aeea7d0324b662ab20c6513d125b`,
+run37219659212. Senast dokumenterad stängd socen-app:
+`020446867dcf29b7ebe63a060f8594e8f8da8aff`. Ingen av dessa representerar hela
+aktuell kod. App-SHA, workflow-SHA och senare dokumentations-SHA skiljs åt.
+P18B ska verifiera hostrelease, privat DB/grants/runtime, MFA/drift/loggning,
+backupomfattning, återställning och rollback. Cron/offsite/daglig hostbackup är
+inte visade som installerade. Befintlig stagingkvot är förbrukad av 31 äldre
+syntetiska PAID-gymkort; den har inte återställts. Tester använder disposable DB.
+
+PR35 är avstämd som ersatt av PR38 och P18A:s beroendepaketering; stängs utan
+merge vid closeout. P19-tabellen är inte skickad; alla verksamhetssvar är öppna.
+Nästa tekniska uppdrag är P18B enligt den justerade SharePoint-kön.
+
+## Historiska leveransnoteringar – tidigare nästa-steg-rader gäller inte
+
 ## P17 – DONE, email/outbox production readiness
 
 2026-10-04: Albert accepterade P12 och beställde endast P17. Acceptansen är
