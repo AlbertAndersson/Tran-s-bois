@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     env:
-      BOIS_SOURCE_REF: 338a76252aa17ad75b55b0bf76c9d104ac8d1547
+      BOIS_SOURCE_REF: c9a6b03cc03b8dc2f9476feb9e6dd4504851ce87
       BOIS_PUBLIC_PATH: bois-shop-p3
       BOIS_BASE_URL: https://alberiq.se/bois-shop-p3
       SIMPLY_HOST: ssh.simply.com
@@ -372,6 +372,17 @@ jobs:
           if [[ "$BOIS_TEST_GYM_ENABLED" == false ]]; then
             echo 'NORDIC_LIVE_PURCHASE: unavailable quota; membership-only E2E, quota covered by P3 CI' >> "$GITHUB_STEP_SUMMARY"
           fi
+          if php -r '$d=json_decode(file_get_contents($argv[1]),true);foreach($d["products"]??[] as $p){if(($p["product_key"]??"")==="nordic-gym")exit(($p["availability"]["sold_out"]??false)?0:1);}exit(1);' "$RUNNER_TEMP/quota-catalog.json"; then
+            status="$(command curl --silent --show-error -A "$UA" --user "bois-demo:$DEMO_PASSWORD" -o "$RUNNER_TEMP/quota-denied.json" -w '%{http_code}' -X POST "$API?action=orders" -H "Origin: https://alberiq.se" -H 'Content-Type: application/json' --data '{"customer":{"name":"Quota Test","email":"quota-check@example.invalid"},"items":[{"sku":"NW-GYM-ANNUAL","quantity":1,"metadata":{}}],"existing_member":true,"consent":true,"website":"","idempotency_key":"quota-denied-'$GITHUB_RUN_ID'"}')"
+            [[ "$status" == 401 ]]
+            php -r '$d=json_decode(file_get_contents($argv[1]),true);if(!str_contains($d["error"]??"","gymkorten är slutsålda"))exit(1);' "$RUNNER_TEMP/quota-denied.json"
+            echo 'NORDIC_SOLD_OUT_SERVER_GATE: pass' >> "$GITHUB_STEP_SUMMARY"
+          fi
+          for action in admin_orders admin_catalog admin_p4 admin_payments admin_p7 admin_sales; do
+            curl --fail --silent --show-error -A "$UA" "$API?action=$action" -H "X-Bois-Admin-Token: $BOIS_ADMIN_TOKEN" -o "$RUNNER_TEMP/admin-check.json"
+            php -r '$d=json_decode(file_get_contents($argv[1]),true);if(($d["ok"]??false)!==true)exit(1);' "$RUNNER_TEMP/admin-check.json"
+          done
+          echo 'STAGING_ADMIN_READ_ENDPOINTS: pass' >> "$GITHUB_STEP_SUMMARY"
           gym_item=''
           if [[ "$BOIS_TEST_GYM_ENABLED" == true ]]; then gym_item='$gym_item'; fi
 
