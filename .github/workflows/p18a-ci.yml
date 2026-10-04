@@ -33,6 +33,23 @@ jobs:
         run: |
           mysql -h127.0.0.1 -uroot -proot -e 'CREATE DATABASE bois_p18_race; CREATE DATABASE bois_p18_ci'
           php -d disable_functions=curl_init,curl_exec,mail tests/p18-quota-race.php
+      - uses: actions/checkout@v5
+        with:
+          ref: 818c262af23431be972986b9c79f70f319da90e2
+          path: pinned-p8
+      - uses: actions/checkout@v5
+        with:
+          ref: 276558e9b187aeea7d0324b662ab20c6513d125b
+          path: pinned-p9
+      - uses: actions/checkout@v5
+        with:
+          ref: 6d13f811d9bce8ebcefec421ab6d360642353bce
+          path: pinned-sandbox
+      - name: Actual historical source pins and current workflow file lists
+        run: |
+          node tests/p18-pinned-payload.test.cjs .github/workflows/simply-deploy-bois-p8-readiness.yml pinned-p8
+          node tests/p18-pinned-payload.test.cjs .github/workflows/simply-deploy-bois-p9-staging.yml pinned-p9
+          node tests/p18-pinned-payload.test.cjs .github/workflows/simply-deploy-bois-stripe-sandbox.yml pinned-sandbox
       - name: Browser dependencies
         run: |
           npm install --no-save --package-lock=false playwright@1.56.1

@@ -121,7 +121,10 @@ jobs:
 
           for f in index.html membership.html match-kit.html order.html admin.html payment.html assortment-preview.html; do cp "bois-src/site/commerce/$f" "$out/$f"; done
           for f in common.js membership.js matchkit.js order.js admin.js payment.js assortment-preview.js commerce.css p5.css; do cp "bois-src/site/commerce/assets/$f" "$out/assets/$f"; done
-          for f in security.php production.php p14_admin.php p15_observability.php commerce-api.php consent.php p9_sales.php p3_db.php p5_batch.php p5-migrate.php p5-worker.php p4_membership.php p4-migrate.php p6_payment.php p6-migrate.php p7_assortment.php p7-migrate.php p8_stripe.php p8-migrate.php; do cp "bois-src/server/$f" "$out/$f"; done
+          for f in commerce-api.php consent.php p3_db.php p5_batch.php p5-migrate.php p5-worker.php p4_membership.php p4-migrate.php p6_payment.php p6-migrate.php p7_assortment.php p7-migrate.php p8_stripe.php p8-migrate.php; do cp "bois-src/server/$f" "$out/$f"; done
+          for f in security.php production.php p14_admin.php p15_observability.php p9_sales.php; do
+            if [[ -f "bois-src/server/$f" ]]; then cp "bois-src/server/$f" "$out/$f"; fi
+          done
           for f in http-errors.php p17_mail.php p17-worker.php; do
             if [[ -f "bois-src/server/$f" ]]; then cp "bois-src/server/$f" "$out/$f"; fi
           done

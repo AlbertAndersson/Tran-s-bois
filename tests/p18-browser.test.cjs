@@ -13,7 +13,7 @@ const order=key=>({customer:{name:'P18 Synthetic',email:'p18@example.invalid'},i
   try{
     build(process.cwd(),root,process.env.GITHUB_SHA||'f'.repeat(40));verify(root);
     php('tests/p18-fixture.php');
-    server=spawn('php',['-d','disable_functions=curl_init,curl_exec,mail','-S','localhost:8766','-t',path.join(root,'public')],{stdio:'ignore',env});
+    server=spawn('php',['-d','opcache.enable=0','-d','opcache.enable_cli=0','-d','disable_functions=curl_init,curl_exec,mail','-S','localhost:8766','-t',path.join(root,'public')],{stdio:'ignore',env});
     let ready=false;
     for(let n=0;n<50;n++){try{const r=await fetch(base+'/');if(r.ok){ready=true;break;}}catch{}await new Promise(r=>setTimeout(r,100));}
     assert(ready,'packaged server started');
