@@ -21,6 +21,21 @@ kan också vara persondata genom order-/medlemskoppling och behandlas därför
 inte som anonyma. Katalogfält avser normalt produkter, men fria JSON-/textfält
 är potentiella persondata även när ingen personkolumn har avsetts.
 
+Särskilt viktiga inbäddade fält, utöver SQL-kolumnerna: order.metadata innehåller
+existing_member. Orderrad.metadata innehåller member_name eller matchställets
+team/player_name/shirt_size/shorts_size/number/name_print/number_print samt
+tekniska eligibility/price_note. P3 validerar dessa nycklar, inte godtycklig
+orderinput. P5 outbox.payload innehåller person-/spelaruppgifter i rows
+(order/team/player/shirt_size/shorts_size/number/quantity) och samma CSV som
+csv_base64, plus batch/supplier/count/hash/filename. Base64 är inte anonymisering.
+P6 payment_outbox.payload innehåller kind/order/amount_ore/currency/payment_status/
+provider/method/safe_staging_recipient; mottagaren finns i separat mailkolumn.
+Affärsevents innehåller order-/payment-/member-/entitlement-/partnerrefs och status;
+supplier_batches.config_json och leverantörs-/produkt-JSON är operativa källor.
+Nordic CSV innehåller entitlement/order-ID, kundnamn/mail/telefon, medlemsnamn,
+medlemstyp/giltighet/status. Sådana exporter, mailkopior och JSON/CSV-underlag
+är skyddade persondata och ingår inte i den valfria statistikgallringen.
+
 | Grupp/tabeller | Data och syfte | Retention/åtgärd |
 | --- | --- | --- |
 | customers | namn, e-post, telefon, UUID för kontakt/order/kvitto | TBD; skyddad |
@@ -76,7 +91,8 @@ Productionexemplet innehåller `retention.rules` med null för
 Null betyder **TBD, ingen kandidat i den regeln**. En explicit integer 1–36500
 är ett tekniskt intervall, ingen rekommenderad juridisk tid. Okända regler,
 strängar, negativa/0-värden och för stor batch nekas. `batch_size` är 1–1000,
-standard 100. Ingen rule finns för orders/payments/members/outboxes/etc.
+standard 100 per event/session/consent-grupp; analyslänkar har separat tak 1000.
+Ingen rule finns för orders/payments/members/outboxes/etc.
 `apply_enabled=false`, `legal_hold=true`, policy-/backupreferens tom och
 `approved_target=[]` gör faktisk gallring avstängd.
 
