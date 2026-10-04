@@ -99,7 +99,6 @@ $matchKit = bois_p3_create_order($pdo, [
             'player_name'=>'Test Spelare',
             'number'=>'17',
             'shirt_size'=>'140',
-            'shorts_size'=>'152',
             'name_print'=>true,
             'number_print'=>true,
         ],
@@ -120,6 +119,9 @@ if (($public['items'][0]['fulfillment_type'] ?? '') !== 'BATCH_SUPPLIER') {
 if (($public['items'][0]['metadata']['team'] ?? '') !== 'P13') {
     throw new RuntimeException('Match kit team metadata was not persisted.');
 }
+if (array_key_exists('shorts_size',$public['items'][0]['metadata'] ?? [])) {
+    throw new RuntimeException('Match kit must not persist shorts metadata.');
+}
 
 $stats = bois_p3_stats($pdo);
 if ($stats['bois_orders'] !== 3) {
@@ -132,10 +134,51 @@ if ($stats['bois_supplier_batches'] !== 0 || $stats['bois_email_outbox'] !== 0) 
     throw new RuntimeException('P3 must not send or batch before payment/fulfillment phases.');
 }
 
+// Two gym reservations already exist above. Fill the remaining annual quota
+// and prove that the 21st card is rejected server-side.
+for ($i=3; $i<=20; $i++) {
+    bois_p3_create_order($pdo, [
+        'customer' => ['name'=>'Kvottest '.$i,'email'=>'quota'.$i.'@example.invalid'],
+        'items' => [['sku'=>'NW-GYM-ANNUAL','quantity'=>1,'metadata'=>[]]],
+        'existing_member' => true,
+        'consent' => true,
+        'website' => '',
+        'idempotency_key' => 'p3-gym-quota-'.$i,
+    ]);
+}
+$quota = bois_p3_gym_quota_status($pdo);
+if (($quota['limit'] ?? 0) !== 20 || ($quota['remaining'] ?? -1) !== 0 || ($quota['sold_out'] ?? false) !== true) {
+    throw new RuntimeException('Annual Nordic quota did not reach sold-out state.');
+}
+$catalogAfterQuota = bois_p3_catalog($pdo,false);
+$gymAfterQuota = null;
+foreach ($catalogAfterQuota as $product) {
+    if (($product['product_key'] ?? '') === 'nordic-gym') $gymAfterQuota = $product;
+}
+if (!$gymAfterQuota || ($gymAfterQuota['is_orderable'] ?? true) !== false || ($gymAfterQuota['availability']['remaining'] ?? -1) !== 0) {
+    throw new RuntimeException('Sold-out Nordic product must be non-orderable in catalog.');
+}
+try {
+    bois_p3_create_order($pdo, [
+        'customer' => ['name'=>'Kvottest 21','email'=>'quota21@example.invalid'],
+        'items' => [['sku'=>'NW-GYM-ANNUAL','quantity'=>1,'metadata'=>[]]],
+        'existing_member' => true,
+        'consent' => true,
+        'website' => '',
+        'idempotency_key' => 'p3-gym-quota-21',
+    ]);
+    throw new RuntimeException('21st annual Nordic card was accepted.');
+} catch (DomainException $e) {
+    if (!str_contains($e->getMessage(),'slutsålda')) throw $e;
+}
+
 echo "P3_SMOKE: pass\n";
 echo "PUBLIC_PRODUCTS: 3\n";
 echo "HIDDEN_2027_PRODUCTS: ".(count($allCatalog)-count($catalog))."\n";
 echo "MEMBERSHIP_GYM_TOTAL: ".$membershipOrder['total_ore']."\n";
 echo "MATCHKIT_FULFILLMENT: BATCH_SUPPLIER\n";
+echo "MATCHKIT_SHORTS: no\n";
+echo "NORDIC_ANNUAL_LIMIT: 20\n";
+echo "NORDIC_SOLD_OUT_GATE: pass\n";
 echo "PAYMENT_ENABLED: no\n";
 echo "EMAIL_OUTBOX: 0\n";
