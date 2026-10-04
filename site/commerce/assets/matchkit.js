@@ -24,7 +24,6 @@
             player_name:$('player').value.trim(),
             number:String(number),
             shirt_size:$('shirt').value,
-            shorts_size:$('shorts').value,
             name_print:$('namePrint').checked,
             number_print:$('numberPrint').checked
           }
