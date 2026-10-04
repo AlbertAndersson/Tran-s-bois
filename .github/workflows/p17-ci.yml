@@ -1,0 +1,35 @@
+name: P17 Email Outbox Readiness
+on:
+  pull_request:
+  push:
+    branches: [main]
+    paths: ['server/**', 'tests/p17-*', '.github/workflows/p17-ci.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  mail:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: bois_p17_ci
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+    env:
+      BOIS_P3_TEST_DB_HOST: 127.0.0.1
+      BOIS_P3_TEST_DB_NAME: bois_p17_ci
+      BOIS_P3_TEST_DB_USER: root
+      BOIS_P3_TEST_DB_PASSWORD: root
+    steps:
+      - uses: actions/checkout@v5
+      - name: Syntax
+        run: for file in server/p17-*.php server/p17_mail.php server/p5_batch.php server/p6_payment.php tests/p17-*.php; do php -l "$file"; done
+      - name: Synthetic chain, sink, templates, retry and concurrent workers
+        run: php -d disable_functions=mail,curl_exec,curl_init tests/p17-mail-smoke.php
+      # Never upload mail bodies, CSVs, recipient data or config as artifacts.

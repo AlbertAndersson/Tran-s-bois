@@ -3,6 +3,7 @@ declare(strict_types=1);
 require_once __DIR__ . "/security.php";
 
 require_once __DIR__ . '/p3_db.php';
+require_once __DIR__ . '/p17_mail.php';
 
 function bois_p5_apply_schema(PDO $pdo): void
 {
@@ -496,39 +497,9 @@ function bois_p5_retry_outbox(PDO $pdo, int $outboxId): array
 
 function bois_p5_deliver_outbox(PDO $pdo, array $config, ?callable $sender=null, int $limit=20): array
 {
-    $transport = (string)($config['mail_transport'] ?? 'disabled');
-    if ($sender === null && $transport === 'disabled') {
-        return ['transport'=>'disabled','processed'=>0,'sent'=>0,'failed'=>0];
-    }
-
-    if ($sender === null) {
-        if ($transport !== 'php_mail') {
-            throw new RuntimeException('Okänt mailtransportläge.');
-        }
-
-        $sender = function(array $message): bool {
-            $headers = [
-                'Content-Type: text/plain; charset=UTF-8',
-                'X-Mailer: Tranås-BoIS-Shop',
-            ];
-            if (!empty($message['cc_email'])) $headers[] = 'Cc: ' . $message['cc_email'];
-
-            $payload = json_decode((string)$message['payload_json'], true) ?: [];
-            $body = "Tranås BoIS leverantörsorder\n\n";
-            $body .= "Batch: " . ($payload['batch_id'] ?? '') . "\n";
-            $body .= "Antal order: " . ($payload['order_count'] ?? 0) . "\n";
-            $body .= "Antal matchställ: " . ($payload['item_count'] ?? 0) . "\n";
-            $body .= "CSV SHA256: " . ($payload['csv_sha256'] ?? '') . "\n";
-            $body .= "\nCSV-underlaget finns i shopadmin och ska bifogas av den skarpa SMTP-transporten.\n";
-
-            return mail(
-                (string)$message['to_email'],
-                (string)$message['subject'],
-                $body,
-                implode("\r\n", $headers)
-            );
-        };
-    }
+    $transport=(string)($config['mail_transport']??'disabled');
+    $sender=bois_p17_sender($config,$transport,'supplier',$sender);
+    if($sender===null)return ['transport'=>'disabled','processed'=>0,'sent'=>0,'failed'=>0];
 
     $rows = $pdo->query(
         "SELECT * FROM bois_email_outbox
@@ -542,27 +513,23 @@ function bois_p5_deliver_outbox(PDO $pdo, array $config, ?callable $sender=null,
     $result = ['transport'=>$transport,'processed'=>0,'sent'=>0,'failed'=>0];
 
     foreach ($rows as $message) {
-        $result['processed']++;
-        $ok = false;
-        $error = null;
-
-        try {
-            $ok = (bool)$sender($message);
-            if (!$ok) $error = 'Transport returned false.';
-        } catch (Throwable $e) {
-            $error = 'transport_failed';
-        }
-
         $pdo->beginTransaction();
         try {
             $locked = $pdo->prepare("SELECT * FROM bois_email_outbox WHERE id=? FOR UPDATE");
             $locked->execute([(int)$message['id']]);
             $current = $locked->fetch();
-            if (!$current || !in_array((string)$current['status'], ['PENDING','RETRY'], true)) {
+            if (!$current || !in_array((string)$current['status'], ['PENDING','RETRY'], true)
+                || (int)$current['attempts']>=5
+                || (!empty($current['not_before']) && strtotime($current['not_before'].' UTC')>time())) {
                 $pdo->rollBack();
                 continue;
             }
 
+            // Claim/validate before I/O; the row lock serializes concurrent workers.
+            $result['processed']++;
+            $ok=false;$error=null;
+            try{$ok=(bool)$sender($current);if(!$ok)$error='transport_failed';}
+            catch(Throwable $e){$error='transport_failed';}
             $attempts = (int)$current['attempts'] + 1;
 
             if ($ok) {
