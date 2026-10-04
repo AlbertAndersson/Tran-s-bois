@@ -10,6 +10,7 @@ const demoPassword=process.env.DEMO_PASSWORD;
 if(!base||!adminToken||!demoPassword)throw Error('Synthetic staging URL and private credentials required.');
 const output=process.env.RUNNER_TEMP?path.join(process.env.RUNNER_TEMP,'bois-browser-evidence'):path.join('/tmp','bois-browser-evidence');
 fs.mkdirSync(output,{recursive:true});
+const gymEnabled=process.env.BOIS_TEST_GYM_ENABLED!=='false';
 const key=()=>Math.random().toString(36).slice(2,12);
 
 (async()=>{
@@ -39,10 +40,13 @@ const key=()=>Math.random().toString(36).slice(2,12);
       }
       await page.goto(base+'/membership.html');
       await page.locator('#membershipForm').waitFor();
+      await page.locator('#gymStock').filter({hasNotText:'Kontrollerar'}).waitFor();
+      if(!gymEnabled) await page.locator('#addGym').uncheck();
       assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2),true,'horizontal overflow on membership '+width);
       await page.screenshot({path:path.join(output,'membership-'+width+'.png')});
       if(width===390){
-        await page.locator('#existingMember').check();
+        if(gymEnabled) await page.locator('#existingMember').check();
+        else await page.locator('#memberName').fill('Bo Test');
         await page.locator('#buyerName').fill('Bo Test');
         await page.locator('#email').fill('bo-'+key()+'@example.invalid');
         await page.locator('#consent').check();
@@ -61,7 +65,7 @@ const key=()=>Math.random().toString(36).slice(2,12);
         await page.locator('#orderLink').click();
         await page.locator('#payment').getByText('PAID').waitFor();
         assert.equal(await page.locator('#retryPayment').isVisible(),false);
-        await page.locator('#p4StatusBody').getByText('PENDING_MEMBER_VERIFICATION').waitFor();
+        await page.locator('#p4StatusBody').getByText(gymEnabled?'PENDING_MEMBER_VERIFICATION':'ACTIVE',{exact:true}).waitFor();
         await page.screenshot({path:path.join(output,'existing-member-retry-390.png')});
         await context.close();continue;
       }
@@ -144,10 +148,12 @@ const key=()=>Math.random().toString(36).slice(2,12);
       if(dialog.type()==='prompt')await dialog.accept(dialog.message().startsWith('Medlemmens')?'Bo Test':dialog.message().startsWith('Medlemstyp')?'adult':'');
       else await dialog.dismiss();
     };
+    if(gymEnabled){
     admin.on('dialog',answerMemberPrompt);
     await pending.getByRole('button',{name:'Verifiera medlem'}).click();
     await admin.locator('#entitlements tr').filter({hasText:existingOrderId}).getByRole('button',{name:'Skickad till Nordic'}).waitFor();
     admin.off('dialog',answerMemberPrompt);
+    }else console.log('NORDIC_MEMBER_VERIFICATION: unavailable annual quota; P3 CI coverage');
     assert.ok((await admin.locator('#orders').innerText()).includes(matchOrderId));
     assert.ok(Number(await admin.locator('#waitingItems').innerText())>=1);
     await admin.locator('#salesCampaigns').getByText('synthetic').waitFor();
