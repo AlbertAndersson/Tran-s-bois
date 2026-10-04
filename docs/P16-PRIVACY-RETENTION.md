@@ -203,3 +203,29 @@ undantag/holds, backupkopior, server-/auditloggar, exporter/partners och Stripe.
 De är TBD och befintliga launchgrindar hålls stängda. Schema/migrationsledger
 förblir 24 tabeller/åtta poster. Ingen produktiongallring eller hostverifiering
 behövs för denna tekniska closeout; P12 förblir uppskjuten. P17 startas inte.
+
+## Closeout
+
+P16 DONE via [PR #34](https://github.com/AlbertAndersson/Tran-s-bois/pull/34).
+Main före: `df6c80a68945a9b6fe7b103a28a66399cf25ea42`; PR-head:
+`d6f2bbbdaffc35adeb96e6f4419c8a779bbf0131`; merge/kod-main efter:
+`ad035c6288852f354a7b39d433aa8c25b10d6180`.
+P16 [37179059419](https://github.com/AlbertAndersson/Tran-s-bois/actions/runs/37179059419),
+jobb `111367711810`, success inklusive P6-syntetik, inventory/SELECT-only dry-run,
+plan-/policy-/target-/hold-/batch-/gränsskydd, rollback, faktisk isolerad apply,
+20 oförändrade skyddade tabeller, ledger/FKs och privat CLI.
+P14 37179059420 inklusive Chromium, P15 37179059403, P13 37179059416,
+P12 37179059415, P9 37179059404, P8 37179059417, P7 37179059411,
+P3 37179059412, P2 37179059413 och Security 37179059409 är alla success
+på slutlig PR-head. P4–P6 hade inga separata triggade runs på denna diff;
+P16 kör deras verkliga syntetiska betalnings-/medlems-/batch-fixture och P13/P9
+kör också sina relevanta regressioner. Ingen production-/staginggallring,
+Simply-deploy eller aktivering. Inga tekniska P16-blockerare/manuella åtgärder nu;
+TBD-beslut/leverantörsverifiering återstår inför drift. P17 har inte startats.
+
+Merge-main passerade också: P16 37179208824, P15 37179208793,
+P14 37179208845, P13 37179208836, P12 37179208841, P9 37179208787,
+P3 37179208794, P2 37179208813 och Security 37179208858 är success.
+Den befintliga statiska GitHub Pages-demoautomaten publicerade uppdaterad
+cookieinformation (37179208786 success); den deployar inte PHP/retention till
+Simply och aktiverar inte production. Inga Simply-miljöer eller affärsdata ändrades.

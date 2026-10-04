@@ -7,7 +7,7 @@ P12:s återstående host-/flödesverifiering är uppskjuten enligt användarens 
 `socen.se` är dedikerad BoIS production; staging/sandbox ligger på separat
 Simply-produkt `alberiq.se`, med separata databas- och SSH-credentials.
 Inga riktiga konton, livebetalningar, extern mejl, DNS-cutover, monitoringköp
-eller nya externa kostnader. P16 ingår inte i denna etapp.
+eller nya externa kostnader. P16:s separata implementation är klar via PR #34; se P16-PRIVACY-RETENTION.md.
 
 ## Signaler och åtkomst
 
@@ -157,7 +157,7 @@ P3 37157817339, P4 37157817382, P5 37157817330, P6 37157817310,
 P7 37157817683, P8 37157817318, P9 37157817362, P12 37157817320,
 P13 37157817429 och Security 37157817423: samtliga success på slutlig PR-head.
 Inga P15-blockerare; inga manuella åtgärder behövs för etappens closeout.
-Hostinförande och godkänd launch återstår enligt ovan; P16 har inte startats.
+Hostinförande och godkänd launch återstår enligt ovan; P16 är nu DONE via PR #34; se P16-PRIVACY-RETENTION.md. P17 har inte startats.
 
 Merge-main verifierades också: P15 37157946246, P14 37157946279,
 P12 37157946306, P13 37157946396 och Security 37157946350 är success,

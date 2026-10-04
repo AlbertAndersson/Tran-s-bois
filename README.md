@@ -1,6 +1,6 @@
 # Tranås BoIS – webshop
 
-P16 IN PROGRESS: datainventering och konfigurerbar retention med privat dry-run. Alla juridiska tider TBD; ingen production-/staginggallring. Se [P16-runbook](docs/P16-PRIVACY-RETENTION.md). P12-verifiering uppskjuten; P17 har inte startats.
+P16 DONE, PR #34: inventering av 24 tabeller/281 fält, konfigurerbar retention och privat dry-run verifierade. Faktisk gallring/rollback testad endast i syntetisk CI; order-/betalningsspår skyddade. Juridiska tider TBD och apply avstängd. Se [P16-runbook](docs/P16-PRIVACY-RETENTION.md). Ingen Simply-deploy eller production-/staginggallring; P12-verifiering uppskjuten, P17 har inte startats.
 
 P15 DONE, PR #33: minimal liveness/readiness, privat JSON-loggning med request-ID, read-only driftkontroller och incidentrunbook. P15/P14 och alla regressioner är gröna. Se [P15-runbook](docs/P15-OPERATIONS.md). Ingen Simply-deploy eller productionaktivering; P12-verifiering är uppskjuten och P16 har inte startats.
 
@@ -24,7 +24,7 @@ P8 är **TECHNICALLY COMPLETE / NOT ACTIVATED**. Stripe, riktig betalning, exter
 
 ## Nästa steg
 
-P16 är nästa utvecklingsetapp och har inte startats. Den kvarvarande P12-host-/flödesverifieringen är uppskjuten enligt användarens beslut. Före verklig drift behövs även verksamhetens godkännanden och befintliga launchgrindar; CI ersätter inte dessa. P15 kräver ingen manuell åtgärd nu och har inte installerats i Simply-miljöerna.
+P17 är nästa utvecklingsetapp och har inte startats. P12-host-/flödesverifiering är fortsatt uppskjuten enligt beslut. Verksamheten ska senare fastställa retention/ändamål och godkännanden innan verklig gallring eller launch. P16 kräver ingen manuell åtgärd nu; apply är avstängd och inga Simply-miljöer är ändrade.
 
 ## Status
 - P1 ordermotor: **COMPLETE**

@@ -1,12 +1,24 @@
-## P16 – IN PROGRESS, privacy och konfigurerbar retention
+## P16 – DONE, privacy och konfigurerbar retention verifierade
 
-Aktuell etapp P16 från main df6c80a68945a9b6fe7b103a28a66399cf25ea42, PR #34.
-Inventering av 24 tabeller/281 fält, privata dry-run och skyddad gallring implementeras
-och testas isolerat. Juridiska tider är TBD; ingen production-/staginggallring.
-Se [P16-runbook](P16-PRIVACY-RETENTION.md). Ingen Simply-deploy, Stripe live,
-DNS-cutover, extern mail, nya kostnader eller productionaktivering.
-P12-verifiering är uppskjuten enligt beslut. P17 har inte startats.
-Äldre status nedan är historisk.
+Main före P16: `df6c80a68945a9b6fe7b103a28a66399cf25ea42`. PR #34 är mergad;
+kod-main efter merge: `ad035c6288852f354a7b39d433aa8c25b10d6180`.
+Slutlig PR-head: `d6f2bbbdaffc35adeb96e6f4419c8a779bbf0131`.
+Inventering av 24 tabeller/281 fält och inbäddade JSON/CSV-personuppgifter,
+konfigurerbar retention med TBD/null, privat SELECT-only dry-run och guardad,
+atomär gallring av valfri sales/inaktiv consent är klara. De 20 övriga tabellerna,
+betalnings-/medlems-/leveransspår och åtta ledgerposter bevaras.
+P16 [37179059419](https://github.com/AlbertAndersson/Tran-s-bois/actions/runs/37179059419),
+jobb `111367711810`: success. Alla 11 startade PR-kontroller är success;
+P16 kör även den syntetiska P6-fixturen för P3–P6-spår. P14 37179059420
+inklusive Chromium, P12/P13/P15/P9 och Security passerar.
+Se [P16-runbook](P16-PRIVACY-RETENTION.md) och [fältinventering](P16-DATA-FIELDS.json).
+Externresurser/sc_clearance/Stripe har granskats tekniskt; leverantörs-/cookie-
+verifiering och juridiska retentionbeslut är TBD inför aktivering.
+Ingen production-/staginggallring, Simply-deploy, Stripe live, DNS-cutover,
+extern mail, ny tjänst/kostnad eller productionaktivering. socen.se är fortsatt
+stängd dedikerad production, separat från staging/sandbox på alberiq.se.
+P12-verifiering är uppskjuten enligt beslut. Inga tekniska P16-blockerare eller
+manuella åtgärder nu. P17 har inte startats. Äldre status nedan är historisk.
 
 ## P15 – DONE, observability och driftberedskap verifierade
 
