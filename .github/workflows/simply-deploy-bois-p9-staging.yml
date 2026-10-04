@@ -75,6 +75,7 @@ jobs:
           test -f bois-src/docs/P8-PRODUCTION-READINESS.md
           test -f bois-src/docs/P8-CUTOVER-RUNBOOK.md
           test -f bois-src/docs/P9-SALES-ENGINE.md
+          test -f bois-src/site/commerce/supporter-preview.html
           python3 -m json.tool bois-src/data/p7-assortment.json >/dev/null
           python3 -m json.tool bois-src/data/p8-readiness.json >/dev/null
 
@@ -135,7 +136,7 @@ jobs:
           out="$RUNNER_TEMP/bois-p9-public"
           mkdir -p "$out/assets"
 
-          for f in index.html membership.html match-kit.html order.html admin.html payment.html assortment-preview.html cookies.html; do cp "bois-src/site/commerce/$f" "$out/$f"; done
+          for f in index.html membership.html match-kit.html order.html admin.html payment.html assortment-preview.html supporter-preview.html cookies.html; do cp "bois-src/site/commerce/$f" "$out/$f"; done
           for f in common.js membership.js matchkit.js order.js admin.js payment.js assortment-preview.js commerce.css p5.css; do cp "bois-src/site/commerce/assets/$f" "$out/assets/$f"; done
           for f in security.php production.php p14_admin.php p15_observability.php commerce-api.php consent.php p3_db.php p5_batch.php p5-migrate.php p5-worker.php p4_membership.php p4-migrate.php p6_payment.php p6-migrate.php p7_assortment.php p7-migrate.php p8_stripe.php p8-migrate.php p9_sales.php p9-migrate.php; do cp "bois-src/server/$f" "$out/$f"; done
 
@@ -273,7 +274,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for path in / /index.html /membership.html /match-kit.html /payment.html /order.html /admin.html /cookies.html /assortment-preview.html /config.js /assets/common.js '/order.html?id=synthetic&token=invalid' '/commerce-api.php?action=health' '/commerce-api.php?action=order&id=synthetic&token=invalid' '/commerce-api.php?action=admin_orders' '/commerce-api.php?action=consent' '/commerce-api.php?action=payment_webhook'; do
+          for path in / /index.html /membership.html /match-kit.html /payment.html /order.html /admin.html /cookies.html /assortment-preview.html /supporter-preview.html /config.js /assets/common.js '/order.html?id=synthetic&token=invalid' '/commerce-api.php?action=health' '/commerce-api.php?action=order&id=synthetic&token=invalid' '/commerce-api.php?action=admin_orders' '/commerce-api.php?action=consent' '/commerce-api.php?action=payment_webhook'; do
             status="$(command curl --silent --show-error --max-time 20 -A 'BoIS-staging-gate-check/1.0' -o /dev/null -w '%{http_code}' "$BOIS_BASE_URL$path")"
             [[ "$status" == 401 ]] || { echo "::error::Unauthorised URL returned $status: $path"; exit 1; }
           done
