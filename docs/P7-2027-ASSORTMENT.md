@@ -213,3 +213,22 @@ P8 äger:
 - production cutover
 
 P7 ska inte påbörja dessa delar.
+
+## Marknadsscan och bred supporterpreview 2026-10-04
+
+BoIS har nu en separat idépreview på `site/commerce/supporter-preview.html` för dialog med Erik/BoIS.
+
+Previewn bygger på en aktuell marknadsscan av officiella klubbshoppar och visar ett betydligt bredare möjligt sortiment än de tre ursprungliga P7-kandidaterna. Exempel på marknadsobserverade kategorier är halsdukar, mössor, kepsar, hoodies, T-shirts, matchtröjor, muggar, termosar, flaggor, nyckelringar, barn/baby, väskor, pins, märken, magneter och limiterade kampanjprodukter.
+
+BoIS-previewn innehåller även bandyspecifika idéer som klubbmärkt bandyboll och skridskoskydd. Dessa är idéer, inte verifierade produkter.
+
+Marknadskällor och observationer finns i `docs/P7-MARKET-SCAN-2026.md`.
+
+Viktigt:
+- previewn är avsedd att visas internt redan nu
+- inga produkter på previewn blir orderbara av att visas där
+- hård launch gate ligger fortsatt på **2027-01-01**
+- varje faktisk produkt kräver verifierad leverantör, SKU/variant, kostnad, pris/moms, marginal, fulfillment/lagerstrategi, bild/design, returpolicy och uttryckligt BoIS-godkännande
+- de tre befintliga P7-produkterna är fortfarande de enda strukturerade lanseringskandidaterna i P7-assortmentdatat tills BoIS väljer vad som ska tas vidare
+
+Rekommenderat första diskussionspaket till Erik är: halsduk, mössa, supporter-T-shirt, hoodie, keps, mugg, nyckelring/nyckelband och handflagga. Det ger en bred butikskänsla utan att direkt skapa ett stort variant- och lagerproblem.

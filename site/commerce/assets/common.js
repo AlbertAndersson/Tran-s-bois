@@ -217,13 +217,14 @@
           },
           {
             product_key:'nordic-gym', name:'Nordic Wellness gymkort', category:'member_benefit',
-            description:'Gymkort för aktiv BoIS-medlem.', price_ore:265000,
+            description:'Gymkort för aktiv BoIS-medlem. Max 20 per kalenderår.', price_ore:265000,
             fulfillment_type:'MEMBER_BENEFIT', is_public:true, is_orderable:true,
+            availability:{period:'calendar_year',year:new Date().getFullYear(),limit:20,sold:0,reserved:0,remaining:20,sold_out:false,reservation_minutes:30},
             variants:[{sku:'NW-GYM-ANNUAL',name:'Gymkort 12 månader',price_ore:265000}]
           },
           {
             product_key:'match-kit', name:'Matchställ', category:'match_kit',
-            description:'Matchställ med namn och nummer.', price_ore:99800,
+            description:'Matchställ med matchtröja, namn och nummer. Byxa ingår inte.', price_ore:99800,
             fulfillment_type:'BATCH_SUPPLIER', is_public:true, is_orderable:true,
             metadata:{staging_price:true,real_price_pending:true},
             variants:[{sku:'MATCHKIT-STAGING',name:'Matchställ – testvariant',price_ore:99800}]

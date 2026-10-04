@@ -317,13 +317,20 @@ function bois_p3_seed_catalog(PDO $pdo): void
         ]);
         $product->execute([
             'nordic-gym','Nordic Wellness gymkort','member_benefit',
-            'Förmånligt gymkort för aktiv BoIS-medlem.',265000,$supplierIds['nordic-wellness-tranas'] ?? null,
+            'Förmånligt gymkort för aktiv BoIS-medlem. Högst 20 kort kan fördelas per kalenderår.',265000,$supplierIds['nordic-wellness-tranas'] ?? null,
             'MEMBER_BENEFIT',1,1,null,
-            json_encode(['membership_required'=>true,'price_comparison_requires_confirmation'=>true], JSON_THROW_ON_ERROR)
+            json_encode([
+                'membership_required'=>true,
+                'price_comparison_requires_confirmation'=>true,
+                'annual_limit'=>20,
+                'quota_period'=>'calendar_year',
+                'quota_timezone'=>'Europe/Stockholm',
+                'reservation_minutes'=>30
+            ], JSON_THROW_ON_ERROR)
         ]);
         $product->execute([
             'match-kit','Matchställ','match_kit',
-            'Matchställ med storlek, namn och nummer. Leverantörsorder batchas för att minska frakt.',99800,$supplierIds['matchkit-supplier'] ?? null,
+            'Matchställ med matchtröja, namn och nummer. Byxa ingår inte i nuvarande erbjudande. Leverantörsorder batchas för att minska frakt.',99800,$supplierIds['matchkit-supplier'] ?? null,
             'BATCH_SUPPLIER',1,1,null,
             json_encode(['staging_price'=>true,'real_price_pending'=>true], JSON_THROW_ON_ERROR)
         ]);
@@ -360,12 +367,17 @@ function bois_p3_seed_catalog(PDO $pdo): void
         $variant->execute([$productIds['membership'],'MEM-YOUTH','Ungdom',20000,json_encode(['membership_type'=>'youth'], JSON_THROW_ON_ERROR)]);
         $variant->execute([$productIds['membership'],'MEM-ADULT','Vuxen',35000,json_encode(['membership_type'=>'adult'], JSON_THROW_ON_ERROR)]);
         $variant->execute([$productIds['membership'],'MEM-SENIOR','Pensionär',30000,json_encode(['membership_type'=>'senior'], JSON_THROW_ON_ERROR)]);
-        $variant->execute([$productIds['nordic-gym'],'NW-GYM-ANNUAL','Gymkort 12 månader',265000,json_encode(['eligibility'=>'active_membership','activation_flow'=>'pending_confirmation'], JSON_THROW_ON_ERROR)]);
+        $variant->execute([$productIds['nordic-gym'],'NW-GYM-ANNUAL','Gymkort 12 månader',265000,json_encode([
+            'eligibility'=>'active_membership',
+            'activation_flow'=>'pending_confirmation',
+            'annual_limit'=>20,
+            'quota_period'=>'calendar_year'
+        ], JSON_THROW_ON_ERROR)]);
         $variant->execute([$productIds['match-kit'],'MATCHKIT-STAGING','Matchställ – testvariant',99800,json_encode([
             'shirt_sizes'=>['128','140','152','164','XS','S'],
-            'shorts_sizes'=>['128','140','152','164','XS','S'],
             'personalization'=>['player_name','number','name_print','number_print'],
-            'staging_only'=>true
+            'staging_only'=>true,
+            'includes_shorts'=>false
         ], JSON_THROW_ON_ERROR)]);
 
         $ruleSql =
@@ -418,6 +430,7 @@ function bois_p3_catalog(PDO $pdo, bool $includeHidden=false, ?DateTimeImmutable
         $available=!function_exists('bois_p7_launch_allowed') || bois_p7_launch_allowed($pdo,$key,$asOf);
         if(!$includeHidden && !$available) continue;
         if (!isset($products[$key])) {
+            $availability=$key==='nordic-gym' ? bois_p3_gym_quota_status($pdo,$asOf) : null;
             $products[$key] = [
                 'product_key'=>$key,
                 'name'=>(string)$row['product_name'],
@@ -427,9 +440,10 @@ function bois_p3_catalog(PDO $pdo, bool $includeHidden=false, ?DateTimeImmutable
                 'currency'=>(string)$row['currency'],
                 'fulfillment_type'=>(string)$row['fulfillment_type'],
                 'is_public'=>(bool)$row['is_public'] && $available,
-                'is_orderable'=>(bool)$row['is_orderable'] && $available,
+                'is_orderable'=>(bool)$row['is_orderable'] && $available && !($availability['sold_out'] ?? false),
                 'active_from'=>$row['active_from'],
                 'metadata'=>$row['product_metadata_json'] ? json_decode((string)$row['product_metadata_json'],true) : [],
+                'availability'=>$availability,
                 'variants'=>[],
             ];
         }
@@ -455,6 +469,82 @@ function bois_p3_clean_string(mixed $value, int $max): string
 function bois_p3_bool(mixed $value): bool
 {
     return $value === true || $value === 1 || $value === '1' || $value === 'true' || $value === 'on';
+}
+
+function bois_p3_gym_quota_status(PDO $pdo, ?DateTimeImmutable $at=null): array
+{
+    $tz=new DateTimeZone('Europe/Stockholm');
+    $at=($at ?? new DateTimeImmutable('now',$tz))->setTimezone($tz);
+    $year=(int)$at->format('Y');
+    $limit=20;
+    $reservationMinutes=30;
+
+    $product=$pdo->prepare("SELECT metadata_json FROM bois_products WHERE product_key='nordic-gym' LIMIT 1");
+    $product->execute();
+    $metadata=$product->fetchColumn();
+    if(is_string($metadata)&&$metadata!==''){
+        $decoded=json_decode($metadata,true);
+        if(is_array($decoded)){
+            $limit=max(0,(int)($decoded['annual_limit']??$limit));
+            $reservationMinutes=max(1,min(240,(int)($decoded['reservation_minutes']??$reservationMinutes)));
+        }
+    }
+
+    $startLocal=new DateTimeImmutable($year.'-01-01 00:00:00',$tz);
+    $endLocal=$startLocal->modify('+1 year');
+    $utc=new DateTimeZone('UTC');
+    $startUtc=$startLocal->setTimezone($utc)->format('Y-m-d H:i:s');
+    $endUtc=$endLocal->setTimezone($utc)->format('Y-m-d H:i:s');
+    $reservationCutoff=$at->modify('-'.$reservationMinutes.' minutes')->setTimezone($utc)->format('Y-m-d H:i:s');
+
+    $stmt=$pdo->prepare(
+        "SELECT
+            COALESCE(SUM(CASE
+              WHEN o.payment_status IN ('PAID','PARTIALLY_REFUNDED','REFUND_PENDING') THEN oi.quantity
+              WHEN o.payment_status IN ('NOT_ENABLED','PENDING') AND o.created_at>=? THEN oi.quantity
+              ELSE 0 END),0) allocated_qty,
+            COALESCE(SUM(CASE
+              WHEN o.payment_status IN ('PAID','PARTIALLY_REFUNDED','REFUND_PENDING') THEN oi.quantity
+              ELSE 0 END),0) sold_qty
+         FROM bois_order_items oi
+         JOIN bois_orders o ON o.id=oi.order_id
+         WHERE oi.sku='NW-GYM-ANNUAL' AND o.created_at>=? AND o.created_at<?"
+    );
+    $stmt->execute([$reservationCutoff,$startUtc,$endUtc]);
+    $row=$stmt->fetch() ?: [];
+    $allocated=max(0,(int)($row['allocated_qty']??0));
+    $sold=max(0,(int)($row['sold_qty']??0));
+    $remaining=max(0,$limit-$allocated);
+
+    return [
+        'period'=>'calendar_year',
+        'year'=>$year,
+        'limit'=>$limit,
+        'sold'=>$sold,
+        'reserved'=>max(0,$allocated-$sold),
+        'remaining'=>$remaining,
+        'sold_out'=>$remaining<1,
+        'reservation_minutes'=>$reservationMinutes,
+    ];
+}
+
+function bois_p3_acquire_gym_quota_lock(PDO $pdo, int $year): string
+{
+    $name='bois:nordic-gym:'.$year;
+    $stmt=$pdo->prepare('SELECT GET_LOCK(?,5)');
+    $stmt->execute([$name]);
+    if((int)$stmt->fetchColumn()!==1) throw new RuntimeException('Gymkortets lagersaldo kunde inte reserveras. Försök igen.');
+    return $name;
+}
+
+function bois_p3_release_named_lock(PDO $pdo, ?string $name): void
+{
+    if(!$name) return;
+    try{
+        $stmt=$pdo->prepare('SELECT RELEASE_LOCK(?)');
+        $stmt->execute([$name]);
+    }catch(Throwable){
+    }
 }
 
 function bois_p3_resolve_variant(PDO $pdo, string $sku, ?DateTimeImmutable $asOf=null): array
@@ -486,7 +576,6 @@ function bois_p3_validate_line_meta(array $variant, array $meta): array
     if ($sku === 'MATCHKIT-STAGING') {
         $team = bois_p3_clean_string($meta['team'] ?? '',60);
         $shirt = bois_p3_clean_string($meta['shirt_size'] ?? '',10);
-        $shorts = bois_p3_clean_string($meta['shorts_size'] ?? '',10);
         $player = bois_p3_clean_string($meta['player_name'] ?? '',80);
         $number = bois_p3_clean_string($meta['number'] ?? '',2);
         $allowed = ['128','140','152','164','XS','S'];
@@ -495,8 +584,8 @@ function bois_p3_validate_line_meta(array $variant, array $meta): array
         if (!in_array($team,$allowedTeams,true)) {
             throw new InvalidArgumentException('Välj ett giltigt lag.');
         }
-        if (!in_array($shirt,$allowed,true) || !in_array($shorts,$allowed,true)) {
-            throw new InvalidArgumentException('Välj giltiga storlekar för matchstället.');
+        if (!in_array($shirt,$allowed,true)) {
+            throw new InvalidArgumentException('Välj en giltig storlek på matchtröjan.');
         }
         if ($player === '') throw new InvalidArgumentException('Ange spelarens namn.');
         if (!preg_match('/^\d{1,2}$/',$number) || (int)$number < 1 || (int)$number > 99) {
@@ -505,7 +594,6 @@ function bois_p3_validate_line_meta(array $variant, array $meta): array
         return [
             'team'=>$team,
             'shirt_size'=>$shirt,
-            'shorts_size'=>$shorts,
             'player_name'=>$player,
             'number'=>(string)(int)$number,
             'name_print'=>bois_p3_bool($meta['name_print'] ?? true),
@@ -560,6 +648,7 @@ function bois_p3_create_order(PDO $pdo, array $input, ?DateTimeImmutable $asOf=n
     $resolved = [];
     $hasMembership = false;
     $hasGym = false;
+    $gymQty = 0;
     $subtotal = 0;
 
     foreach ($lines as $line) {
@@ -572,7 +661,10 @@ function bois_p3_create_order(PDO $pdo, array $input, ?DateTimeImmutable $asOf=n
         $lineTotal = $unit * $qty;
 
         if (str_starts_with($sku,'MEM-')) $hasMembership = true;
-        if ($sku === 'NW-GYM-ANNUAL') $hasGym = true;
+        if ($sku === 'NW-GYM-ANNUAL') {
+            $hasGym = true;
+            $gymQty += $qty;
+        }
 
         $subtotal += $lineTotal;
         $resolved[] = compact('variant','meta','qty','unit','lineTotal');
@@ -580,6 +672,21 @@ function bois_p3_create_order(PDO $pdo, array $input, ?DateTimeImmutable $asOf=n
 
     if ($hasGym && !$hasMembership && !bois_p3_bool($input['existing_member'] ?? false)) {
         throw new InvalidArgumentException('Gymkort kräver ett medlemskap i samma köp eller bekräftelse på befintligt medlemskap.');
+    }
+
+    $quotaLock=null;
+    if($hasGym){
+        $initialQuota=bois_p3_gym_quota_status($pdo,$asOf);
+        $quotaLock=bois_p3_acquire_gym_quota_lock($pdo,(int)$initialQuota['year']);
+        try{
+            $quota=bois_p3_gym_quota_status($pdo,$asOf);
+            if((int)$quota['remaining']<$gymQty){
+                throw new DomainException('Nordic Wellness-gymkorten är slutsålda för '.$quota['year'].'.');
+            }
+        }catch(Throwable $e){
+            bois_p3_release_named_lock($pdo,$quotaLock);
+            throw $e;
+        }
     }
 
     $publicId = bois_p3_public_id();
@@ -647,6 +754,8 @@ function bois_p3_create_order(PDO $pdo, array $input, ?DateTimeImmutable $asOf=n
     } catch (Throwable $e) {
         $pdo->rollBack();
         throw $e;
+    } finally {
+        bois_p3_release_named_lock($pdo,$quotaLock);
     }
 
     return [

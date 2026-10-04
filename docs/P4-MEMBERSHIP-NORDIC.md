@@ -131,3 +131,19 @@ AlberIQ/Simply:
 
 ## Kostnad
 Ny extern kostnad: **0 kr**.
+
+## Årskvot för Nordic Wellness
+
+Nytt verksamhetsbeslut 2026-10-04: BoIS får sälja högst **20 Nordic Wellness-gymkort per kalenderår**.
+
+Teknisk modell:
+- kvoten är serverstyrd i Commerce Core, inte endast en frontendmarkering
+- publikt katalogsvar innehåller aktuell tillgänglighet: limit, sold, reserved, remaining och sold_out
+- påbörjade gymorder reserverar en plats kortvarigt för att minska risken för översäljning
+- standard reservationstid är 30 minuter
+- PAID, PARTIALLY_REFUNDED och REFUND_PENDING räknas mot årets kvot
+- nya gymorder stoppas fail-closed när årets tillgängliga saldo är 0
+- medlemsflödet visar återstående antal och markerar produkten som **Slutsåld** när kvoten är slut
+- samtidig orderläggning serialiseras med databaslås så den 21:a ordern inte kan smita igenom vid race condition
+
+Kvoten gäller kalenderår i Europe/Stockholm. Hur en fullt återbetald/återkallad gymförmån ska påverka den avtalsmässiga 20-gränsen ska bekräftas med BoIS/Nordic innan skarp drift; nuvarande tekniska modell frigör en helt återbetald order från säljsaldot.

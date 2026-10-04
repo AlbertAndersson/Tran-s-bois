@@ -13,7 +13,7 @@
   <section class="form-card" style="margin-top:14px">
     <span class="tag red">BATCH_SUPPLIER</span>
     <h1>Beställ matchställ</h1>
-    <p class="sub">Matchstället registreras som en riktig commerce-orderrad. P5-batchmotorn är klar: efter verifierad P6-betalning väntar ordern tills 8 betalda ställ uppnåtts, 7 dagar passerat eller admin skickar batchen manuellt.</p>
+    <p class="sub">Matchstället består just nu av matchtröjan. Den registreras som en riktig commerce-orderrad. P5-batchmotorn är klar: efter verifierad P6-betalning väntar ordern tills 8 betalda ställ uppnåtts, 7 dagar passerat eller admin skickar batchen manuellt.</p>
     <div class="notice"><b>Stagingpris 998 kr:</b> detta är fortfarande ett testpris. Riktigt leverantörspris ska in innan skarp försäljning.</div>
     <form id="kitForm">
       <h2>Spelare & lag</h2>
@@ -22,10 +22,8 @@
         <div class="field"><label for="player">Spelarens namn</label><input id="player" required></div>
         <div class="field"><label for="number">Tröjnummer 1–99</label><input id="number" inputmode="numeric" pattern="[0-9]{1,2}" maxlength="2" required></div>
       </div>
-      <div class="row">
-        <div class="field"><label for="shirt">Storlek tröja</label><select id="shirt" required><option>128</option><option>140</option><option>152</option><option>164</option><option>XS</option><option>S</option></select></div>
-        <div class="field"><label for="shorts">Storlek byxa</label><select id="shorts" required><option>128</option><option>140</option><option>152</option><option>164</option><option>XS</option><option>S</option></select></div>
-      </div>
+      <div class="field"><label for="shirt">Storlek matchtröja</label><select id="shirt" required><option>128</option><option>140</option><option>152</option><option>164</option><option>XS</option><option>S</option></select></div>
+      <div class="notice blue"><b>Ingen byxa i nuvarande matchställ:</b> beställningen avser matchtröjan med namn och nummer. Byxa kan läggas till senare om klubben börjar erbjuda det.</div>
       <label class="toggle"><input id="namePrint" type="checkbox" checked><span><b>Namntryck</b><br><span class="small">Registreras strukturerat på orderraden.</span></span></label>
       <label class="toggle"><input id="numberPrint" type="checkbox" checked><span><b>Nummertryck</b><br><span class="small">Tröjnumret följer med till leverantörsflödet.</span></span></label>
 
