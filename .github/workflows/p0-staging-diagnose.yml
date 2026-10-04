@@ -114,6 +114,44 @@ jobs:
           for action in ['admin_orders','admin_catalog','admin_batches','admin_p4','admin_payments','admin_p7','admin_sales']:
               check(action,'commerce-api.php?action='+action,True,env['STAGING_ADMIN_TOKEN'])
           PYTHON
+      - name: Windows Edge and Chrome admin login
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --prefix "$RUNNER_TEMP/bois-browser" --no-save --ignore-scripts playwright@1.62.1
+          "$RUNNER_TEMP/bois-browser/node_modules/.bin/playwright" install --with-deps chromium
+          NODE_PATH="$RUNNER_TEMP/bois-browser/node_modules" node <<'JS'
+          const {chromium}=require('playwright');
+          const assert=require('node:assert/strict');
+          (async()=>{
+            const browser=await chromium.launch({headless:true});
+            try{
+              for(const profile of ['Chrome','Edge']){
+                const ua='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36'+(profile==='Edge'?' Edg/154.0.0.0':'');
+                const ctx=await browser.newContext({userAgent:ua,locale:'sv-SE',httpCredentials:{username:'bois-demo',password:process.env.DEMO_PASSWORD}});
+                const page=await ctx.newPage();
+                const statuses=[];
+                page.on('response',r=>{if(r.url().includes('commerce-api.php'))statuses.push({action:new URL(r.url()).searchParams.get('action'),status:r.status()});});
+                await page.goto('https://alberiq.se/bois-shop-p3/admin.html');
+                await page.locator('#token').fill('p0-invalid-fixture');
+                await page.getByRole('button',{name:'Öppna admin'}).click();
+                await page.locator('#loginError').waitFor({state:'visible'});
+                assert.equal(await page.locator('#dashboard').isVisible(),false);
+                console.log('P0_WINDOWS_WRONG_KEY '+profile+' denied '+JSON.stringify(statuses));
+                statuses.length=0;
+                await page.locator('#token').fill(process.env.STAGING_ADMIN_TOKEN);
+                await page.getByRole('button',{name:'Öppna admin'}).click();
+                try{await page.locator('#dashboard').waitFor({state:'visible',timeout:20000});}
+                catch(e){console.log('P0_WINDOWS_CORRECT_KEY '+profile+' failed '+JSON.stringify(statuses));throw Error('Admin UI did not open; credential and response body suppressed');}
+                assert.equal(await page.locator('#token').inputValue(),'');
+                const actions=['admin_orders','admin_catalog','admin_batches','admin_p4','admin_payments','admin_p7','admin_sales'];
+                for(const action of actions)assert(statuses.some(x=>x.action===action&&x.status===200),action);
+                console.log('P0_WINDOWS_CORRECT_KEY '+profile+' pass '+JSON.stringify(statuses));
+                await ctx.close();
+              }
+            }finally{await browser.close();}
+          })().catch(e=>{console.error(e.message);process.exitCode=1});
+          JS
       - name: Cleanup credentials
         if: always()
         run: rm -rf -- "$SSH_DIR"
