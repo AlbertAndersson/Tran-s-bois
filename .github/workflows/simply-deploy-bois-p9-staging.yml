@@ -315,7 +315,18 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          curl(){ command curl --user "bois-demo:$DEMO_PASSWORD" "$@"; }
+          curl(){
+            local endpoint=static arg rc
+            for arg in "$@"; do
+              if [[ "$arg" == "$BOIS_BASE_URL/commerce-api.php?action="* ]]; then
+                endpoint="${arg#*action=}"; endpoint="${endpoint%%&*}"
+              fi
+            done
+            echo "STAGING_HTTP_CHECK: $endpoint"
+            command curl --user "bois-demo:$DEMO_PASSWORD" "$@" || {
+              rc=$?; echo "::error::Staging HTTP check failed: $endpoint (curl exit $rc)"; return "$rc";
+            }
+          }
           UA="AlberIQ-BoIS-P9-Check/1.0"
           API="$BOIS_BASE_URL/commerce-api.php"
 
