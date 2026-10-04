@@ -98,7 +98,7 @@ function bois_security_gate(array $config,string $action,array $routes): void
         if($admin&&$action!=='admin_login') bois_security_admin($config);
         if($action==='admin_login'){
             require_once __DIR__.'/p14_admin.php';
-            if(!bois_p14_personal($config)||((($_SERVER['HTTPS']??'')!=='on')&&($config['mode']??'')!=='test')) bois_security_reject(401,'Personlig inloggning är inte tillgänglig.');
+            if(!bois_p14_personal($config)||((($_SERVER['HTTPS']??'')!=='on')&&($config['mode']??'')!=='test')) bois_security_reject(403,'Personlig inloggning är inte tillgänglig.');
             if(!is_string($origin)||!in_array($origin,$config['allowed_origins']??[],true))bois_security_reject(403,'Otillåtet ursprung.');
         }
     }

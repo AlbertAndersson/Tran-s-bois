@@ -23,6 +23,7 @@ const order=key=>({customer:{name:'P18 Synthetic',email:'p18@example.invalid'},i
     };
     await request('health',200);
     await request('admin_orders',401);
+    await request('admin_login',403,{});
     await request('catalog',403,null,{Origin:'https://denied.example.invalid'});
     await request('orders',422,{});
     await request('unknown_endpoint',404);

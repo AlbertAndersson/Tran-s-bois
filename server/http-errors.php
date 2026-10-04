@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 if(PHP_SAPI!=='cli'&&realpath($_SERVER['SCRIPT_FILENAME']??'')===__FILE__){
-    http_response_code(403);header('Cache-Control: no-store');exit;
+    require_once __DIR__.'/security.php';
 }
 
 // Typed denials preserve DomainException compatibility for existing callers.
