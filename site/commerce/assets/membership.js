@@ -9,6 +9,37 @@
   }
 
   let recommendationRun=0;
+  let gymAvailability={limit:20,remaining:null,sold_out:false,year:new Date().getFullYear()};
+
+  async function refreshGymAvailability(){
+    const stock=$('gymStock');
+    try{
+      const catalog=await c.catalog();
+      const gym=catalog.find(product=>product.product_key==='nordic-gym');
+      if(gym?.availability){
+        gymAvailability=gym.availability;
+        const remaining=Number(gymAvailability.remaining??0);
+        const limit=Number(gymAvailability.limit??20);
+        const year=gymAvailability.year||new Date().getFullYear();
+        if(gymAvailability.sold_out){
+          $('addGym').checked=false;
+          $('addGym').disabled=true;
+          $('gymChoice').classList.add('sold-out');
+          stock.textContent='Slutsåld för '+year+' · 0 av '+limit+' kvar';
+        }else{
+          $('addGym').disabled=false;
+          $('gymChoice').classList.remove('sold-out');
+          stock.textContent=remaining+' av '+limit+' gymkort kvar '+year;
+        }
+      }else{
+        stock.textContent='Max 20 gymkort per kalenderår.';
+      }
+    }catch{
+      stock.textContent='Lagersaldot kunde inte hämtas. Gymköp verifieras ändå av servern.';
+    }
+    refresh();
+  refreshGymAvailability();
+  }
 
   async function refreshRecommendation(){
     const run=++recommendationRun;
@@ -44,7 +75,7 @@
         lines.push('<div class="line"><span>' + label + '</span><b>' + c.money(prices[sku]) + '</b></div>');
       }
     }
-    if ($('addGym').checked) {
+    if ($('addGym').checked && !$('addGym').disabled) {
       total += prices['NW-GYM-ANNUAL'];
       lines.push('<div class="line"><span>Nordic Wellness gymkort</span><b>' + c.money(prices['NW-GYM-ANNUAL']) + '</b></div>');
     }
@@ -71,7 +102,7 @@
       if (!sku) return;
       items.push({sku,quantity:1,metadata:{member_name:$('memberName').value.trim()}});
     }
-    if ($('addGym').checked) items.push({sku:'NW-GYM-ANNUAL',quantity:1,metadata:{}});
+    if ($('addGym').checked && !$('addGym').disabled) items.push({sku:'NW-GYM-ANNUAL',quantity:1,metadata:{}});
     if (!items.length) {
       $('error').textContent = 'Välj medlemskap och/eller gymkort.';
       $('error').hidden = false;
