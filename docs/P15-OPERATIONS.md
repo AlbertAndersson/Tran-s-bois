@@ -1,3 +1,18 @@
+## Aktuell styrning 2026-10-05
+
+P18A är DONE och mergad via PR40. P18B är beställd men **BLOCKED**:
+run37241703902 på main `4e4e2349631d434160b77bd9b2b2d3e7be7db349`
+saknar produktionscredentials i GitHub och stannade före DB-anslutning.
+Befintlig privat produktionsåtkomst är dokumenterad på Alberts lokala dator.
+Ingen ny hostdeployment, migration eller aktivering utfördes.
+P12 är accepterad av Albert; återstående hostbevis ligger i P18B.
+P13–P17 är klara i kod/isolering och får inte beskrivas som fullt installerade.
+P18 och P20 förblir BLOCKED vid hostacceptans; P19:s verksamhetssvar är öppna.
+Se [aktuell hostacceptans och lokal fortsättning](P18B-HOST-ACCEPTANCE.md).
+Äldre nästa-etapp-rader nedan är historik och gäller inte som arbetsinstruktion.
+
+---
+
 # P15 – observability och driftberedskap
 
 Baslinje main: `18ef6b03605ae96c5c1b84fa6f683037c0d452c8`. PR #33.
