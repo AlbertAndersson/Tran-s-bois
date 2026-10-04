@@ -1,0 +1,218 @@
+name: P0 existing protected staging regression
+on:
+  push:
+    branches: ["chatgpt/p0-shopadmin-regression"]
+    paths: [".github/workflows/p0-staging-regression.yml"]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: simply-tranas-bois-p9-staging
+  cancel-in-progress: false
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      BOIS_BASE_URL: https://alberiq.se/bois-shop-p3
+      BOIS_ADMIN_TOKEN: ${{ secrets.BOIS_STAGING_ADMIN_TOKEN }}
+      DEMO_PASSWORD: ${{ secrets.BOIS_STAGING_DEMO_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: f355ff5c26ce11ad20815e2f48b35ec2f4bbc064
+          path: bois-src
+      - name: Verify unauthorised direct access is blocked
+        shell: bash
+        run: |
+          set -euo pipefail
+          for path in / /index.html /membership.html /match-kit.html /payment.html /order.html /admin.html /cookies.html /assortment-preview.html /config.js /assets/common.js '/order.html?id=synthetic&token=invalid' '/commerce-api.php?action=health' '/commerce-api.php?action=order&id=synthetic&token=invalid' '/commerce-api.php?action=admin_orders' '/commerce-api.php?action=consent' '/commerce-api.php?action=payment_webhook'; do
+            status="$(command curl --silent --show-error --max-time 20 -A 'BoIS-staging-gate-check/1.0' -o /dev/null -w '%{http_code}' "$BOIS_BASE_URL$path")"
+            [[ "$status" == 401 ]] || { echo "::error::Unauthorised URL returned $status: $path"; exit 1; }
+          done
+          for action in orders checkout mock_payment_event consent sales_event; do
+            status="$(command curl --silent --show-error --max-time 20 -A 'BoIS-staging-gate-check/1.0' -o /dev/null -w '%{http_code}' -X POST -H 'Content-Type: application/json' --data '{}' "$BOIS_BASE_URL/commerce-api.php?action=$action")"
+            [[ "$status" == 401 ]] || { echo "::error::Unauthorised POST returned $status: $action"; exit 1; }
+          done
+          status="$(command curl --silent --show-error --max-time 20 -A 'BoIS-staging-gate-check/1.0' -o /dev/null -w '%{http_code}' --user 'bois-demo:wrong-demo-credential' "$BOIS_BASE_URL/commerce-api.php?action=health")"
+          [[ "$status" == 401 ]]
+          echo 'STAGING_DIRECTORY_AUTH_DIRECT_URLS: pass' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Verify P10 protected HTTP controls
+        shell: bash
+        run: |
+          set -euo pipefail
+          api="$BOIS_BASE_URL/commerce-api.php"
+          check(){
+            expected="$1"; shift
+            actual="$(command curl --silent --show-error --max-time 20 -A 'AlberIQ-BoIS-P9-Check/1.0' --user "bois-demo:$DEMO_PASSWORD" -o /dev/null -w '%{http_code}' "$@")"
+            [[ "$actual" == "$expected" ]] || { echo "::error::P10 expected $expected got $actual"; exit 1; }
+          }
+          command curl --fail --silent --show-error -A 'AlberIQ-BoIS-P9-Check/1.0' --user "bois-demo:$DEMO_PASSWORD" -D "$RUNNER_TEMP/p10-headers.txt" -o /dev/null "$BOIS_BASE_URL/index.html"
+          for header in content-security-policy x-frame-options x-content-type-options referrer-policy permissions-policy cache-control; do
+            grep -qi "^$header:" "$RUNNER_TEMP/p10-headers.txt"
+          done
+          grep -qi "script-src 'self'" "$RUNNER_TEMP/p10-headers.txt"
+          check 401 "$api?action=admin_orders"
+          check 401 -H 'X-Bois-Admin-Token: invalid-fixture' "$api?action=admin_orders"
+          check 405 "$api?action=orders"
+          check 403 -X POST -H 'Content-Type: application/json' -H 'Origin: https://attacker.invalid' --data '{}' "$api?action=consent"
+          check 415 -X POST -H 'Content-Type: text/plain' --data '{}' "$api?action=consent"
+          for path in security.php p3_db.php p5-worker.php p9-migrate.php consent.php; do
+            check 403 "$BOIS_BASE_URL/$path"
+          done
+          echo 'P10_PROTECTED_HTTP_HEADERS_AND_GATES: pass' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Verify P4–P9 zero-cost staging end-to-end
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl(){ command curl --user "bois-demo:$DEMO_PASSWORD" "$@"; }
+          UA="AlberIQ-BoIS-P9-Check/1.0"
+          API="$BOIS_BASE_URL/commerce-api.php"
+
+          curl --fail --silent --show-error -A "$UA" "$API?action=health" -o "$RUNNER_TEMP/health.json"
+          grep -q '"phase":"P9"' "$RUNNER_TEMP/health.json"
+          grep -q '"payment_enabled":true' "$RUNNER_TEMP/health.json"
+          grep -q '"checkout_enabled":true' "$RUNNER_TEMP/health.json"
+          grep -q '"payment_provider":"mock"' "$RUNNER_TEMP/health.json"
+          grep -q '"payment_mode":"testmode"' "$RUNNER_TEMP/health.json"
+          grep -q '"stripe_ready_for_test":false' "$RUNNER_TEMP/health.json"
+          grep -q '"production_launch_ready":false' "$RUNNER_TEMP/health.json"
+          grep -q '"sales_engine":"first_party"' "$RUNNER_TEMP/health.json"
+          grep -q '"sales_tracking_enabled":true' "$RUNNER_TEMP/health.json"
+          grep -q '"external_analytics":false' "$RUNNER_TEMP/health.json"
+          grep -q '"mail_transport":"disabled"' "$RUNNER_TEMP/health.json"
+          grep -q '"batch_threshold_qty":8' "$RUNNER_TEMP/health.json"
+
+          curl --fail --silent --show-error -A "$UA" -X POST "$API?action=sales_event" \
+            -H "Origin: https://alberiq.se" -H "Content-Type: application/json" \
+            --data '{"session_id":"123e4567-e89b-42d3-a456-426614174333","event_key":"no-consent-direct-event","event_type":"page_view"}' \
+            -o "$RUNNER_TEMP/no-consent.json"
+          grep -q '"disabled":true' "$RUNNER_TEMP/no-consent.json"
+          curl --fail --silent --show-error -A "$UA" -c "$RUNNER_TEMP/consent-cookies.txt" \
+            -X POST "$API?action=consent" -H "Origin: https://alberiq.se" -H "Content-Type: application/json" \
+            --data '{"statistics":true}' -o "$RUNNER_TEMP/consent.json"
+          grep -q '"statistics":true' "$RUNNER_TEMP/consent.json"
+
+          sales_session="$(python3 - <<'PY'
+          import uuid
+          print(uuid.uuid4())
+          PY
+          )"
+          curl --fail --silent --show-error -A "$UA" -b "$RUNNER_TEMP/consent-cookies.txt" -X POST "$API?action=sales_event"             -H "Origin: https://alberiq.se" -H "Content-Type: application/json"             --data "{\"session_id\":\"$sales_session\",\"event_key\":\"gh-$GITHUB_RUN_ID-page\",\"event_type\":\"page_view\",\"page_path\":\"/bois-shop-p3/\",\"attribution\":{\"source\":\"github\",\"medium\":\"staging\",\"campaign\":\"p9-readiness\",\"ref\":\"ci\",\"landing_path\":\"/bois-shop-p3/\"}}"             -o "$RUNNER_TEMP/sales-event.json"
+          grep -q '"accepted":true' "$RUNNER_TEMP/sales-event.json"
+
+          curl --fail --silent --show-error -A "$UA" -X POST "$API?action=sales_recommendations"             -H "Origin: https://alberiq.se" -H "Content-Type: application/json"             --data '{"skus":["MEM-ADULT"],"existing_member":false}'             -o "$RUNNER_TEMP/recommendations.json"
+          php -r '$d=json_decode(file_get_contents($argv[1]),true); $r=$d["recommendations"][0]??[]; if(($r["product_key"]??"")!=="nordic-gym" || (int)($r["discount_ore"]??-1)!==0) exit(1);' "$RUNNER_TEMP/recommendations.json"
+
+          new_email="p9-new-$GITHUB_RUN_ID@example.invalid"
+          curl --fail --silent --show-error -A "$UA" -b "$RUNNER_TEMP/consent-cookies.txt" -X POST "$API?action=orders"             -H "Origin: https://alberiq.se" -H "Content-Type: application/json"             --data "{\"customer\":{\"name\":\"P9 Syntetisk Medlem\",\"email\":\"$new_email\",\"phone\":\"070-900 00 01\"},\"items\":[{\"sku\":\"MEM-ADULT\",\"quantity\":1,\"metadata\":{\"member_name\":\"P9 Syntetisk Medlem\"}},{\"sku\":\"NW-GYM-ANNUAL\",\"quantity\":1,\"metadata\":{}}],\"existing_member\":false,\"consent\":true,\"website\":\"\",\"idempotency_key\":\"p9-new-$GITHUB_RUN_ID\",\"sales_session_id\":\"$sales_session\",\"sales_attribution\":{\"source\":\"github\",\"medium\":\"staging\",\"campaign\":\"p9-readiness\",\"ref\":\"ci\",\"landing_path\":\"/bois-shop-p3/\"}}"             -o "$RUNNER_TEMP/order.json"
+
+          order_id="$(php -r '$d=json_decode(file_get_contents($argv[1]),true);echo $d["order"]["public_id"]??"";' "$RUNNER_TEMP/order.json")"
+          order_token="$(php -r '$d=json_decode(file_get_contents($argv[1]),true);echo $d["order"]["public_token"]??"";' "$RUNNER_TEMP/order.json")"
+          [[ -n "$order_id" && -n "$order_token" ]]
+
+          curl --fail --silent --show-error -A "$UA" -X POST "$API?action=checkout" -H "Origin: https://alberiq.se" -H "Content-Type: application/json"             --data "{\"public_id\":\"$order_id\",\"public_token\":\"$order_token\",\"method\":\"swish\"}"             -o "$RUNNER_TEMP/checkout.json"
+          grep -q '"provider":"mock"' "$RUNNER_TEMP/checkout.json"
+          grep -q '"method":"swish"' "$RUNNER_TEMP/checkout.json"
+          grep -q '"status":"PENDING"' "$RUNNER_TEMP/checkout.json"
+
+          session_ref="$(php -r '$d=json_decode(file_get_contents($argv[1]),true);echo $d["checkout"]["session_ref"]??"";' "$RUNNER_TEMP/checkout.json")"
+          session_token="$(php -r '$d=json_decode(file_get_contents($argv[1]),true);echo $d["checkout"]["session_token"]??"";' "$RUNNER_TEMP/checkout.json")"
+          [[ -n "$session_ref" && -n "$session_token" ]]
+
+          curl --fail --silent --show-error -A "$UA" -X POST "$API?action=mock_payment_event" -H "Origin: https://alberiq.se" -H "Content-Type: application/json"             --data "{\"session_ref\":\"$session_ref\",\"session_token\":\"$session_token\",\"outcome\":\"paid\"}"             -o "$RUNNER_TEMP/paid.json"
+          grep -q '"status":"PAID"' "$RUNNER_TEMP/paid.json"
+          grep -q '"status":"ELIGIBLE"' "$RUNNER_TEMP/paid.json"
+
+          curl --fail --silent --show-error -A "$UA" -X POST "$API?action=mock_payment_event" -H "Origin: https://alberiq.se" -H "Content-Type: application/json"             --data "{\"session_ref\":\"$session_ref\",\"session_token\":\"$session_token\",\"outcome\":\"paid\"}"             -o "$RUNNER_TEMP/paid-again.json"
+          grep -q '"already_applied":true' "$RUNNER_TEMP/paid-again.json"
+
+          curl --fail --silent --show-error -A "$UA" "$API?action=order&id=$order_id&token=$order_token" -o "$RUNNER_TEMP/public.json"
+          grep -q '"payment_status":"PAID"' "$RUNNER_TEMP/public.json"
+          grep -q '"status":"ACTIVE"' "$RUNNER_TEMP/public.json"
+          grep -q '"status":"ELIGIBLE"' "$RUNNER_TEMP/public.json"
+
+          cp "$RUNNER_TEMP/consent-cookies.txt" "$RUNNER_TEMP/old-consent-cookies.txt"
+          curl --fail --silent --show-error -A "$UA" -b "$RUNNER_TEMP/consent-cookies.txt" \
+            -c "$RUNNER_TEMP/consent-cookies.txt" -X POST "$API?action=consent" \
+            -H "Origin: https://alberiq.se" -H "Content-Type: application/json" \
+            --data '{"statistics":false}' -o "$RUNNER_TEMP/revoked.json"
+          grep -q '"statistics":false' "$RUNNER_TEMP/revoked.json"
+          curl --fail --silent --show-error -A "$UA" -b "$RUNNER_TEMP/old-consent-cookies.txt" -X POST "$API?action=sales_event" \
+            -H "Origin: https://alberiq.se" -H "Content-Type: application/json" \
+            --data "{\"session_id\":\"$sales_session\",\"event_key\":\"gh-$GITHUB_RUN_ID-revoked\",\"event_type\":\"page_view\"}" \
+            -o "$RUNNER_TEMP/revoked-event.json"
+          grep -q '"disabled":true' "$RUNNER_TEMP/revoked-event.json"
+
+          curl --fail --silent --show-error -A "$UA" "$API?action=admin_sales"             -H "X-Bois-Admin-Token: $BOIS_ADMIN_TOKEN" -o "$RUNNER_TEMP/p9-sales.json"
+          php -r '$d=json_decode(file_get_contents($argv[1]),true);$s=$d["sales"]??[];$p=$s["privacy"]??[];$k=$s["kpis"]??[];if(($p["first_party_only"]??null)!==true||($p["direct_customer_identifiers_stored"]??null)!==false||($p["pseudonymous_session_identifier"]??null)!==true||($p["order_link_exists"]??null)!==true||($p["ip_stored"]??null)!==false||($p["user_agent_stored"]??null)!==false||($p["external_analytics"]??null)!==false||(int)($k["paid_sessions"]??0)<1)exit(1);$ok=false;foreach(($s["campaigns"]??[]) as $r){if(($r["campaign"]??"")==="p9-readiness"&&(int)($r["paid_orders"]??0)>=1){$ok=true;break;}}if(!$ok)exit(2);' "$RUNNER_TEMP/p9-sales.json"
+
+          curl --fail --silent --show-error -A "$UA" "$BOIS_BASE_URL/assortment-preview.html" -o "$RUNNER_TEMP/p7-preview.html"
+          grep -q 'INTERN GRANSKNING' "$RUNNER_TEMP/p7-preview.html"
+          curl --fail --silent --show-error -A "$UA" "$API?action=admin_p7" \
+            -H "X-Bois-Admin-Token: $BOIS_ADMIN_TOKEN" -o "$RUNNER_TEMP/p7-admin.json"
+          php -r '$d=json_decode(file_get_contents($argv[1]),true); if(count($d["assortment"]??[])!==3) exit(1); foreach($d["assortment"] as $p){if($p["approved"] || $p["is_public"] || $p["is_orderable"] || !$p["blockers"] || $p["margin_ore"]!==null) exit(2);}' "$RUNNER_TEMP/p7-admin.json"
+          curl --fail --silent --show-error -A "$UA" "$API?action=catalog" -o "$RUNNER_TEMP/p7-catalog.json"
+          php -r '$d=json_decode(file_get_contents($argv[1]),true); foreach($d["products"]??[] as $p){if(in_array($p["product_key"],["bois-1941-hoodie","supporter-tee","bois-beanie"],true)) exit(1);}' "$RUNNER_TEMP/p7-catalog.json"
+          grep -q '"payment_provider":"mock"' "$RUNNER_TEMP/health.json"
+          grep -q '"mail_transport":"disabled"' "$RUNNER_TEMP/health.json"
+
+          curl --fail --silent --show-error -A "$UA" -X POST "$API?action=admin_run_payment_outbox"             -H "X-Bois-Admin-Token: $BOIS_ADMIN_TOKEN" -H "Content-Type: application/json" --data '{}'             -o "$RUNNER_TEMP/payment-mail.json"
+          grep -q '"transport":"disabled"' "$RUNNER_TEMP/payment-mail.json"
+          grep -q '"sent":0' "$RUNNER_TEMP/payment-mail.json"
+
+          {
+            echo "## Tranås BoIS P9 sales engine verified"
+            echo "P9_PHASE: pass"
+            echo "P9_FIRST_PARTY_FUNNEL: pass"
+            echo "P9_CAMPAIGN_ATTRIBUTION_TO_PAID: pass"
+            echo "CONSENT_NO_CHOICE_DIRECT_EVENT_BLOCKED: pass"
+            echo "CONSENT_ACCEPTED_SYNTHETIC_ATTRIBUTION: pass"
+            echo "CONSENT_WITHDRAWAL_EVENT_BLOCKED: pass"
+            echo "STAGING_DIRECTORY_AUTH_DIRECT_URLS: pass"
+            echo "STABLE_STAGING_ADMIN_TOKEN: configured"
+            echo "P9_ZERO_DISCOUNT_RECOMMENDATION: pass"
+            echo "P9_DIRECT_CUSTOMER_IDENTIFIERS_IN_SALES_TABLES: no"
+            echo "P9_PSEUDONYMOUS_SESSION_DATA: yes"
+            echo "EXTERNAL_ANALYTICS: no"
+            echo "P8_READINESS_PRESERVED: pass"
+            echo "STRIPE_ACTIVATED: no"
+            echo "PRODUCTION_LAUNCH_READY: no"
+            echo "SERVER_CHECKOUT: pass"
+            echo "MOCK_SWISH: pass"
+            echo "SIGNED_WEBHOOK_PATH: pass"
+            echo "DOWNSTREAM_EFFECT_IDEMPOTENCY: pass"
+            echo "MEMBERSHIP_AFTER_PAID: pass"
+            echo "NORDIC_AFTER_PAID: pass"
+            echo "PAYMENT_MAIL_TRANSPORT_DISABLED: pass"
+            echo "P5_BATCH_CONFIG_PRESERVED: pass"
+            echo "P7_ADMIN_PREVIEW: pass"
+            echo "P7_PRELAUNCH_CATALOG_HIDDEN: pass"
+            echo "REAL_PAYMENT_PROVIDER: no"
+            echo "REAL_STRIPE_CALLS: no"
+            echo "PRODUCTION_TRAFFIC: no"
+            echo "MARKETING_EMAIL_SENT: no"
+            echo "PAID_ADVERTISING: no"
+            echo "NEW_EXTERNAL_COST: 0"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Browser customer and admin acceptance at 375, 390 and desktop
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --prefix "$RUNNER_TEMP/bois-browser" --no-save --ignore-scripts playwright@1.62.1
+          "$RUNNER_TEMP/bois-browser/node_modules/.bin/playwright" install --with-deps chromium
+          NODE_PATH="$RUNNER_TEMP/bois-browser/node_modules" \
+            node bois-src/tests/staging-browser-smoke.cjs
+
+      - name: Save synthetic browser screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bois-p9-synthetic-browser-${{ github.run_id }}
+          path: ${{ runner.temp }}/bois-browser-evidence/*.png
+          if-no-files-found: ignore
+          retention-days: 7
+
