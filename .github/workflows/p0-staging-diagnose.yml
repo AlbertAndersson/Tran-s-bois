@@ -27,6 +27,8 @@ jobs:
       STAGING_ADMIN_TOKEN: ${{ secrets.BOIS_STAGING_ADMIN_TOKEN }}
     steps:
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
       - name: Prepare settings and strict SSH
         shell: bash
         run: |
