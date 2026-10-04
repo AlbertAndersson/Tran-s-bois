@@ -37,6 +37,8 @@ bois_p13_equal($before,bois_p13_snapshot($pdo));
 $plan=bois_p16_dry_run($pdo,$config,$at);
 foreach(['legal_hold'=>true,'apply_enabled'=>false,'policy_reference'=>'','backup_reference'=>'','approved_target'=>[]] as $key=>$value){$bad=$config;$bad['retention'][$key]=$value;p16_no(fn()=>bois_p16_apply($pdo,$bad,$at,$plan['plan_hash']));}
 p16_no(fn()=>bois_p16_apply($pdo,$config,$at,str_repeat('0',64)));
+$bad=$config;$bad['retention']['policy_reference']='changed-policy';p16_no(fn()=>bois_p16_apply($pdo,$bad,$at,$plan['plan_hash']));
+$bad=$config;$bad['mode']='unknown';p16_no(fn()=>bois_p16_dry_run($pdo,$bad,$at));
 $bad=$config;$bad['retention']['rules']['sales_events_days']='30';p16_no(fn()=>bois_p16_dry_run($pdo,$bad,$at));
 $bad=$config;$bad['retention']['rules']['orders_days']=1;p16_no(fn()=>bois_p16_dry_run($pdo,$bad,$at));
 p16_no(fn()=>bois_p16_dry_run($pdo,$config,$at->modify('+1 day')));

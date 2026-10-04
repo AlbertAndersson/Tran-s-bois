@@ -1,3 +1,13 @@
+## P16 – IN PROGRESS, privacy och konfigurerbar retention
+
+Aktuell etapp P16 från main df6c80a68945a9b6fe7b103a28a66399cf25ea42, PR #34.
+Inventering av 24 tabeller/281 fält, privata dry-run och skyddad gallring implementeras
+och testas isolerat. Juridiska tider är TBD; ingen production-/staginggallring.
+Se [P16-runbook](P16-PRIVACY-RETENTION.md). Ingen Simply-deploy, Stripe live,
+DNS-cutover, extern mail, nya kostnader eller productionaktivering.
+P12-verifiering är uppskjuten enligt beslut. P17 har inte startats.
+Äldre status nedan är historisk.
+
 ## P15 – DONE, observability och driftberedskap verifierade
 
 Main före P15: `18ef6b03605ae96c5c1b84fa6f683037c0d452c8`. PR #33 är mergad;

@@ -4,6 +4,7 @@ require_once __DIR__.'/p12-common.php';
 
 function bois_p16_settings(array $config): array
 {
+    if(!in_array($config['mode']??null,['test','staging','production'],true))throw new RuntimeException('Unknown retention environment.');
     $r=$config['retention']??[];
     if(!is_array($r)||array_diff(array_keys($r),['rules','batch_size','apply_enabled','legal_hold','policy_reference','backup_reference','approved_target']))throw new RuntimeException('Invalid retention settings.');
     $rules=$r['rules']??[];
@@ -52,7 +53,9 @@ function bois_p16_collect(PDO $pdo,array $config,DateTimeImmutable $at,bool $loc
         WHERE CASE WHEN revoked_at IS NOT NULL THEN revoked_at ELSE expires_at END <? ORDER BY token_hash LIMIT $size",[$cutoffs['consent_inactive_days']]);
     $rows=['sales_events'=>$events,'sales_links'=>$links,'sales_sessions'=>$sessions,'consent_choices'=>$consents];
     $report=['format'=>1,'operation'=>'dry_run','as_of'=>$utc->format('Y-m-d\TH:i:s\Z'),
-        'target_fingerprint'=>bois_p16_target($pdo,$config),'batch_size'=>$size,'rules'=>$r['rules'],'cutoffs_utc'=>$cutoffs,
+        'target_fingerprint'=>bois_p16_target($pdo,$config),
+        'approval_fingerprint'=>hash('sha256',json_encode([$r['policy_reference']??'',$r['backup_reference']??'',$r['approved_target']??[]],JSON_THROW_ON_ERROR)),
+        'batch_size'=>$size,'rules'=>$r['rules'],'cutoffs_utc'=>$cutoffs,
         'would_delete'=>array_map('count',$rows),'unresolved_rules'=>array_keys(array_filter($r['rules'],static fn($days)=>$days===null)),
         'legal_hold'=>($r['legal_hold']??true)!==false,'apply_enabled'=>($r['apply_enabled']??false)===true,
         'protected_commerce'=>'all order/payment/customer/member/benefit/fulfilment/outbox/event/ledger rows retained'];
