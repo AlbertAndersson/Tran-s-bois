@@ -38,7 +38,6 @@
       stock.textContent='Lagersaldot kunde inte hämtas. Gymköp verifieras ändå av servern.';
     }
     refresh();
-  refreshGymAvailability();
   }
 
   async function refreshRecommendation(){
@@ -88,6 +87,7 @@
   $('addGym').addEventListener('change', refresh);
   document.querySelectorAll('input[name="membership"]').forEach(el => el.addEventListener('change', refresh));
   refresh();
+  refreshGymAvailability();
 
   $('membershipForm').addEventListener('submit', async event => {
     event.preventDefault();
