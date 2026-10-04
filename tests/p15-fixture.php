@@ -33,6 +33,14 @@ $config['db']['user']='root';$config['db']['password']='root';$pdo=bois_p3_pdo($
 if($mode==='queue'){
     $pdo->exec("INSERT INTO bois_email_outbox(message_key,to_email,subject,payload_json,status,created_at) VALUES('synthetic','NEVER_LOG_THIS_PERSON@example.invalid','synthetic','{}','PENDING',CURRENT_TIMESTAMP-INTERVAL 20 MINUTE)");
 }elseif($mode==='transport'){
+    // P17 refuses injected transports in production. This disposable-only branch
+    // exercises the same operational logger with a valid synthetic mail envelope.
+    $config['mode']='test';
+    $csv="synthetic,fixture\n";
+    $payload=['kind'=>'SUPPLIER_BATCH','batch_id'=>'SYNTHETIC','order_count'=>1,'item_count'=>1,
+        'csv_filename'=>'tranas-bois-synthetic.csv','csv_sha256'=>hash('sha256',$csv),'csv_base64'=>base64_encode($csv)];
+    $pdo->prepare("UPDATE bois_email_outbox SET payload_json=? WHERE message_key='synthetic'")
+        ->execute([json_encode($payload,JSON_THROW_ON_ERROR)]);
     bois_p15_begin($config,'worker');
     $result=bois_p5_deliver_outbox($pdo,$config,static function(){throw new RuntimeException('NEVER_LOG_THIS_PERSON NEVER_LOG_THIS_CREDENTIAL');});
     if($result['failed']!==1||$pdo->query("SELECT last_error FROM bois_email_outbox WHERE message_key='synthetic'")->fetchColumn()!=='transport_failed')throw new RuntimeException('Transport privacy failed.');

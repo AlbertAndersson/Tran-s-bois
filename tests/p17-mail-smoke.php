@@ -116,7 +116,7 @@ foreach(['payment','supplier'] as $queue){
     $pdo->exec("UPDATE $table SET status='SENT'");
     $pdo->exec("UPDATE $table SET status='PENDING',attempts=0,not_before=CURRENT_TIMESTAMP WHERE id=$id");
     $race=$dir.'/race-'.$queue;mkdir($race,0700);$procs=[];$pipes=[];
-    foreach([0,1] as $n){$procs[$n]=proc_open([PHP_BINARY,__FILE__,'--worker',$race,$queue,(string)$n],[0=>['pipe','r'],1=>['pipe','w'],2=>['pipe','w']],$pipes[$n]);fclose($pipes[$n][0]);}
+    foreach([0,1] as $n){$procs[$n]=proc_open([PHP_BINARY,'-d','disable_functions=mail,curl_exec,curl_init',__FILE__,'--worker',$race,$queue,(string)$n],[0=>['pipe','r'],1=>['pipe','w'],2=>['pipe','w']],$pipes[$n]);fclose($pipes[$n][0]);}
     $deadline=microtime(true)+10;
     while(!file_exists($race.'/ready-0')||!file_exists($race.'/ready-1')){p17_check(microtime(true)<$deadline,'race ready');usleep(10000);}
     touch($race.'/start');
