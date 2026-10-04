@@ -129,3 +129,9 @@ Inga nya betaltjänster, abonnemang eller externa kostnader aktiveras utan uttry
 Historisk P6-hardening: adminens stagingknapp använder signerad mockbetalning; order/session/valuta/belopp kontrolleras. P2–P6 CI på `b5b9a157` och run `36327128975` lyckades. Ursprunglig P9-bas var run `36445454316` med appref `3219dba57fca1eb97b9d50022477131c8db2501b`. C1–C4/browserversionen före inloggningsskydd verifierades i run `36517329717` med appref `e4ac4ce385fcf751460b4af208756d74e562d54b`. Den öppna stagingens åtkomstblockerare löstes genom **36623915463**; stabil adminåtkomst verifierades därefter i **36906493137**.
 
 Fullständiga tidigare status- och handofftexter har bevarats i `docs/history/`. Historiska instruktioner om att installera demoåtkomst är inte nästa uppdrag. Denna dokumentationscloseout ändrar ingen applikationskod, workflow, hemlighet, databas eller serverinställning.
+# P17 email readiness
+
+P17 is technically verified with synthetic local mail only; production mail
+remains disabled. See [P17 email/outbox runbook](docs/P17-EMAIL-OUTBOX.md) and
+[current status](docs/CURRENT_STATUS.md). P18 is not started.
+

@@ -3,6 +3,7 @@ declare(strict_types=1);
 require_once __DIR__ . "/security.php";
 
 require_once __DIR__ . '/p3_db.php';
+require_once __DIR__ . '/p17_mail.php';
 require_once __DIR__ . '/p5_batch.php';
 require_once __DIR__ . '/p4_membership.php';
 require_once __DIR__ . '/p8_stripe.php';
@@ -475,12 +476,11 @@ function bois_p6_apply_paid_effects(PDO $pdo,array $config,array $payment): arra
     );
     $p4=bois_p4_apply_paid_order($pdo,$config,(string)$payment['public_id']);
 
+    $fresh=bois_p6_payment_by_provider_ref($pdo,(string)$payment['provider'],(string)$payment['provider_ref']);
+    bois_p6_queue_message($pdo,$config,$fresh,'PAYMENT_RECEIPT',(int)$fresh['paid_ore']);
     $pdo->prepare(
         "UPDATE bois_payments SET effects_status='APPLIED' WHERE id=? AND status='PAID'"
     )->execute([(int)$payment['id']]);
-
-    $fresh=bois_p6_payment_by_provider_ref($pdo,(string)$payment['provider'],(string)$payment['provider_ref']);
-    bois_p6_queue_message($pdo,$config,$fresh,'PAYMENT_RECEIPT',(int)$fresh['paid_ore']);
 
     return ['already_applied'=>false,'p4'=>$p4,'p5'=>$p5];
 }
@@ -541,7 +541,7 @@ function bois_p6_process_succeeded(PDO $pdo,array $config,array $event): array
     ];
 }
 
-function bois_p6_process_failed_or_cancelled(PDO $pdo,array $event,string $target): array
+function bois_p6_process_failed_or_cancelled(PDO $pdo,array $event,string $target,array $config): array
 {
     $provider=(string)$event['provider'];
     $providerRef=(string)$event['provider_ref'];
@@ -574,6 +574,8 @@ function bois_p6_process_failed_or_cancelled(PDO $pdo,array $event,string $targe
             'PAYMENT_'.$target,
             json_encode(['provider'=>$provider,'provider_ref'=>$providerRef],JSON_THROW_ON_ERROR)
         ]);
+
+        bois_p6_queue_message($pdo,$config,array_replace($payment,['status'=>$target]),'PAYMENT_'.$target,0);
 
         $pdo->commit();
         return [
@@ -639,22 +641,23 @@ function bois_p6_process_refund(PDO $pdo,array $config,array $event): array
             ],JSON_THROW_ON_ERROR)
         ]);
 
+        bois_p6_queue_message($pdo,$config,array_replace($payment,[
+            'status'=>$target,'refunded_ore'=>$newRefunded,
+        ]),'REFUND_RECEIPT',$refund);
+
         $pdo->commit();
     } catch(Throwable $e){
         if($pdo->inTransaction()) $pdo->rollBack();
         throw $e;
     }
 
-    $fresh=bois_p6_payment_by_provider_ref($pdo,$provider,$providerRef);
-    bois_p6_queue_message($pdo,$config,$fresh,'REFUND_RECEIPT',$refund);
-
     return [
-        'payment_id'=>(int)$fresh['id'],
-        'order_id'=>(int)$fresh['order_id'],
-        'public_id'=>(string)$fresh['public_id'],
-        'status'=>(string)$fresh['status'],
+        'payment_id'=>(int)$payment['id'],
+        'order_id'=>(int)$payment['order_id'],
+        'public_id'=>(string)$payment['public_id'],
+        'status'=>$target,
         'refund_ore'=>$refund,
-        'refunded_ore'=>(int)$fresh['refunded_ore'],
+        'refunded_ore'=>$newRefunded,
         'manual_fulfillment_review'=>true,
     ];
 }
@@ -734,8 +737,8 @@ function bois_p6_process_verified_event(PDO $pdo,array $config,array $event,stri
             }
             $result=match((string)$event['type']){
                 'payment.succeeded'=>bois_p6_process_succeeded($pdo,$config,$event),
-                'payment.failed'=>bois_p6_process_failed_or_cancelled($pdo,$event,'FAILED'),
-                'payment.cancelled'=>bois_p6_process_failed_or_cancelled($pdo,$event,'CANCELLED'),
+                'payment.failed'=>bois_p6_process_failed_or_cancelled($pdo,$event,'FAILED',$config),
+                'payment.cancelled'=>bois_p6_process_failed_or_cancelled($pdo,$event,'CANCELLED',$config),
                 'payment.refund_pending'=>bois_p6_process_refund_pending($pdo,$event),
                 'payment.refunded'=>bois_p6_process_refund($pdo,$config,$event),
             };
@@ -852,26 +855,9 @@ function bois_p6_retry_outbox(PDO $pdo,int $id): array
 
 function bois_p6_deliver_outbox(PDO $pdo,array $config,?callable $sender=null,int $limit=20): array
 {
-    $transport=(string)($config['payment_mail_transport'] ?? 'disabled');
-    if($sender===null && $transport==='disabled'){
-        return ['transport'=>'disabled','processed'=>0,'sent'=>0,'failed'=>0];
-    }
-    if($sender===null){
-        if($transport!=='php_mail') throw new RuntimeException('Okänt payment-mailtransportläge.');
-        $sender=function(array $message): bool {
-            $payload=json_decode((string)$message['payload_json'],true) ?: [];
-            $body="Tranås BoIS\n\n";
-            $body.="Order: ".($payload['order'] ?? '')."\n";
-            $body.="Status: ".($payload['payment_status'] ?? '')."\n";
-            $body.="Belopp: ".number_format(((int)($payload['amount_ore'] ?? 0))/100,0,',',' ')." kr\n";
-            return mail(
-                (string)$message['to_email'],
-                (string)$message['subject'],
-                $body,
-                "Content-Type: text/plain; charset=UTF-8\r\nX-Mailer: Tranås-BoIS-Shop"
-            );
-        };
-    }
+    $transport=(string)($config['payment_mail_transport']??'disabled');
+    $sender=bois_p17_sender($config,$transport,'payment',$sender);
+    if($sender===null)return ['transport'=>'disabled','processed'=>0,'sent'=>0,'failed'=>0];
 
     $rows=$pdo->query(
         "SELECT * FROM bois_payment_outbox
@@ -884,25 +870,22 @@ function bois_p6_deliver_outbox(PDO $pdo,array $config,?callable $sender=null,in
 
     $result=['transport'=>$transport,'processed'=>0,'sent'=>0,'failed'=>0];
     foreach($rows as $message){
-        $result['processed']++;
-        $ok=false;$error=null;
-        try{
-            $ok=(bool)$sender($message);
-            if(!$ok) $error='Transport returned false.';
-        } catch(Throwable $e){
-            $error='transport_failed';
-        }
-
         $pdo->beginTransaction();
         try{
             $locked=$pdo->prepare("SELECT * FROM bois_payment_outbox WHERE id=? FOR UPDATE");
             $locked->execute([(int)$message['id']]);
             $current=$locked->fetch();
-            if(!$current || !in_array((string)$current['status'],['PENDING','RETRY'],true)){
+            if(!$current || !in_array((string)$current['status'],['PENDING','RETRY'],true)
+                || (int)$current['attempts']>=5
+                || (!empty($current['not_before']) && strtotime($current['not_before'].' UTC')>time())){
                 $pdo->rollBack();
                 continue;
             }
 
+            $result['processed']++;
+            $ok=false;$error=null;
+            try{$ok=(bool)$sender($current);if(!$ok)$error='transport_failed';}
+            catch(Throwable $e){$error='transport_failed';}
             $attempts=(int)$current['attempts']+1;
             if($ok){
                 $pdo->prepare(

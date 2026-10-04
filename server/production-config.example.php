@@ -15,6 +15,12 @@ return [
     'stripe_swish_enabled' => false,
     'mail_transport' => 'disabled',
     'payment_mail_transport' => 'disabled',
+    // P17: private config only; no delivery enabled by provisioning these values.
+    'mail' => [
+        'from'=>'', 'sink_dir'=>'', 'public_root'=>'',
+        'external_delivery_approved'=>false, 'domain_verified'=>false,
+        'provider_verified'=>false,
+    ],
     'sales_tracking_enabled' => false,
     'external_analytics' => false,
     'admin_token' => '', // Future break-glass secret; not the P14 personal identity model.

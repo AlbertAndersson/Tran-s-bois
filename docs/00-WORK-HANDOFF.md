@@ -1,3 +1,33 @@
+## P17 – DONE, email/outbox production readiness
+
+2026-10-04: Albert accepterade P12 och beställde endast P17. Acceptansen är
+ett användarbeslut, inte bevis för nya hosttester eller tillstånd för go-live.
+Äldre P12-/P17-status nedan är historisk; P18 har inte startats.
+
+Main före P17: `0637bc2c9771443dd834baa5492f6ca902452e00`. PR #39.
+Verifierad kod-head: `5bde80215bb316fa54a8c11594ac6be5a7f8a537`.
+P17 [37225130300](https://github.com/AlbertAndersson/Tran-s-bois/actions/runs/37225130300),
+jobb `111503109361`: **success**. Alla 13 startade kontroller på kod-head
+är success: P2/P5/P6/P7/P8/P9/P12/P13/P14/P15/P16/P17/Security.
+P14 inkluderar Chromium/admin; P8 inkluderar tidigare commerce-regressioner.
+
+Gemensamt renderat mailtransportlager, privat idempotent sink, strikt spärrad
+hostadapter, order-/betalningsfel-/avbrotts-/refundmallar och leverantörsmail
+med verifierad CSV/MIME är implementerade. Båda köerna låser/revaliderar raden
+före transport, behåller fem försök/backoff och generiska privata felkoder.
+Signerade mockbetalningar genom hela mailkedjan, samtidiga workers för båda
+köerna, injektions-/mottagar-/sinkspärrar och varje aktiveringsgrind passerar.
+CLI-only mailworker skapar inga batcher och kör ingen DDL.
+
+Se [P17-runbook](P17-EMAIL-OUTBOX.md). Inga nya tabeller/migrationer,
+Simply-deploy, riktiga mottagare, mail, Stripe live, riktiga pengar, DNS-cutover,
+cron, productionaktivering eller ny extern kostnad. Båda productiontransporter
+förblir disabled; gamla syntetiska köer får inte skickas externt. Framtida host-
+provider/avsändare/SPF/DKIM/DMARC och extern leverans kräver separat verifiering
+samt uttryckligt godkännande. SMTP exakt-en-gång-leverans utlovas inte.
+
+P17 tekniskt klar; ingen manuell åtgärd behövs nu. Nästa etapp är P18.
+
 ## P16 – DONE, privacy och konfigurerbar retention verifierade
 
 Main före P16: `df6c80a68945a9b6fe7b103a28a66399cf25ea42`. PR #34 är mergad;
