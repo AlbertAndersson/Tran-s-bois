@@ -14,7 +14,7 @@
     <span class="tag">MEDLEM + GYMFÖRMÅN</span>
     <h1>Bli medlem i BoIS</h1>
     <p class="sub">Välj medlemskap och lägg till Nordic Wellness-gymkortet om du vill. I utvecklingsmiljön sparas en testorder och P6 låter dig därefter köra en isolerad Test‑Swish- eller Test‑kortbetalning utan riktig transaktion.</p>
-    <div class="notice"><b>Gymkort 2 650 kr</b> kräver aktivt BoIS-medlemskap. Ny medlem + gym kan godkännas automatiskt efter betalning. Befintlig medlem verifieras av BoIS i admin. P4 samlar inte in personnummer.</div>
+    <div class="notice"><b>Gymkort 2 650 kr</b> kräver aktivt BoIS-medlemskap. BoIS får sälja högst <b>20 gymkort per kalenderår</b>. Shoppen visar aktuellt tillgängligt saldo och stoppar nya gymköp när årets kvot är slut. Ny medlem + gym kan godkännas automatiskt efter betalning. Befintlig medlem verifieras av BoIS i admin. P4 samlar inte in personnummer.</div>
 
     <form id="membershipForm">
       <h2>1. Medlemsstatus</h2>
@@ -31,7 +31,7 @@
       </div>
 
       <h2 id="gym">2. Gymförmån</h2>
-      <label class="toggle"><input type="checkbox" id="addGym" checked><span><b>Lägg till Nordic Wellness gymkort – 2 650 kr</b><br><span class="small">Aktivering sker först efter verifierad betalning och P4-medlemskontroll.</span></span></label>
+      <label class="toggle" id="gymChoice"><input type="checkbox" id="addGym" checked><span><b>Lägg till Nordic Wellness gymkort – 2 650 kr</b><br><span class="small">Aktivering sker först efter verifierad betalning och P4-medlemskontroll.</span><br><span class="stock-line" id="gymStock" role="status">Kontrollerar årets lagersaldo…</span></span></label>
 
       <h2>3. Kontaktuppgifter</h2>
       <div class="field"><label for="buyerName">Beställarens namn</label><input id="buyerName" autocomplete="name" required></div>
