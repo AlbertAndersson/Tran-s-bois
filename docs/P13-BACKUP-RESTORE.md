@@ -1,5 +1,19 @@
 ## Aktuell styrning 2026-10-05
 
+## Aktuell lokal hoststatus 2026-10-06
+
+Stängd production på dedikerad socen.se-produkt är uppgraderad till main
+`cd76ea8ffedd6ca63eaf3905eda40031327421dc` efter PR42. Verifierad privat
+backup, isolerad restore, rollback, readiness och syntetiska hostprov finns.
+Verifierad krypterad offsitekopia finns på Besovida. Daglig Simply-backup är
+installerad. Albert har accepterat driftansvar, RPO 24 h och RTO 4 h som mål.
+P18A är DONE; P18B/P18 är fortsatt BLOCKED vid SELECT-only, automatisk
+offsiteöverföring, övervakning/key escrow och full hostbrowseracceptans. Se [nya hostbevis och begränsningar](P18B-LOCAL-HOST-EVIDENCE.md).
+Den äldre molnkörningens credentialblockerare nedan är historik och gäller
+inte som aktuell lokal status. Staging är separat och har inte ändrats.
+
+## Tidigare dokumentation (historik)
+
 P18A är DONE och mergad via PR40. P18B är beställd men **BLOCKED**:
 run37241703902 på main `4e4e2349631d434160b77bd9b2b2d3e7be7db349`
 saknar produktionscredentials i GitHub och stannade före DB-anslutning.
