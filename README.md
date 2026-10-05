@@ -8,6 +8,10 @@ backup, isolerad restore, rollback, readiness och syntetiska hostprov finns.
 Verifierad krypterad offsitekopia finns på Besovida. Daglig Simply-backup är
 installerad. Albert har accepterat driftansvar, RPO 24 h och RTO 4 h som mål.
 Separat nyckelförvaring i iPhones Lösenord bekräftad av Albert 2026-10-06.
+Albert har nu beställt fortsättning genom P20. Go-live-underlag förbereds,
+men publik aktivering kräver kvarstående P18B-bevis, P19-verksamhetsbeslut
+samt separat godkännande av Stripe live och slutlig DNS-cutover.
+Se [P20-plan och lanseringsgrindar](docs/P20-GO-LIVE.md).
 P18A är DONE; P18B/P18 är fortsatt BLOCKED vid SELECT-only, automatisk
 offsiteöverföring, övervakning/retention och full hostbrowseracceptans. Se [nya hostbevis och begränsningar](docs/P18B-LOCAL-HOST-EVIDENCE.md).
 Den äldre molnkörningens credentialblockerare nedan är historik och gäller

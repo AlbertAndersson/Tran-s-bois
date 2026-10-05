@@ -35,6 +35,11 @@ jobs:
           php -d disable_functions=curl_init,curl_exec,mail tests/p18-quota-race.php
       - name: Concurrent operational append and stuck-log refusal
         run: php tests/p18-log-contention.php
+      - name: Encrypted offsite relay refuses tamper, stale data and overwrite
+        run: |
+          python3 -m venv "$RUNNER_TEMP/p18-relay-venv"
+          "$RUNNER_TEMP/p18-relay-venv/bin/python" -m pip install cryptography==50.0.1
+          PYTHONDONTWRITEBYTECODE=1 "$RUNNER_TEMP/p18-relay-venv/bin/python" tests/p18-offsite-relay.test.py
       - uses: actions/checkout@v5
         with:
           ref: 818c262af23431be972986b9c79f70f319da90e2

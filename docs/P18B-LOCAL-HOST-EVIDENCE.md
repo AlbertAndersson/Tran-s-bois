@@ -1,8 +1,9 @@
 # P18B – lokal hostverifiering 2026-10-06
 
 Denna status ersätter tidigare åtkomstblockerare från molnkörningen. P18A är
-DONE; P18B och P18 är fortsatt BLOCKED vid återstående driftacceptans. P20
-startas inte. Ingen RC/tag eller PRODUCTION READY-status sätts.
+DONE; P18B och P18 är fortsatt BLOCKED vid återstående driftacceptans. Albert
+har beställt arbete genom P20; förberedelsen finns i [P20-planen](P20-GO-LIVE.md).
+Publik aktivering, RC/tag och PRODUCTION READY är fortsatt blockerade.
 
 ## Installerad release och separation
 
@@ -102,6 +103,46 @@ Se [driftinstruktionen](P18-BACKUP-OPERATIONS.md).
 
 ## Nästa arbete
 
+## Ny fortsättning 2026-10-06 mot P20
+
+En ny full daglig backup skapades manuellt med installerat program:
+`bois-daily-20261005T225830Z-cd76ea8.aesgcm`, SHA256
+`d9dfdc2661a01babc0fccf0a9a9643a43e80ea906ee9d27ac5c36edf9a908f7f`.
+Den finns på Besovida och har faktiskt återlästs. Autentiserad dekryptering,
+intern manifestkontroll och privat filåterställning av 89 runtimefiler samt
+SQL/schedule passerade. Manipulerad tag nekades. Själva filprovet tog 0,11 s;
+det är **inte** tid för full databas- och tjänsteåterställning eller ett bevis
+för RTO 4 h. Återställda filer har Windows-ACL endast Albert och SYSTEM.
+
+Verifierad privat lokal plats:
+`C:\Users\AlbertAndersson\.codex\private\bois-production\p18-timed-file-restore-20261006`.
+Arkivkopia/återläsning och rapport ligger privat på datorn; inga secrets,
+DB-rader eller återställningsnycklar läggs i GitHub/SharePoint.
+
+`scripts/p18-offsite-relay.py` är förberedd för Alberts Windows-dator med
+befintliga separata SSH-nycklar. Den hämtar endast färsk krypterad backup,
+verifierar SHA256/AES-GCM/interna hashar, överför via begränsad Besovida-SFTP
+och verifierar verklig återläsning. Manuell körning passerade. Sex isolerade
+tester provar framgång/omkörning, manipulerad tag, gammal backup, korrupt
+befintlig offsitefil, path escape och samtidig körning. Inga backuper raderas.
+**Inget Windows-schema eller automatisk alarmleverans är installerat.**
+Driftmodellens krav på påslagen/ansluten dator samt retention är frågor till
+Albert; inga svar antas. Fristående Simply–Besovida-åtkomst är fortfarande olöst.
+
+Den befintliga syntetiska testytan/DB fick privat verifierad SQL/runtime/config-
+backup innan en ny kontrollerad testperiod. API-wrappern använder nu installerad
+cd76ea8-kod; mockbetalning och externa transportspärrar bevarades. Inbyggd
+webbläsare nekades vid Basic Auth med `ERR_INVALID_AUTH_CREDENTIALS`, före
+något köpprov. Ytan stängdes igen, data bevarades och produktionens HTTPS
+200/200/503/503 verifierades igen. Detta är inget nytt fullständigt browserbevis.
+
+Produkt- och credentialseparationen socen.se/alberiq.se fungerar. SELECT-only
+gäller ett extra begränsat konto inom productionprodukten; det är inte ett
+krav på ytterligare hostingprodukt och inte ett tecken på delade staging-
+credentials. Providerbegränsningen och frånvaron av accepterat undantag kvarstår.
+
+## Kvarstående arbete
+
 Slutför begränsad automatisk offsiteåtkomst och övervakning,
 retention och SELECT-only/providerundantag. Kontrollera första tidsstyrda
 backupen och utför ett tidsatt katastrofåterställningsprov för RTO-målet.
@@ -109,5 +150,6 @@ Den syntetiska publika testytan är stängd och dess data bevarade; full
 hostbrowseracceptans kräver en ny kontrollerad testperiod. Markera P18B DONE
 endast när kraven faktiskt är uppfyllda.
 
-Stripe live, extern transport, skarp gallring, DNS-cutover och P20 är fortsatt
-stängda. Ingen extern kostnad eller verksamhetsacceptans har fabricerats.
+Stripe live, extern transport, skarp gallring och DNS-cutover är fortsatt
+stängda. P20-förberedelse är beställd, men aktivering förblir blockerad.
+Ingen extern kostnad eller verksamhetsacceptans har fabricerats.

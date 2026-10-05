@@ -58,6 +58,27 @@ backupmodellen för öppnad drift innan flaggorna ändras.
 
 ## Offsite och kvarstående blockerare
 
+### Förberedd Windows-relay, ännu inte schemalagd
+
+`scripts/p18-offsite-relay.py --private-dir <privat-BoIS-katalog>` använder
+befintlig Simply-nyckel bara på Alberts dator och Besovidas SFTP-begränsade
+nyckel. Den kontrollerar backupens 24-timmarsgräns, checksumma, AES-GCM och
+interna hashar före överföring, samt faktisk offsite-återläsning efteråt.
+En befintlig korrupt offsitefil skrivs inte över. Inga backuper raderas,
+credentials provisioneras inte och programmet installerar inget schema.
+
+Manuellt host/offsiteprov passerade för
+`bois-daily-20261005T225830Z-cd76ea8.aesgcm`. Sex syntetiska negativa/integrations-
+tester passerade lokalt och ingår nu i P18-CI. Privata statusfilen heter
+`p18-offsite-relay-status.json`. Pythonmiljön som verifierades använder
+`cryptography==50.0.1`; använd en betrodd befintlig installation.
+
+Schemaläggning på Windows inväntar Alberts svar om att datorn ska vara den
+påslagna/anslutna mellanhanden. Retention på 30 dagar är endast ett förslag;
+inget godkännande eller raderingsjobb är registrerat. Inga nycklar till bred
+productionåtkomst har flyttats till Besovida. Den ursprungliga blockeraren
+nedan avser fristående hämtning från servern.
+
 Mål: Alberts Besovida-server, `/home/albert/Bois`, privat 0700. Två aktuella
 krypterade backupfiler finns där med 0600. Serverns hostnyckel är verifierad
 mot Termius; dedikerad clientnyckel till servern tillåter endast SFTP.
