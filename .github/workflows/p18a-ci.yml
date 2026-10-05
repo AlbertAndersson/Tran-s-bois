@@ -33,6 +33,8 @@ jobs:
         run: |
           mysql -h127.0.0.1 -uroot -proot -e 'CREATE DATABASE bois_p18_race; CREATE DATABASE bois_p18_ci'
           php -d disable_functions=curl_init,curl_exec,mail tests/p18-quota-race.php
+      - name: Concurrent operational append and stuck-log refusal
+        run: php tests/p18-log-contention.php
       - uses: actions/checkout@v5
         with:
           ref: 818c262af23431be972986b9c79f70f319da90e2

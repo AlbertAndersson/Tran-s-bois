@@ -49,7 +49,15 @@ function bois_p15_log(string $event,int $status=0): void
     if(is_link($path)||(file_exists($path)&&(!is_file($path)||(fileperms($path)&0077)!==0)))throw new RuntimeException('Operational log refused.');
     $file=@fopen($path,'ab');if($file===false)throw new RuntimeException('Operational log unavailable.');
     try{
-        if(!chmod($path,0600)||!flock($file,LOCK_EX|LOCK_NB))throw new RuntimeException('Operational log unavailable.');
+        if(!chmod($path,0600))throw new RuntimeException('Operational log unavailable.');
+        // Apache serves dashboard reads concurrently. A short append by another
+        // request must not turn a healthy request into 500. Keep a bounded wait
+        // so an unavailable/stuck logger still refuses the request before writes.
+        $deadline=hrtime(true)+200000000;
+        while(!flock($file,LOCK_EX|LOCK_NB)){
+            if(hrtime(true)>=$deadline)throw new RuntimeException('Operational log unavailable.');
+            usleep(1000);
+        }
         $stat=fstat($file);$named=lstat($path);
         if(!$stat||!$named||$stat['ino']!==$named['ino']||$stat['nlink']!==1
             ||$stat['size']+strlen($line)>10*1024*1024)throw new RuntimeException('Operational log capacity/refusal.');
