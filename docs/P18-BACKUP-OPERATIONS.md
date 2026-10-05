@@ -70,7 +70,14 @@ visar bara allmänna SSH-nycklar. Providerstödd begränsad läsning av kryptera
 backuper behöver lösas innan schemalagd hämtning kan införas. Tills dess är
 överföringen från Simply till Besovida manuell och offsite-RPO inte bevisat.
 
-Separat säker key escrow, beslutad retention, övervakning/alarmering och
+Separat key escrow är bekräftad av Albert 2026-10-06: nyckeln är sparad som
+vanlig lösenordspost i iPhones Lösenord, i Base64-format. Vid återställning
+avkodas texten från Base64 till den ursprungliga 32-byte AES-nyckeln. Nyckeln
+får inte behandlas som TOTP-inställningsnyckel eller skickas i chatten.
+Bekräftelsen av sparandet är Alberts uppgift; den tekniska dekrypteringen
+verifierades före sparandet.
+
+Beslutad retention, övervakning/alarmering och
 tidsatt katastrofåterställningsprov återstår. Återställ endast till isolerad
 privat testmiljö först och jämför manifest/schema/ledger/FK. Restore till
 production ingår inte i dessa tester. P18B/P18 är BLOCKED tills kvarstående

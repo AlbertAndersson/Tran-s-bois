@@ -7,8 +7,9 @@ Stängd production på dedikerad socen.se-produkt är uppgraderad till main
 backup, isolerad restore, rollback, readiness och syntetiska hostprov finns.
 Verifierad krypterad offsitekopia finns på Besovida. Daglig Simply-backup är
 installerad. Albert har accepterat driftansvar, RPO 24 h och RTO 4 h som mål.
+Separat nyckelförvaring i iPhones Lösenord bekräftad av Albert 2026-10-06.
 P18A är DONE; P18B/P18 är fortsatt BLOCKED vid SELECT-only, automatisk
-offsiteöverföring, övervakning/key escrow och full hostbrowseracceptans. Se [nya hostbevis och begränsningar](docs/P18B-LOCAL-HOST-EVIDENCE.md).
+offsiteöverföring, övervakning/retention och full hostbrowseracceptans. Se [nya hostbevis och begränsningar](docs/P18B-LOCAL-HOST-EVIDENCE.md).
 Den äldre molnkörningens credentialblockerare nedan är historik och gäller
 inte som aktuell lokal status. Staging är separat och har inte ändrats.
 
