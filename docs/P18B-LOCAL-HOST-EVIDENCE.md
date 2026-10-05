@@ -56,7 +56,10 @@ forced SFTP och restrict. Remote återläsning, SHA256 och autentiserad dekrypte
 passerade; även arkivens interna hashar/rättigheter och nekad manipulerad
 backup verifierades för det nya backup-programmet. Katalog 0700, filer 0600.
 Återställningsnyckeln ligger privat på Simply och lokalt; den ingår inte i
-offsitearkiven. Separat säker escrow återstår.
+offsitearkiven. Albert bekräftade 2026-10-06 att samma återställningsnyckel är
+sparad separat som vanlig lösenordspost i iPhones Lösenord, i Base64-format.
+Detta är Alberts bekräftelse av förvaringen; dekryptering med nyckeln har
+verifierats tekniskt före sparandet.
 
 Albert har uttryckligen accepterat driftansvar, RPO högst 24 timmar och RTO
 4 timmar. Dessa är mål, ingen uppmätt garanterad SLA. Krypterad backup är
@@ -92,13 +95,14 @@ Se [driftinstruktionen](P18-BACKUP-OPERATIONS.md).
   saknar CREATE USER/GRANT OPTION; kontrollpanelen visar ingen användarhantering.
   Providerlösning eller uttryckligt accepterat undantag krävs. Detta är inte
   ett tyst accepterat undantag.
-- Backupretention och key escrow återstår. Inga gamla backuper raderas.
+- Backupretention återstår. Separat key escrow är bekräftad av Albert.
+  Inga gamla backuper raderas.
 - SharePoint-kön och överlämningen uppdateras med samma lokala hostbevis och
   driftbeslut; originalens historik bevaras och innehållet återläses för verifiering.
 
 ## Nästa arbete
 
-Slutför begränsad automatisk offsiteåtkomst, övervakning, separat key escrow,
+Slutför begränsad automatisk offsiteåtkomst och övervakning,
 retention och SELECT-only/providerundantag. Kontrollera första tidsstyrda
 backupen och utför ett tidsatt katastrofåterställningsprov för RTO-målet.
 Den syntetiska publika testytan är stängd och dess data bevarade; full
