@@ -34,8 +34,12 @@ def transfer(private: Path) -> dict:
         def execute(args, stdin=None, absent_ok=False):
             result = subprocess.run(args, input=stdin, text=True, capture_output=True, timeout=90)
             if result.returncode != 0:
-                if absent_ok and 'No such file' in result.stderr:
-                    return None
+                if absent_ok and result.returncode == 1 and stdin:
+                    requested = stdin.splitlines()[0].split()
+                    if len(requested) >= 2 and requested[0] == 'get':
+                        missing = {f'File "{requested[1]}" not found.', 'No such file'}
+                        if result.stderr.strip() in missing:
+                            return None
                 raise RuntimeError('Private transfer failed; owner inspection required')
             return result.stdout
         def options(key, hosts):

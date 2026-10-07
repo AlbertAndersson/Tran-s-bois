@@ -54,7 +54,7 @@ class RelayTest(unittest.TestCase):
             parts = shlex.split(line)
             if parts[0] == 'get':
                 if parts[1] not in self.remote:
-                    return subprocess.CompletedProcess(args, 1, '', 'No such file')
+                    return subprocess.CompletedProcess(args, 1, '', f'File "{parts[1]}" not found.\n')
                 Path(parts[2]).write_bytes(self.remote[parts[1]])
             elif parts[0] == 'put':
                 self.writes += 1
@@ -82,6 +82,16 @@ class RelayTest(unittest.TestCase):
         self.data = self.data[:-1] + bytes([self.data[-1] ^ 1])
         self.status['sha256'] = hashlib.sha256(self.data).hexdigest()
         with self.assertRaises(Exception): self.run_relay()
+        self.assertEqual(self.writes, 0)
+
+    def test_permission_failure_is_not_treated_as_missing(self):
+        original = self.process
+        def denied(args, **kwargs):
+            if args[0] == 'sftp':
+                return subprocess.CompletedProcess(args, 1, '', 'Permission denied')
+            return original(args, **kwargs)
+        self.process = denied
+        with self.assertRaises(RuntimeError): self.run_relay()
         self.assertEqual(self.writes, 0)
 
     def test_stale_backup_never_downloaded_or_uploaded(self):
