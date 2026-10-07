@@ -1,7 +1,9 @@
 ## Aktuell driftverifiering 2026-10-07
 
 PR46 är mergad. Windows-task är installerad och ett verkligt tidsutlöst
-relayprov har passerat. Simply-backupen 03:00 är observerad. Fullständigt
+relayprov har passerat. Simply-backupen 03:00 är observerad. Crontab är nu
+03:00 och 15:00 för marginal till RPO; nya schemat är ännu inte observerat.
+Fullständigt
 DR med DB + runtime + HTTPS från Besovida passerade på 216,437 sekunder,
 inklusive korrigerade försök; production och ursprungliga testdata bevarades.
 Retention, SELECT-only och sammanhängande hostbrowseracceptans återstår.

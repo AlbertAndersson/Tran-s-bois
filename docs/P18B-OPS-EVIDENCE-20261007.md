@@ -28,6 +28,18 @@ Verklig Simply-cron skapade backupen 2026-10-07 03:00:03 CEST:
 Privat cronlogg rapporterade
 `P18_SCHEDULED_BACKUP_SQL_RUNTIME_STABLE_HASH_AES_GCM:pass`.
 
+Efter provet ändrades SSH-crontab från dagligen 03:00 till **03:00 och 15:00**.
+Ett dygn mellan backups kombinerat med relay först 06:15 kan annars ge en
+offsitekopia som är 27 timmar 15 minuter gammal, över RPO-målet. Två backups
+per dygn ger beräknad maximal ålder 15 timmar 15 minuter med den installerade
+relaycadencen när dator/anslutning och båda jobben fungerar. Det är en
+beräkning, inte en fler-dygnsmätning eller SLA. Crontab före ändring sparades
+läsbart privat, enbart den exakta backup-raden ändrades och nya crontab
+återlästes identiskt. Privata bevis: `p18-cron-before-margin-20261007.txt` och
+`p18-cron-after-margin-20261007.txt`. Simply-panelens separata URL-cronvy är
+tom och beskriver inte detta SSH-jobb. Det nya två-gånger-per-dygn-schemat har
+ännu inte observerats; den ovanstående 03:00-körningen gällde tidigare schema.
+
 Efter manuell Task Scheduler-körning utlöstes en kontrollerad engångstrigger
 2026-10-07 20:55:51 CEST. Task Scheduler rapporterade exitkod 0; relayens
 faktiska Besovida-återläsning verifierades 20:55:55 CEST med SHA256, AES-GCM
