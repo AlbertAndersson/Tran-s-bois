@@ -20,6 +20,9 @@ class WindowsTaskStaticTest(unittest.TestCase):
         for at in ["00:15", "06:15", "12:15", "18:15"]:
             self.assertIn(at, text)
         self.assertIn("-StartWhenAvailable", text)
+        self.assertIn("-RunOnlyIfNetworkAvailable", text)
+        self.assertIn("-RestartCount 3", text)
+        self.assertIn("-RestartInterval (New-TimeSpan -Minutes 15)", text)
 
     def test_cycle_writes_private_failure_marker_without_external_alert(self):
         text = (ROOT / "scripts/p18-offsite-cycle.ps1").read_text(encoding="utf-8")
