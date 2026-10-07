@@ -40,6 +40,10 @@ jobs:
           python3 -m venv "$RUNNER_TEMP/p18-relay-venv"
           "$RUNNER_TEMP/p18-relay-venv/bin/python" -m pip install cryptography==50.0.1
           PYTHONDONTWRITEBYTECODE=1 "$RUNNER_TEMP/p18-relay-venv/bin/python" tests/p18-offsite-relay.test.py
+      - name: Offsite health gate and Windows scheduler safety
+        run: |
+          PYTHONDONTWRITEBYTECODE=1 python3 tests/p18-offsite-health.test.py
+          PYTHONDONTWRITEBYTECODE=1 python3 tests/p18-windows-task-static.test.py
       - uses: actions/checkout@v5
         with:
           ref: 818c262af23431be972986b9c79f70f319da90e2
