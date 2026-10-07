@@ -88,14 +88,20 @@ Se [driftinstruktionen](P18-BACKUP-OPERATIONS.md).
   detta återstående hostbevis.
 - Retention kördes endast dry-run. Produktionsworkers vägrar starta enligt
   stängda flaggor; inga mail-/affärsworkers schemaläggs. Backupcron är installerad.
-  Automatisk offsiteöverföring och verifierad övervakningsmodell återstår:
-  Simply godtar inte den vanliga authorized_keys-filen i genomfört prov,
-  och panelen visar inget stöd för att begränsa en backupnyckel till krypterade
-  filer. Ingen bred productionnyckel har lagts på Besovida.
+  Windows-relayens schemaläggning, health gate och lokal felnotis är nu
+  implementerade i repo men **inte installerade/verifierade på Alberts dator**.
+  Server-till-server-begränsningen kvarstår: Simply godtar inte den vanliga
+  authorized_keys-filen i genomfört prov och panelen visar inget stöd för att
+  begränsa en backupnyckel till krypterade filer. Ingen bred productionnyckel
+  har lagts på Besovida.
 - SELECT-only credential saknas. Simply-kontot har ALL på sina två DB:er och
   saknar CREATE USER/GRANT OPTION; kontrollpanelen visar ingen användarhantering.
-  Providerlösning eller uttryckligt accepterat undantag krävs. Detta är inte
-  ett tyst accepterat undantag.
+  Simply:s aktuella supportdokumentation anger dessutom att flera MySQL-databaser
+  på produkten använder samma databasanvändare och skapas via kontrollpanelen.
+  Detta stärker bedömningen att separat SELECT-only DB-user inte kan skapas av
+  kunden på denna webbhotellsmodell. Providerlösning eller **uttryckligt
+  accepterat tekniskt undantag med kompensationskontroller** krävs fortfarande;
+  inget undantag antas här.
 - Backupretention återstår. Separat key escrow är bekräftad av Albert.
   Inga gamla backuper raderas.
 - SharePoint-kön och överlämningen uppdateras med samma lokala hostbevis och
@@ -143,12 +149,15 @@ credentials. Providerbegränsningen och frånvaron av accepterat undantag kvarst
 
 ## Kvarstående arbete
 
-Slutför begränsad automatisk offsiteåtkomst och övervakning,
-retention och SELECT-only/providerundantag. Kontrollera första tidsstyrda
-backupen och utför ett tidsatt katastrofåterställningsprov för RTO-målet.
-Den syntetiska publika testytan är stängd och dess data bevarade; full
-hostbrowseracceptans kräver en ny kontrollerad testperiod. Markera P18B DONE
-endast när kraven faktiskt är uppfyllda.
+Installera och verifiera den förberedda Windows-tasken på Alberts dator,
+inklusive en verklig tidsstyrd relaykörning, health gate och lokal felnotis.
+Besluta backupretention; ingen radering sker före beslut. Avgör därefter
+SELECT-only-frågan genom providerlösning eller uttryckligt accepterat tekniskt
+undantag. Kontrollera första tidsstyrda Simply-backupen och utför ett tidsatt
+fullständigt katastrofåterställningsprov för RTO-målet. Den syntetiska publika
+testytan är stängd och dess data bevarade; full hostbrowseracceptans kräver en
+ny kontrollerad testperiod. Markera P18B DONE endast när kraven faktiskt är
+uppfyllda.
 
 Stripe live, extern transport, skarp gallring och DNS-cutover är fortsatt
 stängda. P20-förberedelse är beställd, men aktivering förblir blockerad.
