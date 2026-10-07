@@ -45,7 +45,7 @@ $triggers = @(
     (New-ScheduledTaskTrigger -Daily -At "18:15"),
     (New-ScheduledTaskTrigger -AtLogOn -User $principalName)
 )
-$settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -MultipleInstances IgnoreNew -ExecutionTimeLimit (New-TimeSpan -Minutes 20) -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
+$settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -RunOnlyIfNetworkAvailable -MultipleInstances IgnoreNew -ExecutionTimeLimit (New-TimeSpan -Minutes 20) -RestartCount 3 -RestartInterval (New-TimeSpan -Minutes 15) -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
 $principal = New-ScheduledTaskPrincipal -UserId $principalName -LogonType Interactive -RunLevel Limited
 $task = New-ScheduledTask -Action $action -Trigger $triggers -Settings $settings -Principal $principal -Description "Copies and authenticates the latest closed BoIS backup to Besovida. Runs only in Albert's interactive Windows session; no credentials are provisioned."
 
