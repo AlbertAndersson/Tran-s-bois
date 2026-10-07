@@ -49,6 +49,13 @@ try {
 }
 catch {
     Write-PrivateAlert "P18 offsite cycle failed; inspect private relay and health status"
+    try {
+        if (Get-Command "msg.exe" -ErrorAction SilentlyContinue) {
+            & msg.exe $env:USERNAME "Tranås BoIS: offsite-backup behöver kontrolleras. Öppna den privata P18-statusen på AlberIQ-datorn." 2>$null
+        }
+    } catch {
+        # Notification failure must not hide the backup failure.
+    }
     Write-Error "P18 offsite cycle failed; no credentials emitted"
     exit 1
 }
