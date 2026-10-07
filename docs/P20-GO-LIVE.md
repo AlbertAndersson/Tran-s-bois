@@ -34,7 +34,7 @@ Varje beslut behöver faktisk beslutsfattare, datum och bevis, utan secrets.
 |---|---|---|
 | `go_live` | Uttryckligt lanseringsbeslut för exakt release, miljö och domän | Saknas |
 | `p18_release` | Full P18A/P18B-acceptans och grön slutlig revision | P18A klar; P18B blockerad |
-| `backup_restore` | Färsk full backup, offsite, övervakning, retention och tidsatt full DR | Offsite/filrestore verifierad; övriga krav återstår |
+| `backup_restore` | Färsk full backup, offsite, övervakning, retention och tidsatt full DR | Offsite/filrestore verifierad; Windows schedule/health/lokal felnotis är implementerade men ej installerade; retention och full tidsatt DR återstår |
 | `personal_admin_mfa` | Namngivna personliga production-konton, roller, MFA och återkallningsansvar | Productionregister tomt; syntetiska hostprov finns |
 | `seller_merchant_bank` | BoIS juridiska säljare, betalningsmerchant och bankansvar | P19 öppet |
 | `legal_policies` | Godkända köpvillkor, reklamation/refund, integritetstext och slutliga URL:er | P19 öppet |
