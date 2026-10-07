@@ -1,3 +1,14 @@
+## Aktuell driftverifiering 2026-10-07
+
+PR46 är mergad. Windows-task är installerad och ett verkligt tidsutlöst
+relayprov har passerat. Simply-backupen 03:00 är observerad. Fullständigt
+DR med DB + runtime + HTTPS från Besovida passerade på 216,437 sekunder,
+inklusive korrigerade försök; production och ursprungliga testdata bevarades.
+Retention, SELECT-only och sammanhängande hostbrowseracceptans återstår.
+P18B/P18 och publik P20-aktivering är fortsatt BLOCKED. Se [aktuella bevis](P18B-OPS-EVIDENCE-20261007.md).
+
+Äldre motstridiga uppgifter nedan är historik.
+
 # P20 – go-live-förberedelse 2026-10-06
 
 Albert har beställt fortsatt arbete genom P20. Det ersätter den äldre
