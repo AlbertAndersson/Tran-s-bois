@@ -17,6 +17,25 @@ offsiteöverföring, övervakning/retention och full hostbrowseracceptans. Se [n
 Den äldre molnkörningens credentialblockerare nedan är historik och gäller
 inte som aktuell lokal status. Staging är separat och har inte ändrats.
 
+## P18B repo-hardening 2026-10-07
+
+PR46 förbereder Windows-relayens återstående driftkedja utan att aktivera
+production: fail-closed health gate, privat felmarkör, lokal Windows-notis och
+en explicit opt-in Task Scheduler-installation för inloggning + sex-timmars-
+cadens. Ingenting är installerat på Alberts dator från molntråden och ingen
+extern alarmkanal, backupgallring, Stripe live, mail eller DNS har aktiverats.
+
+SELECT-only-frågan är nu också snävare: genomförda hostprov visar att produktens
+DB-user saknar CREATE USER/GRANT OPTION och Simply:s supportdokumentation anger
+att extra MySQL-databaser på webbhotellet använder samma databasanvändare.
+Providerlösning eller uttryckligt tekniskt undantag krävs fortfarande.
+
+Kvar för P18B efter repo-hardening: installera/verifiera Windows-tasken på
+Alberts dator, observera verklig tidsstyrd backup/offsitekörning, besluta
+backupretention, fullständigt tidsatt DR-prov, full hostbrowseracceptans samt
+beslut om SELECT-only-undantag/providerlösning. P18B markeras inte DONE före
+dessa faktiska bevis.
+
 ## Tidigare dokumentation (historik)
 
 P18A är DONE och mergad via PR40. P18B är beställd men **BLOCKED**:
