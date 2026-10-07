@@ -17,7 +17,8 @@ class WindowsTaskStaticTest(unittest.TestCase):
         self.assertIn("-LogonType Interactive", text)
         self.assertIn("-RunLevel Limited", text)
         self.assertNotIn("-RunLevel Highest", text)
-        self.assertIn("PT6H", text)
+        for at in ["00:15", "06:15", "12:15", "18:15"]:
+            self.assertIn(at, text)
         self.assertIn("-StartWhenAvailable", text)
 
     def test_cycle_writes_private_failure_marker_without_external_alert(self):
