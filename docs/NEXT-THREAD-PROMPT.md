@@ -17,6 +17,29 @@ offsiteöverföring, övervakning/retention och full hostbrowseracceptans. Se [n
 Den äldre molnkörningens credentialblockerare nedan är historik och gäller
 inte som aktuell lokal status. Staging är separat och har inte ändrats.
 
+## Nästa konkreta P18B-körning efter PR46
+
+1. På Alberts Windows-dator: kör först preview av
+   `scripts/install-p18-offsite-task.ps1` med befintlig privat katalog och
+   betrodd Python. Installera endast efter att previewens paths/user stämmer.
+2. Verifiera Task Scheduler-resultatet: kör tasken manuellt en gång, kontrollera
+   exit 0, `p18-offsite-relay-status.json`, health gate och Besovida-readback.
+   Prova därefter ett kontrollerat failurefall som ger privat alertfil och lokal
+   Windows-notis utan extern transport.
+3. Observera minst en verklig tidsstyrd körning och första tidsstyrda Simply-
+   backupen. Dokumentera att Windows-modellen kräver Alberts inloggning efter
+   reboot; ingen Windows-credential lagras av installeraren.
+4. Ta retentionbeslut innan någon radering byggs eller körs. Nuvarande kod
+   raderar inget.
+5. Genomför full tidsatt DR till isolerat mål och verifiera DB + runtime +
+   service/HTTPS mot RTO-målet.
+6. Öppna den syntetiska hostytan endast för kontrollerad full browseracceptans,
+   därefter stäng den igen och bevara testdata.
+7. SELECT-only: hostbevis + Simply-dokumentation stödjer providerbegränsning.
+   Antingen ordnas providerlösning eller Albert accepterar uttryckligen ett
+   dokumenterat tekniskt undantag med kompensationskontroller. Anta aldrig
+   undantaget automatiskt.
+
 ## Tidigare dokumentation (historik)
 
 ## Aktuell styrning 2026-10-05

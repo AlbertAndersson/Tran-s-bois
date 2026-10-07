@@ -73,11 +73,24 @@ tester passerade lokalt och ingår nu i P18-CI. Privata statusfilen heter
 `p18-offsite-relay-status.json`. Pythonmiljön som verifierades använder
 `cryptography==50.0.1`; använd en betrodd befintlig installation.
 
-Schemaläggning på Windows inväntar Alberts svar om att datorn ska vara den
-påslagna/anslutna mellanhanden. Retention på 30 dagar är endast ett förslag;
-inget godkännande eller raderingsjobb är registrerat. Inga nycklar till bred
-productionåtkomst har flyttats till Besovida. Den ursprungliga blockeraren
-nedan avser fristående hämtning från servern.
+Albert har beställt fortsatt P18B-arbete. En guarded Windows-installationsväg
+är nu förberedd i `scripts/install-p18-offsite-task.ps1`, men den är **inte
+installerad från molntråden**. Installern är preview-only utan `-Install`,
+använder begränsad Interactive-principal utan lagrat Windows-lösenord och
+förbereder körning vid inloggning samt dagligen 00:15, 06:15, 12:15 och 18:15. Nackdelen
+är explicit: reläet kan inte köras före Alberts första Windows-inloggning efter
+omstart.
+
+`scripts/p18-offsite-cycle.ps1` kör relay + fail-closed health check. Vid fel
+skriver den endast privat `p18-offsite-alert.json`, returnerar felkod och försöker
+visa en lokal Windows-notis via `msg.exe`; ingen extern mail/webhook skickas.
+`scripts/p18-offsite-health.py` kräver verifierad offsite-readback, noll
+raderingar och färsk relay/backup. Dess 30-timmarsgräns är en teknisk
+övervakningströskel för sex-timmarscadencen, **inte** ett retentionbeslut.
+
+Backupretention är fortsatt obeslutad och ingen automatisk radering finns.
+Inga nycklar till bred productionåtkomst har flyttats till Besovida. Den
+ursprungliga blockeraren nedan avser fristående server-till-server-hämtning.
 
 Mål: Alberts Besovida-server, `/home/albert/Bois`, privat 0700. Två aktuella
 krypterade backupfiler finns där med 0600. Serverns hostnyckel är verifierad
