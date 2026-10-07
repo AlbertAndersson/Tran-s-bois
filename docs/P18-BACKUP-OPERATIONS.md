@@ -77,7 +77,7 @@ Albert har beställt fortsatt P18B-arbete. En guarded Windows-installationsväg
 är nu förberedd i `scripts/install-p18-offsite-task.ps1`, men den är **inte
 installerad från molntråden**. Installern är preview-only utan `-Install`,
 använder begränsad Interactive-principal utan lagrat Windows-lösenord och
-förbereder körning vid inloggning samt var sjätte timme från 04:15. Nackdelen
+förbereder körning vid inloggning samt dagligen 00:15, 06:15, 12:15 och 18:15. Nackdelen
 är explicit: reläet kan inte köras före Alberts första Windows-inloggning efter
 omstart.
 
