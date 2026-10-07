@@ -24,6 +24,7 @@ class WindowsTaskStaticTest(unittest.TestCase):
         text = (ROOT / "scripts/p18-offsite-cycle.ps1").read_text(encoding="utf-8")
         self.assertIn("p18-offsite-alert.json", text)
         self.assertIn("external_notification_sent = $false", text)
+        self.assertIn("msg.exe", text)
         self.assertNotIn("Send-MailMessage", text)
         self.assertNotIn("Invoke-WebRequest", text)
         self.assertNotIn("Invoke-RestMethod", text)
