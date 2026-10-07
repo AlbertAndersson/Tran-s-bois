@@ -38,19 +38,22 @@ $q = [char]34
 $arguments = "-NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -File $q$cycle$q -PrivateDir $q$private$q -PythonExe $q$PythonExe$q -RepoRoot $q$RepoRoot$q -MaxAgeHours 30"
 
 $action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument $arguments
-$daily = New-ScheduledTaskTrigger -Daily -At "04:15"
-$daily.Repetition.Interval = "PT6H"
-$daily.Repetition.Duration = "P1D"
-$logon = New-ScheduledTaskTrigger -AtLogOn -User $principalName
+$triggers = @(
+    (New-ScheduledTaskTrigger -Daily -At "00:15"),
+    (New-ScheduledTaskTrigger -Daily -At "06:15"),
+    (New-ScheduledTaskTrigger -Daily -At "12:15"),
+    (New-ScheduledTaskTrigger -Daily -At "18:15"),
+    (New-ScheduledTaskTrigger -AtLogOn -User $principalName)
+)
 $settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -MultipleInstances IgnoreNew -ExecutionTimeLimit (New-TimeSpan -Minutes 20) -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
 $principal = New-ScheduledTaskPrincipal -UserId $principalName -LogonType Interactive -RunLevel Limited
-$task = New-ScheduledTask -Action $action -Trigger @($daily, $logon) -Settings $settings -Principal $principal -Description "Copies and authenticates the latest closed BoIS backup to Besovida. Runs only in Albert's interactive Windows session; no credentials are provisioned."
+$task = New-ScheduledTask -Action $action -Trigger $triggers -Settings $settings -Principal $principal -Description "Copies and authenticates the latest closed BoIS backup to Besovida. Runs only in Albert's interactive Windows session; no credentials are provisioned."
 
 if (-not $Install) {
     Write-Output "PREVIEW ONLY - no task installed."
     Write-Output "Task: $TaskName"
     Write-Output "User: $principalName"
-    Write-Output "Triggers: at logon and every 6 hours from 04:15 while an interactive user session exists."
+    Write-Output "Triggers: at logon and daily 00:15, 06:15, 12:15 and 18:15 while an interactive user session exists."
     Write-Output "Run again with -Install after reviewing the preview."
     exit 0
 }
