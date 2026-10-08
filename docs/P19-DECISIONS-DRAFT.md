@@ -1,3 +1,5 @@
+> Driftbeslut 2026-10-08: 30 dagars retention för nya krypterade backuper och ett avgränsat SELECT-only-undantag är accepterade av Albert. Se [P18B-besluten](P18B-DECISIONS-20261008.md). Detta är inte beslut om personuppgiftsretention eller övriga P19-verksamhetsfrågor.
+
 ## Aktuell P19-status 2026-10-06
 
 Albert har beställt fortsättning genom P20. P19-underlaget är uppdaterat med
