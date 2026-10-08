@@ -1,3 +1,5 @@
+> Senare beslut 2026-10-08: 30 dagars backupretention och avgränsat Simply SELECT-only-undantag är accepterade. Se [P18B-besluten](P18B-DECISIONS-20261008.md). Gallringsautomation, kompensationskontroller och full hostbrowseracceptans är inte slutverifierade.
+
 ## Aktuell driftverifiering 2026-10-07
 
 PR46 är mergad. Windows-task är installerad och ett verkligt tidsutlöst

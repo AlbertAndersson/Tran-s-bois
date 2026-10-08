@@ -1,3 +1,5 @@
+> Beslut 2026-10-08: 30 dagars retention för nya krypterade backuper och avgränsat SELECT-only-undantag är godkända. Villkor i [P18B-DECISIONS-20261008.md](P18B-DECISIONS-20261008.md). Inga backuper har raderats och P18B är inte färdigverifierad.
+
 ## Aktuell driftverifiering 2026-10-07
 
 PR46 är mergad. Windows-task är installerad och ett verkligt tidsutlöst
