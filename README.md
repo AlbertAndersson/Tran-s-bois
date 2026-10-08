@@ -1,3 +1,17 @@
+## Aktuell teknisk acceptans 2026-10-08
+
+P18A och P18B är tekniskt klara för stängd production, med Alberts uttryckligt
+accepterade SELECT-only-undantag. Backupretention 30 dagar är beslutad för nya
+backuper; befintliga äldre backuper bevaras och ingen raderingskod är byggd.
+Full hostbrowseracceptans, DB + runtime + HTTPS-DR och ny tidsstyrd
+Simply→Windows→Besovida-kedja har passerat. Cronincidenten med CRLF är rättad
+och redovisad. Se [closeout](docs/P18B-CLOSEOUT-20261008.md) och
+[godkända driftbeslut](docs/P18-OPS-DECISIONS-20261008.md).
+
+P19-verksamhetsbeslut och publik P20-aktivering återstår. Production är fortsatt
+stängd; Stripe live och slutlig DNS-cutover kräver separat godkännande.
+Äldre motstridiga statusuppgifter nedan är bevarad historik.
+
 ## Aktuell driftverifiering 2026-10-07
 
 PR46 är mergad. Windows-task är installerad och ett verkligt tidsutlöst
