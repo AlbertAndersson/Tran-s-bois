@@ -1,3 +1,11 @@
+## Uppdaterade driftbeslut 2026-10-08
+
+Albert har godkänt 30 dagars backupretention och dokumenterat SELECT-only-
+undantag med kompensationskontroller. P18-hostacceptansen är tekniskt klar.
+Se [driftbeslut](P18-OPS-DECISIONS-20261008.md) och
+[hostcloseout](P18B-CLOSEOUT-20261008.md). Övriga P19-verksamhetsbeslut är
+fortsatt öppna; detta avgör inte P16:s verksamhets-/juridiska retention.
+
 ## Aktuell P19-status 2026-10-06
 
 Albert har beställt fortsättning genom P20. P19-underlaget är uppdaterat med
@@ -37,7 +45,7 @@ Registrera svar, beslutsfattare, datum och bevis/länk innan slutkonfiguration.
 | Mail | Avsändare, befintlig provider, domän/SPF/DKIM/DMARC, support/leverantörsmottagare och tillstånd för extern leverans | BoIS/teknisk ansvarig; P17 hostverifiering och aktiveringsgrindar | ÖPPET | TBD |
 | Statistik och cookies | Ändamål, integritetstext, cookie/provider-verifiering, consentperiod (180 dagar är testvärde), frånvaro av extern analytics | Verksamhets-/privacyansvarig; P16/granskning | ÖPPET | TBD |
 | Retention | Perioder för sales/inaktiv consent, order/betalning/medlemskap/leverans, rättslig grund och legal hold | Verksamhets-/privacyansvarig; inga skarpa standardvärden sätts av kod | ÖPPET | TBD |
-| Drift | Incident-/återställningsansvar, backupomfattning, RPO/RTO, privat/offsite-kopia och eventuell cron | Albert; P18B måste ge hostbevis | DELVIS BESLUTAT: Albert ansvarar; mål RPO 24 h/RTO 4 h; Besovida offsite; iPhones Lösenord för separat nyckel. Daglig Simply-backup installerad. Automatisk offsite/driftmodell, retention/larm och full DR kvarstår | 2026-10-06, Alberts chattsvar och P18-hostbevis |
+| Drift | Incident-/återställningsansvar, backupomfattning, RPO/RTO, privat/offsite-kopia och eventuell cron | Albert; P18B måste ge hostbevis | BESLUTAT: Albert ansvarar; mål RPO 24 h/RTO 4 h; Besovida offsite och iPhones Lösenord för separat nyckel. Windows-relay, tidsstyrd kedja, health/MSG och fullt DR verifierade. Backupretention 30 dagar och tekniskt SELECT-only-undantag godkända; inga raderingar byggda. Se P18-closeout och driftbeslut | Registrerat 2026-10-08; Alberts chattsvar och hostbevis |
 | Administratörer | Namngivna personliga konton, roller, MFA och återkallningsansvar | BoIS/teknisk ansvarig; P14 hostinförande | ÖPPET | TBD |
 | Acceptans | Namngivna granskare, demofeedback och vilka webbläsare/enheter som krävs | Erik/BoIS; automatiserad Chromium ersätter inte användaracceptans | ÖPPET | TBD |
 | 2027-sortiment | Vilka produkter, leverantörer, pris/marginal/MOQ och datum ska godkännas? | Erik/BoIS; preview saknar köp, P7-spärr 2027-01-01 Europe/Stockholm kvarstår | ÖPPET | TBD |

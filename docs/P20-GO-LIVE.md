@@ -1,3 +1,17 @@
+## Aktuell teknisk acceptans 2026-10-08
+
+P18A och P18B är tekniskt klara för stängd production, med Alberts uttryckligt
+accepterade SELECT-only-undantag. Backupretention 30 dagar är beslutad för nya
+backuper; befintliga äldre backuper bevaras och ingen raderingskod är byggd.
+Full hostbrowseracceptans, DB + runtime + HTTPS-DR och ny tidsstyrd
+Simply→Windows→Besovida-kedja har passerat. Cronincidenten med CRLF är rättad
+och redovisad. Se [closeout](P18B-CLOSEOUT-20261008.md) och
+[godkända driftbeslut](P18-OPS-DECISIONS-20261008.md).
+
+P19-verksamhetsbeslut och publik P20-aktivering återstår. Production är fortsatt
+stängd; Stripe live och slutlig DNS-cutover kräver separat godkännande.
+Äldre motstridiga statusuppgifter nedan är bevarad historik.
+
 ## Aktuell driftverifiering 2026-10-07
 
 PR46 är mergad. Windows-task är installerad och ett verkligt tidsutlöst
@@ -46,8 +60,8 @@ Varje beslut behöver faktisk beslutsfattare, datum och bevis, utan secrets.
 | Privat beslut | Underlag före aktivering | Aktuellt läge |
 |---|---|---|
 | `go_live` | Uttryckligt lanseringsbeslut för exakt release, miljö och domän | Saknas |
-| `p18_release` | Full P18A/P18B-acceptans och grön slutlig revision | P18A klar; P18B blockerad |
-| `backup_restore` | Färsk full backup, offsite, övervakning, retention och tidsatt full DR | Offsite/filrestore verifierad; Windows schedule/health/lokal felnotis är implementerade men ej installerade; retention och full tidsatt DR återstår |
+| `p18_release` | Full P18A/P18B-acceptans och grön slutlig revision | P18A/P18B tekniskt accepterade för stängd drift; SELECT-only-undantag dokumenterat |
+| `backup_restore` | Färsk full backup, offsite, övervakning, retention och tidsatt full DR | Fullt DR 216,437 s, tidsstyrd offsitekedja och health/Windows MSG verifierade; 30 dagar retention beslutad, ingen radering byggd |
 | `personal_admin_mfa` | Namngivna personliga production-konton, roller, MFA och återkallningsansvar | Productionregister tomt; syntetiska hostprov finns |
 | `seller_merchant_bank` | BoIS juridiska säljare, betalningsmerchant och bankansvar | P19 öppet |
 | `legal_policies` | Godkända köpvillkor, reklamation/refund, integritetstext och slutliga URL:er | P19 öppet |
@@ -56,7 +70,7 @@ Varje beslut behöver faktisk beslutsfattare, datum och bevis, utan secrets.
 | `support_mail` | Avsändare/support/mottagare, provider, SPF/DKIM/DMARC och leveransprov | P19 öppet; extern transport stängd |
 | `domain_dns_tls` | Slutlig shopdomän, TLS, verifierat DNS-underlag och separat cutoverbeslut | Slutlig URL/beslut saknas |
 | `privacy_retention` | Verksamhetsbeslut om lagring/gallring, cookies och legal hold | P19 öppet; endast dry-run |
-| `final_smoke_rollback` | Full hostbrowseracceptans, mänsklig acceptans och aktuell rollback | Partiella hostbevis; full acceptans återstår |
+| `final_smoke_rollback` | Full hostbrowseracceptans, mänsklig acceptans och aktuell rollback | Full teknisk hostbrowseracceptans och rollback verifierade; mänsklig verksamhetsacceptans återstår |
 
 ## Genomförande när underlagen finns
 

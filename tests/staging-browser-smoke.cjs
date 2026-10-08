@@ -7,6 +7,7 @@ const path=require('node:path');
 const base=process.env.BOIS_BASE_URL;
 const adminToken=process.env.BOIS_ADMIN_TOKEN;
 const demoPassword=process.env.DEMO_PASSWORD;
+const demoUsername=process.env.DEMO_USERNAME||'bois-demo';
 if(!base||!adminToken||!demoPassword)throw Error('Synthetic staging URL and private credentials required.');
 const output=process.env.RUNNER_TEMP?path.join(process.env.RUNNER_TEMP,'bois-browser-evidence'):path.join('/tmp','bois-browser-evidence');
 fs.mkdirSync(output,{recursive:true});
@@ -14,11 +15,11 @@ const gymEnabled=process.env.BOIS_TEST_GYM_ENABLED!=='false';
 const key=()=>Math.random().toString(36).slice(2,12);
 
 (async()=>{
-  const browser=await chromium.launch({headless:true});
+  const browser=await chromium.launch({headless:true,...(process.env.BOIS_BROWSER_CHANNEL?{channel:process.env.BOIS_BROWSER_CHANNEL}:{})});
   let existingOrderId='',matchOrderId='',refundOrderId='',refundSession=null;
   try{
     for(const width of [375,390,1280]){
-      const context=await browser.newContext({viewport:{width,height:850},deviceScaleFactor:1,httpCredentials:{username:'bois-demo',password:demoPassword}});
+      const context=await browser.newContext({viewport:{width,height:850},deviceScaleFactor:1,httpCredentials:{username:demoUsername,password:demoPassword}});
       const page=await context.newPage();
       await page.goto(base+'/');
       await page.locator('#bois-consent').waitFor({state:'visible'});
@@ -140,7 +141,7 @@ const key=()=>Math.random().toString(36).slice(2,12);
       await context.close();
     }
 
-    const context=await browser.newContext({viewport:{width:1280,height:850},httpCredentials:{username:'bois-demo',password:demoPassword}});
+    const context=await browser.newContext({viewport:{width:1280,height:850},httpCredentials:{username:demoUsername,password:demoPassword}});
     const admin=await context.newPage();
     await admin.goto(base+'/admin.html');
     await admin.locator('#token').fill(adminToken);
@@ -171,13 +172,16 @@ const key=()=>Math.random().toString(36).slice(2,12);
       assert.match(await admin.locator('#batchMessage').innerText(),/Batch skapad/);
       console.log('ADMIN_SYNTHETIC_BATCH: pass');
     }else{
+      assert.notEqual(process.env.BOIS_REQUIRE_BATCH,'true','Full host acceptance requires an isolated batch fixture');
       console.log('ADMIN_SYNTHETIC_BATCH: skipped; other waiting rows exist');
     }
-    const refund=await admin.request.post(base+'/commerce-api.php?action=mock_payment_event',{
-      data:{session_ref:refundSession.session_ref,session_token:refundSession.session_token,outcome:'refunded',refund_ore:refundSession.amount_ore},
-      headers:{Origin:new URL(base).origin}
-    });
-    assert.equal(refund.ok(),true,'synthetic mock refund endpoint');
+    const refund=await admin.evaluate(async data=>{
+      const response=await fetch('commerce-api.php?action=mock_payment_event',{
+        method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)
+      });
+      return {ok:response.ok,status:response.status};
+    },{session_ref:refundSession.session_ref,session_token:refundSession.session_token,outcome:'refunded',refund_ore:refundSession.amount_ore});
+    assert.equal(refund.ok,true,'synthetic mock refund endpoint HTTP '+refund.status);
     await admin.reload();
     await admin.locator('#dashboard').waitFor({state:'visible'});
     assert.ok((await admin.locator('#payments').innerText()).includes('REFUNDED'));

@@ -1,3 +1,35 @@
+## Aktuell teknisk acceptans 2026-10-08
+
+P18A och P18B är tekniskt klara för stängd production, med Alberts uttryckligt
+accepterade SELECT-only-undantag. Backupretention 30 dagar är beslutad för nya
+backuper; befintliga äldre backuper bevaras och ingen raderingskod är byggd.
+Full hostbrowseracceptans, DB + runtime + HTTPS-DR och ny tidsstyrd
+Simply→Windows→Besovida-kedja har passerat. Cronincidenten med CRLF är rättad
+och redovisad. Se [closeout](P18B-CLOSEOUT-20261008.md) och
+[godkända driftbeslut](P18-OPS-DECISIONS-20261008.md).
+
+P19-verksamhetsbeslut och publik P20-aktivering återstår. Production är fortsatt
+stängd; Stripe live och slutlig DNS-cutover kräver separat godkännande.
+Äldre motstridiga statusuppgifter nedan är bevarad historik.
+
+## Nästa arbete efter teknisk P18-acceptans
+
+1. Verifiera aktuell main och closeout; bevara senare arbete. Återupprepa inte
+   de sex levererade P18-punkterna som om de vore blockerade.
+2. Slutför verkliga P19-verksamhetsbeslut enligt P19-underlaget. Backupretention
+   och SELECT-only-undantag är godkända; övriga affärs-/privacy-/adminbeslut är
+   fortfarande öppna och får inte antas av assistenten.
+3. Inför go-live måste backupmodellen fungera även vid öppnad production,
+   personliga production-admins införas säkert och SELECT-only-undantaget
+   omprövas i slutgranskningen. Behåll stängda flaggor medan detta förbereds.
+4. Albert följer ordinarie cron 03:00/15:00 och Windows-cadencen. Cron som
+   skrivs från Windows måste använda LF och rå byteverifiering. Dokumentera
+   nya verkliga driftbevis och fel; en tidigare grön körning är ingen SLA.
+5. Ingen backupgallring byggs/körs genom detta closeout. En senare beställning
+   ska använda beslutad 30-dagarsregel och skydda befintliga äldre backuper.
+6. Publik aktivering, Stripe live och slutlig DNS-cutover kräver sina separata
+   uttryckliga godkännanden när ett konkret granskat underlag är färdigt.
+
 ## Aktuell driftverifiering 2026-10-07
 
 PR46 är mergad. Windows-task är installerad och ett verkligt tidsutlöst
