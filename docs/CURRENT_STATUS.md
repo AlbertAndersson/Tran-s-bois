@@ -1,3 +1,7 @@
+## P18B beslut 2026-10-08
+
+Albert har uttryckligen beslutat 30 dagars rullande retention för **nya krypterade dagliga backuper** och accepterat ett avgränsat säkerhetsundantag för saknat separat SELECT-only-konto på Simply, med obligatoriska kompensationskontroller. Se [beslut och villkor](P18B-DECISIONS-20261008.md). Historiska manuella återställningskopior bevaras. Besluten är registrerade, men gallringsautomation och hostverifiering är inte installerade/genomförda genom dokumentationen. P18B kvarstår BLOCKED vid full hostbrowseracceptans, uppföljning av ordinarie backup/relay och återstående driftskontroller. P19-verksamhetsbeslut och P20-aktivering är separata.
+
 ## Aktuell driftverifiering 2026-10-07
 
 PR46 är mergad. Windows-task är installerad och ett verkligt tidsutlöst
