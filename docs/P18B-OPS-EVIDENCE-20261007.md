@@ -1,3 +1,7 @@
+## Senare beslut 2026-10-08
+
+Albert har godkänt 30 dygns rullande retention för nya krypterade dagliga backuper, med undantag för historiska manuella arkiv, samt accepterat ett avgränsat SELECT-only-säkerhetsundantag för Simply med krav på verifierade kompensationskontroller. Se [P18B-beslut](P18B-DECISIONS-20261008.md). Detta ersätter nedanstående historiska text om att besluten saknas. Automatisk radering har inte installerats eller körts. Full hostbrowseracceptans och ordinarie driftsuppföljning återstår. P18B är inte DONE.
+
 # P18B – observerad drift och fullständigt DR-prov 2026-10-07
 
 Detta är aktuell status och ersätter äldre uppgifter om oinstallerad Windows-
