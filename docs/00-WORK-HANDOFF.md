@@ -1,3 +1,13 @@
+## Dokumentingång och operativ huvudkö – 2026-10-09
+
+- [STARTA_HAR – ingång i AlberIQ SharePoint](https://alberiq.sharepoint.com/sites/AlberIQ/P-bois/00%20Starta%20har/STARTA_HAR.md)
+- [01 – Tranås BoIS – Work utvecklingskö till go-live (huvudkö)](https://alberiq.sharepoint.com/sites/AlberIQ/P-bois/01%20Utvecklingsko%20och%20beslut/01%20%E2%80%93%20Tran%C3%A5s%20BoIS%20%E2%80%93%20Work%20utvecklingsk%C3%B6%20till%20go-live.docx)
+- GitHub `docs/CURRENT_STATUS.md` och tekniska runbooks är fortsatt källa för kod, tester, CI, drift och deployment. SharePoint-kön äger beslutad arbetsordning.
+- Huvudfilen flyttades **inom samma** SharePoint-bibliotek `P-bois` 2026-10-09 från `90 Drive original` till `01 Utvecklingsko och beslut`. SharePoint-item-ID och versionshistorik bevarades; ingen ny parallell kö skapades.
+- Verifierat läge 2026-10-08: P18A/P18B tekniskt klara för **stängd production**. P19:s verksamhetsbeslut återstår; publik P20-aktivering, Stripe live, extern e-post och slutlig DNS-cutover är **inte godkända**.
+- Läs alltid aktuell SharePoint-kö och `main` innan nästa utvecklingssteg. Äldre nästa-steg-rader längre ned är historik.
+
+---
 ## Aktuell styrning 2026-10-05
 
 ## Aktuell lokal hoststatus 2026-10-06
