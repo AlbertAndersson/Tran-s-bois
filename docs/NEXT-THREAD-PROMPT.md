@@ -1,3 +1,14 @@
+## Skyddat iPhoneprov och faktiskt installerad P20 2026-11-12
+
+Läs [hostbevis](P20-HOST-EVIDENCE-20261112.md) och
+[iPhoneguide](P20-IPHONE-TEST.md). Socen-app 0aecd18 är installerad stängd;
+den separata syntetiska köpytan är skyddat tillgänglig och fullbrowsergrön.
+Återställ inte äldre testdata över pågående iPhoneprov. Föregående test-DB
+finns i verifierad privat backup. Productiondata och stagingkvot bevaras.
+Följ upp stagingens 403-rättning och ny deploymentrun samt aktuell offsite-
+source_revision. Invänta Alberts Safariresultat och verksamhetsbeslut;
+testbeställningen godkänner ingen liveaktivering, extern mail eller DNS-cutover.
+
 ## Stängda P20-förberedelser 2026-11-12
 
 Priser och lagringstidsförslaget är bekräftade. Läs
