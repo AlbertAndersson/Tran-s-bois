@@ -19,7 +19,7 @@ function p20_snapshot(PDO $pdo):array{
 }
 function p20_copy_public(string $from,string $to):void{
     if(file_exists($to)||is_link($from))throw new RuntimeException('Unique public target required.');
-    mkdir($to,0755);
+    mkdir($to,0755);chmod($to,0755);
     foreach(new RecursiveIteratorIterator(new RecursiveDirectoryIterator($from,FilesystemIterator::SKIP_DOTS),RecursiveIteratorIterator::SELF_FIRST) as $f){
         if($f->isLink())throw new RuntimeException('Link refused.');$target=$to.'/'.substr($f->getPathname(),strlen($from)+1);
         if($f->isDir()){mkdir($target,0755);chmod($target,0755);}else{copy($f->getPathname(),$target);chmod($target,0644);}
