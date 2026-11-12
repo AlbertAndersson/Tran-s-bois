@@ -4,6 +4,11 @@ require_once dirname(__DIR__).'/server/p4_membership.php';
 require_once dirname(__DIR__).'/server/p5_batch.php';
 function p20_expect(bool $ok,string $message): void { if (!$ok) throw new RuntimeException($message); }
 $calendar=['membership_period'=>'calendar_year'];
+$shirtVariant=['sku'=>'MATCHKIT-STAGING','variant_metadata_json'=>json_encode(['shirt_sizes'=>['S','M','L']])];
+foreach(['S','M','L'] as $size){
+    p20_expect(bois_p3_validate_line_meta($shirtVariant,['shirt_size'=>$size,'team'=>'P9','player_name'=>'Synthetic','number'=>'9'])['shirt_size']===$size,'Approved shirt size');
+}
+try { bois_p3_validate_line_meta($shirtVariant,['shirt_size'=>'XS','team'=>'P9','player_name'=>'Synthetic','number'=>'9']); throw new RuntimeException('Unapproved size accepted'); } catch(InvalidArgumentException $e) {}
 foreach (['2026-01-01','2026-12-31','2026-06-15'] as $day) {
     p20_expect(bois_p4_membership_end($calendar,new DateTimeImmutable($day))==='2026-12-31','Calendar end');
 }

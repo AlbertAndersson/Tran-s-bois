@@ -486,7 +486,7 @@ function bois_p5_admin_batches(PDO $pdo): array
     return $pdo->query($sql)->fetchAll();
 }
 
-function bois_p5_waiting_summary(PDO $pdo): array
+function bois_p5_waiting_summary(PDO $pdo, array $config=[]): array
 {
     $rule = bois_p5_matchkit_rule($pdo);
     $rows = bois_p5_candidate_rows($pdo, $rule, false);
@@ -505,6 +505,7 @@ function bois_p5_waiting_summary(PDO $pdo): array
         'max_wait_hours'=>(int)$rule['max_wait_hours'],
         'oldest_wait_hours'=>$oldestHours,
         'threshold_remaining'=>max(0, (int)$rule['threshold_qty'] - $qty),
+        'schedule'=>$config['matchkit_batch'] ?? ['mode'=>'legacy'],
     ];
 }
 
