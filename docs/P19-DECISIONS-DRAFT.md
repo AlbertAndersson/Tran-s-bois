@@ -1,3 +1,27 @@
+## Priser och lagringstider bekräftade 2026-11-12
+
+Albert har godkänt gympris 2 650 kr, ungdom 200 kr, vuxen 350 kr och pensionär
+300 kr samt lagringstidsförslaget. Medlems-/partnerdata utan föreslaget antal
+dagar är fortsatt öppna. Leverantör och månadsdag kommer senare. Se
+[stängda P20-förberedelser](P20-PREPARATION-20261112.md).
+Äldre begäran om prisbekräftelse nedan är därmed ersatt; inget launchbeslut ges.
+
+## Registrerade verksamhetssvar 2026-11-12
+
+Alberts tolv svar finns i [P19-beslutsregistret](P19-ANSWERS-20261112.md).
+Det anger tillfällig socen.se-adress, säljare/support, kalenderårsmedlemskap,
+Nordickvot och tillfällig mottagare, tröja 998 kr/S–L med månadsvis/manuell
+beställning, Albert som enda admin samt årets tre produktgrupper.
+Gympriset i kod är 2 650 kr; uttrycklig bekräftelse och medlemspriser saknas.
+Stripe-konto, partner-/leverantörsdetaljer, exakta privacytider, personlig
+production-admin och verksamhetsacceptans återstår. BoIS har inte beslutat
+om lansering. P19 IN PROGRESS; publik P20 BLOCKED.
+
+Beslutsregistret innehåller granskade källor och ett **icke godkänt**
+lagringstidsförslag samt faktiska kodgap för kalenderår och månadsbatch.
+Inga runtimevärden, externa transporter eller aktiveringsgrindar har ändrats.
+Äldre tabell med ÖPPET nedan är historik och ersätts i dessa delar av registret.
+
 ## Uppdaterade driftbeslut 2026-10-08
 
 Albert har godkänt 30 dagars backupretention och dokumenterat SELECT-only-

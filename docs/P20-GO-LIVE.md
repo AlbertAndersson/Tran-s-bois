@@ -1,3 +1,21 @@
+## Stängda förberedelser 2026-11-12
+
+Priser och föreslagna lagringstider är godkända. Se
+[P20-förberedelsepaketet](P20-PREPARATION-20261112.md) för opt-in kalenderår,
+månadsbatch med null-spärr, katalogunderlag och stängd config. Ingen deploy
+eller aktivering ingår. BoIS beslut, leverantör/månadsdag och kvarvarande
+host-/mail-/Stripe-/privacyåtgärder blockerar fortfarande publik P20.
+
+## P19-underlag 2026-11-12 – aktivering fortsatt blockerad
+
+[Alberts registrerade svar](P19-ANSWERS-20261112.md) ersätter äldre uppgifter
+om helt obesvarat P19. socen.se väljs som tillfällig publik adress; det är
+inget DNS-/go-livegodkännande. Kalenderår, månadsvis/manuell tröjbatch,
+S/M/L och leveransinformation kräver granskad implementation före lansering.
+Stripe-konto saknas; Swish är inget krav. BoIS slutbeslut saknas.
+Mailadresser är registrerade önskemål, inte verifierad/aktiverad transport.
+Exakta lagringstider är fortfarande förslag. Production förblir stängd.
+
 ## Aktuell teknisk acceptans 2026-10-08
 
 P18A och P18B är tekniskt klara för stängd production, med Alberts uttryckligt

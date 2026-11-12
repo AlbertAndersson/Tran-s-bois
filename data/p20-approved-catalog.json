@@ -1,0 +1,25 @@
+{
+  "status": "PREPARATION_ONLY_NOT_APPLIED",
+  "decision_source": "docs/P19-ANSWERS-20261112.md",
+  "membership": {
+    "period": "calendar_year",
+    "timezone": "Europe/Stockholm",
+    "prices_ore": {"MEM-YOUTH": 20000, "MEM-ADULT": 35000, "MEM-SENIOR": 30000}
+  },
+  "nordic": {"price_ore": 265000, "annual_limit": 20, "partner_verified": false},
+  "matchkit": {
+    "price_ore": 99800,
+    "shirt_only": true,
+    "shirt_sizes": ["S", "M", "L"],
+    "batch_mode": "monthly",
+    "batch_day": null,
+    "manual_batch_allowed": true,
+    "minimum_quantity": null,
+    "supplier_verified": false,
+    "printing_included_confirmed": false,
+    "pickup": "Utlämning genom ledare för köparens eget lag.",
+    "delivery_text_draft": "Leverantörsbeställningar samlas månadsvis eller skickas manuellt. Väntan till nästa beställning kan vara omkring en månad. Leverantörens produktion och transport tillkommer; slutlig leveranstid bekräftas före köp."
+  },
+  "other_products_orderable": false,
+  "launch_approved": false
+}
