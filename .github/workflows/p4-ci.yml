@@ -56,6 +56,8 @@ jobs:
           php -l server/commerce-api.php
       - name: P4 MySQL smoke
         run: php tests/p4-smoke.php
+      - name: Calendar membership and closed P20 boundaries
+        run: php tests/p20-preparation.php
       - name: Admin JavaScript syntax
         run: node --check site/commerce/assets/admin.js
       - name: P4 privacy and safety checks

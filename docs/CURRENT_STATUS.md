@@ -1,3 +1,21 @@
+## P20-förberedelser efter bekräftade P19-svar 2026-11-12
+
+Priser och föreslagna lagringstider är nu godkända av Albert. Kalenderår,
+null-spärrad månadsbatch/manuell batch och stängd kandidatkonfiguration är
+förberedda; se [ändringar och verifiering](P20-PREPARATION-20261112.md).
+Leverantör/månadsdag och BoIS lanseringsbeslut saknas fortfarande. Ingen
+production-/stagingdeploy, extern mail, gallring, betalning eller DNS-ändring
+ingår. Tidigare saknade pris-/retentionsgodkännanden nedan är ersatta.
+
+## P19 verksamhetssvar registrerade 2026-11-12
+
+Se [beslut, återstående frågor och kodgap](P19-ANSWERS-20261112.md).
+Albert har besvarat P19-underlaget; kalenderår och månadsbatch behöver
+implementeras separat. Medlemspriser, gymprisbekräftelse, partner-/leverantörs-
+detaljer och exakta privacytider återstår. P19 IN PROGRESS; BoIS beslut och
+publik P20-aktivering kvarstår. Inget deploy-, Stripe-, mail- eller DNS-steg
+har utförts genom beslutsregistreringen. P18:s stängda tekniska acceptans gäller.
+
 ## Aktuell teknisk acceptans 2026-10-08
 
 P18A och P18B är tekniskt klara för stängd production, med Alberts uttryckligt

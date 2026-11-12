@@ -136,6 +136,18 @@ if(count($aged)!==1 || ($aged[0]['trigger_reason']??'')!=='MAX_WAIT'){
 $waiting=bois_p5_waiting_summary($pdo);
 if(($waiting['waiting_item_count']??-1)!==0) throw new RuntimeException('Waiting queue should be empty.');
 
+$monthly=$config+['matchkit_batch'=>['mode'=>'monthly','day'=>null]];
+$monthlyOrder=p5_make_kit($pdo,12);
+$monthlyPaid=bois_p5_mark_order_paid($pdo,$monthly,$monthlyOrder['public_id']);
+if ($monthlyPaid['auto_batches']!==[]) throw new RuntimeException('Unknown monthly day created a batch.');
+$monthly['matchkit_batch']['day']=1;
+$monthlyBatch=bois_p5_evaluate_batches($pdo,$monthly,false);
+if (count($monthlyBatch)!==1 || $monthlyBatch[0]['trigger_reason']!=='MONTHLY') throw new RuntimeException('Monthly batch not created.');
+$nextOrder=p5_make_kit($pdo,13);
+$nextPaid=bois_p5_mark_order_paid($pdo,$monthly,$nextOrder['public_id']);
+if ($nextPaid['auto_batches']!==[] || bois_p5_evaluate_batches($pdo,$monthly,false)!==[]) throw new RuntimeException('Repeated monthly scheduler created a second batch.');
+if (count(bois_p5_evaluate_batches($pdo,$monthly,true))!==1) throw new RuntimeException('Manual batch blocked after monthly batch.');
+echo "MONTHLY_BATCH_REPLAY_AND_MANUAL: pass\n";
 echo "P5_SMOKE: pass\n";
 echo "THRESHOLD_QTY: 8\n";
 echo "MAX_WAIT_HOURS: 168\n";

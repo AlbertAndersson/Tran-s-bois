@@ -118,6 +118,21 @@ bois_p4_register_order($pdo, $unpaid['public_id']);
 $stats = bois_p4_stats($pdo);
 if ($stats['active_members'] !== 2) throw new RuntimeException('Unpaid membership became active.');
 
+$calendarConfig=$config+['membership_period'=>'calendar_year'];
+$calendarOrder=bois_p3_create_order($pdo,[
+    'customer'=>['name'=>'Calendar Synthetic','email'=>'calendar@example.invalid'],
+    'items'=>[['sku'=>'MEM-ADULT','quantity'=>1,'metadata'=>['member_name'=>'Calendar Synthetic']]],
+    'consent'=>true,'website'=>'','idempotency_key'=>'p20-calendar-membership',
+]);
+bois_p4_register_order($pdo,$calendarOrder['public_id']);
+bois_p5_mark_order_paid($pdo,$calendarConfig,$calendarOrder['public_id']);
+bois_p4_apply_paid_order($pdo,$calendarConfig,$calendarOrder['public_id']);
+$calendarEnd=$pdo->query("SELECT m.valid_to FROM bois_members m JOIN bois_customers c ON c.id=m.customer_id WHERE c.email='calendar@example.invalid'")->fetchColumn();
+$expectedEnd=(new DateTimeImmutable('now',new DateTimeZone('Europe/Stockholm')))->format('Y').'-12-31';
+if ($calendarEnd!==$expectedEnd) throw new RuntimeException('Calendar membership not stored correctly.');
+bois_p4_apply_paid_order($pdo,$calendarConfig,$calendarOrder['public_id']);
+if ($pdo->query("SELECT valid_to FROM bois_members WHERE member_name='Calendar Synthetic'")->fetchColumn()!==$calendarEnd) throw new RuntimeException('Payment replay extended calendar membership.');
+echo "CALENDAR_MEMBERSHIP_PAYMENT_REPLAY: pass\n";
 echo "P4_SMOKE: pass\n";
 echo "NEW_MEMBER_AUTO_ELIGIBLE: pass\n";
 echo "MEMBERSHIP_RENEWAL: pass\n";

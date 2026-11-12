@@ -69,6 +69,26 @@ function bois_p4_membership_validity_days(array $config): int
     return max(1, min(730, (int)($config['membership_validity_days'] ?? 365)));
 }
 
+function bois_p4_membership_end(array $config, DateTimeImmutable $start, ?string $existingEnd=null): string
+{
+    $start=$start->setTimezone(new DateTimeZone('Europe/Stockholm'));
+    $period=$config['membership_period'] ?? 'rolling_days';
+    if (!in_array($period,['rolling_days','calendar_year'],true)) {
+        throw new InvalidArgumentException('Unknown membership period.');
+    }
+    if ($period==='calendar_year') {
+        $end=$start->format('Y').'-12-31';
+        // Never shorten an existing entitlement or turn a same-year purchase
+        // into an unapproved purchase of next year's membership.
+        return $existingEnd!==null && $existingEnd>$end ? $existingEnd : $end;
+    }
+    if ($existingEnd!==null) {
+        $existing=new DateTimeImmutable($existingEnd,new DateTimeZone('Europe/Stockholm'));
+        if ($existing>$start) $start=$existing;
+    }
+    return $start->modify('+'.bois_p4_membership_validity_days($config).' days')->format('Y-m-d');
+}
+
 function bois_p4_register_order(PDO $pdo, string $publicId): void
 {
     $stmt=$pdo->prepare(
@@ -125,10 +145,9 @@ function bois_p4_find_active_member_by_email(PDO $pdo, string $email): ?array
 
 function bois_p4_activate_paid_memberships(PDO $pdo, array $config, int $orderId): array
 {
-    $days=bois_p4_membership_validity_days($config);
     $today=new DateTimeImmutable('today',new DateTimeZone('Europe/Stockholm'));
     $validFrom=$today->format('Y-m-d');
-    $validTo=$today->modify('+'.$days.' days')->format('Y-m-d');
+    $validTo=bois_p4_membership_end($config,$today);
 
     $stmt=$pdo->prepare(
         "SELECT m.id membership_id,m.customer_id,m.member_name,m.membership_type,m.status,c.email
@@ -174,12 +193,7 @@ function bois_p4_activate_paid_memberships(PDO $pdo, array $config, int $orderId
 
         if($member){
             $memberId=(int)$member['id'];
-            $renewBase=$today;
-            if(!empty($member['valid_to'])){
-                $existingEnd=new DateTimeImmutable((string)$member['valid_to'],new DateTimeZone('Europe/Stockholm'));
-                if($existingEnd>$renewBase) $renewBase=$existingEnd;
-            }
-            $renewTo=$renewBase->modify('+'.$days.' days')->format('Y-m-d');
+            $renewTo=bois_p4_membership_end($config,$today,$member['valid_to'] ?: null);
 
             $pdo->prepare(
                 "UPDATE bois_members
@@ -323,11 +337,11 @@ function bois_p4_verify_existing_member(PDO $pdo, array $config, string $publicI
     $entitlementId=(int)$ent->fetchColumn();
     if($entitlementId<1) throw new InvalidArgumentException('Ordern innehåller inget Nordic-gymkort.');
 
-    $days=bois_p4_membership_validity_days($config);
     $today=new DateTimeImmutable('today',new DateTimeZone('Europe/Stockholm'));
     $validFrom=$today->format('Y-m-d');
-    $validTo=$today->modify('+'.$days.' days')->format('Y-m-d');
     $existing=bois_p4_find_active_member_by_email($pdo,(string)$order['email']);
+    $validTo=bois_p4_membership_end($config,$today,
+        ($config['membership_period'] ?? 'rolling_days')==='calendar_year' ? ($existing['valid_to'] ?? null) : null);
 
     $pdo->beginTransaction();
     try{

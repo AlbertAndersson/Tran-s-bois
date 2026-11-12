@@ -1,3 +1,23 @@
+## Stängda P20-förberedelser 2026-11-12
+
+Priser och lagringstidsförslaget är bekräftade. Läs
+[förberedelsepaket och kvarstående åtgärder](P20-PREPARATION-20261112.md).
+Återfråga inte godkända priser/tider. Leverantör och månadsdag inväntas.
+Kandidatkonfiguration och katalogunderlag är inte installerade; ingen
+lansering, skarp transport eller gallring är godkänd. Kodändringar ska
+verifieras och levereras med bibehållen stängd production.
+
+## Nästa arbete efter Alberts P19-svar 2026-11-12
+
+Läs [P19-registret](P19-ANSWERS-20261112.md) först. Tolv svar är registrerade;
+de ersätter äldre ÖPPET i dessa delar men godkänner ingen lansering.
+Bekräfta befintliga priser och månadsdag/leverantör, granska privacyförslaget
+och exakt villkorsversion. Förbered separat kalenderårsmedlemskap och
+månadsvis/manuell tröjbatch med S/M/L och lagutlämning. Bevara äldre data.
+Verifiera personliga admins, säker Nordic-process och mailbox/provider;
+tillfälliga adresser är inte aktiveringsbevis. BoIS beslut saknas, P20 är
+fortsatt spärrad. Inga runtime-/hoständringar gjordes i beslutsregistreringen.
+
 ## Dokumentingång och operativ huvudkö – 2026-10-09
 
 - [STARTA_HAR – ingång i AlberIQ SharePoint](https://alberiq.sharepoint.com/sites/AlberIQ/P-bois/00%20Starta%20har/STARTA_HAR.md)

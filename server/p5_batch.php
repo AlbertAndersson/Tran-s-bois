@@ -201,10 +201,30 @@ function bois_p5_candidate_rows(PDO $pdo, array $rule, bool $forUpdate=false): a
     return $stmt->fetchAll();
 }
 
-function bois_p5_due_reason(array $rule, array $rows, bool $manual): ?string
+function bois_p5_due_reason(array $rule, array $rows, bool $manual, ?DateTimeImmutable $now=null): ?string
 {
     if (!$rows) return null;
     if ($manual) return 'MANUAL';
+
+    $schedule=$rule['runtime_schedule'] ?? ['mode'=>'legacy'];
+    $mode=$schedule['mode'] ?? '';
+    if ($mode==='monthly') {
+        $day=$schedule['day'] ?? null;
+        // No invented day, quantity threshold or maximum-wait fallback.
+        if ($day===null) return null;
+        if (!is_int($day) || $day<1 || $day>31) {
+            throw new InvalidArgumentException('Monthly batch day must be 1–31.');
+        }
+        $now=($now ?? new DateTimeImmutable('now'))->setTimezone(new DateTimeZone('Europe/Stockholm'));
+        if ((int)$now->format('j')<min($day,(int)$now->format('t'))) return null;
+        $last=$rule['last_monthly_batch_at'] ?? null;
+        if ($last!==null) {
+            $last=(new DateTimeImmutable($last,new DateTimeZone('UTC')))->setTimezone(new DateTimeZone('Europe/Stockholm'));
+            if ($last->format('Y-m') >= $now->format('Y-m')) return null;
+        }
+        return 'MONTHLY';
+    }
+    if ($mode!=='legacy') throw new InvalidArgumentException('Unknown batch schedule.');
 
     $qty = array_sum(array_map(fn(array $row): int => (int)$row['quantity'], $rows));
     $threshold = max(1, (int)($rule['threshold_qty'] ?? 8));
@@ -272,6 +292,17 @@ function bois_p5_create_batch(PDO $pdo, array $config, array $rule, bool $manual
 {
     $pdo->beginTransaction();
     try {
+        if (array_key_exists('matchkit_batch',$config)) {
+            if (!is_array($config['matchkit_batch'])) throw new InvalidArgumentException('Invalid batch schedule.');
+            $rule['runtime_schedule']=$config['matchkit_batch'];
+            // Serialize scheduler/manual calls before reading the monthly marker.
+            $lock=$pdo->prepare('SELECT id FROM bois_fulfillment_rules WHERE id=? FOR UPDATE');
+            $lock->execute([(int)$rule['rule_id']]);
+            if (!$lock->fetchColumn()) throw new RuntimeException('Batch rule missing.');
+            $last=$pdo->prepare("SELECT MAX(created_at) FROM bois_supplier_batches WHERE supplier_id=? AND trigger_reason='MONTHLY' AND JSON_UNQUOTE(JSON_EXTRACT(config_json,'$.rule_key'))=?");
+            $last->execute([(int)$rule['supplier_id'],$rule['rule_key']]);
+            $rule['last_monthly_batch_at']=$last->fetchColumn() ?: null;
+        }
         $rows = bois_p5_candidate_rows($pdo, $rule, true);
         $reason = bois_p5_due_reason($rule, $rows, $manual);
         if ($reason === null) {
