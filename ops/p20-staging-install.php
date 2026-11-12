@@ -19,7 +19,7 @@ function p20_snapshot(PDO $pdo):array{
 }
 function p20_copy_public(string $from,string $to):void{
     if(file_exists($to)||is_link($from))throw new RuntimeException('Unique public target required.');
-    mkdir($to,0755);
+    mkdir($to,0755);chmod($to,0755);
     foreach(new RecursiveIteratorIterator(new RecursiveDirectoryIterator($from,FilesystemIterator::SKIP_DOTS),RecursiveIteratorIterator::SELF_FIRST) as $f){
         if($f->isLink())throw new RuntimeException('Link refused.');$target=$to.'/'.substr($f->getPathname(),strlen($from)+1);
         if($f->isDir()){mkdir($target,0755);chmod($target,0755);}else{copy($f->getPathname(),$target);chmod($target,0644);}
@@ -39,7 +39,13 @@ try{
     $cnf="[client]\n";foreach(['host','user','password'] as $k)$cnf.=$k.'="'.str_replace(['\\','"'],['\\\\','\\"'],(string)$config['db'][$k])."\"\n";
     file_put_contents($backup.'/mysql.cnf',$cnf);chmod($backup.'/mysql.cnf',0600);
     p20_run(['mysqldump','--defaults-extra-file='.$backup.'/mysql.cnf','--no-tablespaces','--single-transaction','--result-file='.$backup.'/database.sql',$config['db']['database']],$backup.'/process.log');
-    p20_run(['tar','-cf',$backup.'/runtime.tar','-C',$home,'.bois-p3/config.php','.bois-demo-auth','public_html/bois-shop-p3'],$backup.'/process.log');
+    $runtimePaths=['.bois-p3','.bois-demo-auth','public_html/bois-shop-p3'];
+    if(is_file($root.'/current-release')){
+        $previous=trim(file_get_contents($root.'/current-release'));
+        if(!preg_match('/\A[a-f0-9]{40}\z/',$previous))throw new RuntimeException('Previous release invalid.');
+        $runtimePaths=array_merge($runtimePaths,['.bois-p20/current-release','.bois-p20/config-'.$previous.'.php','.bois-p20/releases/'.$previous]);
+    }
+    p20_run(array_merge(['tar','-cf',$backup.'/runtime.tar','-C',$home],$runtimePaths),$backup.'/process.log');
     if(!str_contains(substr(file_get_contents($backup.'/database.sql'),-300),'Dump completed'))throw new RuntimeException('Incomplete SQL backup.');
     p20_run(['tar','-tf',$backup.'/runtime.tar'],$backup.'/archive-check.log');
     $hashes=[];foreach(['database.sql','runtime.tar'] as $f){chmod($backup.'/'.$f,0600);$hashes[$f]=hash_file('sha256',$backup.'/'.$f);if(!is_readable($backup.'/'.$f))throw new RuntimeException('Unreadable backup.');}

@@ -1,3 +1,13 @@
+## P20 installerad för skyddat iPhoneprov 2026-11-12
+
+App `0aecd183a708c5d8144a631a2b919824fc7ee6a6` är installerad på socen.se.
+Production är stängd och dess DB oförändrad. Separat syntetisk köpvy på
+`https://socen.se/bois-p20-test/` har passerat full hostbrowseracceptans.
+Se [faktiska bevis](P20-HOST-EVIDENCE-20261112.md) och
+[iPhoneguide](P20-IPHONE-TEST.md). Staginginstallationen kräver separat
+verifierad 403-rättning; äldre kvot och order är bevarade. Tidigare uppgifter
+om ingen installation nedan är historik. Publik P20 är fortfarande spärrad.
+
 ## P20-förberedelser efter bekräftade P19-svar 2026-11-12
 
 Priser och föreslagna lagringstider är nu godkända av Albert. Kalenderår,
