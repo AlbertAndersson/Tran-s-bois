@@ -1,3 +1,13 @@
+## Faktiskt installerat skyddat test 2026-11-12
+
+Efter Alberts uttryckliga testbeställning är P20-appen installerad i stängd
+socen-production och skyddad alberiq-staging. Separat syntetisk köpvy på
+socen har passerat hela hostbrowserkedjan. Se [hostbevis](P20-HOST-EVIDENCE-20261112.md)
+och [iPhoneguide](P20-IPHONE-TEST.md). Aktuell production-release har verifierad
+Besovida-backup. BoIS go-livebeslut, Stripe live, extern mail, skarp gallring
+och slutlig DNS-cutover är fortfarande inte aktiverade. Uppgifterna nedan om
+ingen deployment är bevarad historik och ersätts av faktiska hostbevis ovan.
+
 ## Stängda förberedelser 2026-11-12
 
 Priser och föreslagna lagringstider är godkända. Se

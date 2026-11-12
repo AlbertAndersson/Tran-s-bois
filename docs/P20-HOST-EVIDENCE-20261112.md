@@ -1,5 +1,26 @@
 # P20 – faktisk hostinstallation och skyddat test 2026-11-12
 
+## Slutligt verifierat utfall
+
+Stagingrättningen är mergad via PR53; alla 11 PR-workflows passerade på
+`8b83aab4bec1dfbfca8225607aa2f29f629d4566`. Ny deploymentrun
+[43297280362](https://github.com/AlbertAndersson/Tran-s-bois/actions/runs/43297280362)
+är **success** på `3f89f74d365890e7dda61620a5daf6bf445807f9`:
+full aktuell SQL/runtime/auth-backup, bevarade äldre order/gymkvoter och
+autentiserad HTTPS/katalog 200. Skyddad staging finns på
+`https://alberiq.se/bois-shop-p3/`. Första körningens 403 nedan är historik.
+Appkoden motsvarar socen-appens `0aecd18`; senare skillnader är staging-
+installationsverktyg och dokumentation, inte en ny production-appinstallation.
+
+Uppgraderad production har verifierad offsitebackup:
+`bois-daily-20261112T200325Z-0aecd18.aesgcm`, SHA256
+`aa0f233abffed1d7fa6297a787270344983a30f0961c2e4d99419a569ed100d6`.
+Windows-task exit 0; Besovida-återläsning och autentiserad dekryptering
+verifierades 2026-11-12 21:04:58 Europe/Stockholm. Source revision är
+`0aecd183a708c5d8144a631a2b919824fc7ee6a6`. Full preinstall-backup finns
+även privat lokalt i `p20-host-backup-20261112` med matchande SHA256.
+Inga backuper har raderats. Efter-browser-SQL är sparad privat.
+
 Albert beställde installation även på den avsedda production-hostingen för
 iPhoneprov. Ingen publik lansering eller skarp transport har aktiverats.
 
@@ -16,7 +37,7 @@ Färsk komplett backup före ändring:
 runtime/release, konfiguration, auth, privata state/loggar och webb-filer är
 kontrollerade för läsbarhet och SHA256. Äldre public-katalog och config bevaras.
 Separat krypterad production-backup skapades före och efter installationen.
-Offsiteöverföring ska verifieras separat mot aktuell source_revision.
+Offsiteöverföring är separat verifierad mot aktuell source_revision ovan.
 
 Production på `https://socen.se/bois-shop-production/` är uppgraderad men
 köpstängd. Personlig admin och det befintliga Basic Auth-skyddet bevaras.
@@ -65,8 +86,8 @@ backup och oförändrade äldre order/gymkvoter, men HTTPS-steget gav 403.
 Orsaken var public-rotens 0700 från privat umask. PR53 sätter explicit 0755,
 utan att ta bort Basic Auth eller ändra privata filers skydd.
 Backupverktyget omfattar även aktuell privat P20-runtime/config vid en
-senare installation. Ny körning och slutlig HTTPS ska verifieras efter merge;
-den första körningen får inte beskrivas som helt grön.
+senare installation. Ny körning och slutlig HTTPS är verifierade efter merge
+enligt slututfallet ovan; den första körningen var inte helt grön.
 
 ## Fortsatt spärrat
 
