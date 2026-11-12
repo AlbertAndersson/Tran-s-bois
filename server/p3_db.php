@@ -578,7 +578,11 @@ function bois_p3_validate_line_meta(array $variant, array $meta): array
         $shirt = bois_p3_clean_string($meta['shirt_size'] ?? '',10);
         $player = bois_p3_clean_string($meta['player_name'] ?? '',80);
         $number = bois_p3_clean_string($meta['number'] ?? '',2);
-        $allowed = ['128','140','152','164','XS','S'];
+        $variantMeta=json_decode((string)($variant['variant_metadata_json'] ?? '{}'),true,512,JSON_THROW_ON_ERROR);
+        $allowed=$variantMeta['shirt_sizes'] ?? ['128','140','152','164','XS','S'];
+        if (!is_array($allowed) || !$allowed || array_diff($allowed,['128','140','152','164','XS','S','M','L'])) {
+            throw new RuntimeException('Invalid shirt catalogue.');
+        }
         $allowedTeams = ['P9','F9','P13','F14','P16','Skridsko- & bandyskola 26/27'];
 
         if (!in_array($team,$allowedTeams,true)) {

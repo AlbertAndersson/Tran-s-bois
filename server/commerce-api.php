@@ -179,7 +179,7 @@ try {
     }
 
     if($action==='health'&&$method==='GET'){
-        $waiting=bois_p5_waiting_summary($pdo);
+        $waiting=bois_p5_waiting_summary($pdo,$config);
         $readiness=bois_p8_readiness($config);
         $provider=bois_p6_provider($config);
         commerce_respond([
@@ -307,7 +307,7 @@ try {
             'ok'=>true,
             'products'=>bois_p3_catalog($pdo,true),
             'stats'=>bois_p3_stats($pdo),
-            'batch_waiting'=>bois_p5_waiting_summary($pdo),
+            'batch_waiting'=>bois_p5_waiting_summary($pdo,$config),
             'p4_stats'=>bois_p4_stats($pdo),
         ]);
     }
@@ -415,7 +415,7 @@ try {
         commerce_require_admin($config);
         commerce_respond([
             'ok'=>true,
-            'waiting'=>bois_p5_waiting_summary($pdo),
+            'waiting'=>bois_p5_waiting_summary($pdo,$config),
             'batches'=>bois_p5_admin_batches($pdo),
         ]);
     }
@@ -428,7 +428,7 @@ try {
         commerce_respond([
             'ok'=>true,
             'result'=>$payment,
-            'waiting'=>bois_p5_waiting_summary($pdo),
+            'waiting'=>bois_p5_waiting_summary($pdo,$config),
         ]);
     }
 
@@ -437,7 +437,7 @@ try {
         commerce_respond([
             'ok'=>true,
             'batches'=>bois_p5_evaluate_batches($pdo,$config,true),
-            'waiting'=>bois_p5_waiting_summary($pdo),
+            'waiting'=>bois_p5_waiting_summary($pdo,$config),
         ]);
     }
 
@@ -463,7 +463,7 @@ try {
             'ok'=>true,
             'batches'=>$batches,
             'mail'=>$mail,
-            'waiting'=>bois_p5_waiting_summary($pdo),
+            'waiting'=>bois_p5_waiting_summary($pdo,$config),
         ]);
     }
 

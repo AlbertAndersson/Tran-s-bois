@@ -290,6 +290,16 @@
   };
 
   window.BOIS_COMMERCE.setEnvironmentLabel();
+  if(cfg.p20Preview===true){
+    const notice=document.createElement('div');
+    notice.className='notice';
+    notice.textContent='Skyddat test – använd påhittade uppgifter. Testbetalningar tar inga pengar och inga externa ordermail skickas.';
+    document.querySelector('main')?.prepend(notice);
+    if(location.pathname.endsWith('/membership.html')){
+      const text=document.querySelector('.sub');
+      if(text)text.textContent='Medlemskapet gäller innevarande kalenderår till och med 31 december. Välj medlemskap och eventuellt Nordic Wellness-gymkort. Här provar du endast med syntetiska uppgifter och testbetalning.';
+    }
+  }
   setupConsent();
 
   if(document.body?.dataset?.salesIgnore!=='true'){

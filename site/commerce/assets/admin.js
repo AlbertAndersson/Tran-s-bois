@@ -83,6 +83,11 @@
     $('oldestWait').textContent=waiting.oldest_wait_hours==null?'–':waiting.oldest_wait_hours+' h';
     $('thresholdText').textContent=waiting.threshold_qty??8;
     $('waitText').textContent=Math.round((waiting.max_wait_hours??168)/24)+' dagar';
+    if(waiting.schedule?.mode==='monthly'){
+      $('thresholdText').textContent='Ingen minsta mängd';
+      $('waitText').textContent=waiting.schedule.day==null?'Månadsdag inväntas':'Månadsvis, dag '+Number(waiting.schedule.day);
+      $('remainingItems').textContent='–';
+    }
   }
 
   function renderBatches(batches) {

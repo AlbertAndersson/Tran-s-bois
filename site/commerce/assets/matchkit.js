@@ -3,6 +3,12 @@
   const c=window.BOIS_COMMERCE;
   const $=id=>document.getElementById(id);
 
+  if(c.cfg.p20Preview===true){
+    $('shirt').replaceChildren(...['S','M','L'].map(size=>new Option(size,size)));
+    document.querySelector('.sub').textContent='Matchtröja utan shorts. Beställningar samlas månadsvis eller skickas manuellt. Utlämning sker genom ledare för ditt eget lag.';
+    document.querySelector('.notice').textContent='Pris 998 kr. Väntan till nästa leverantörsbeställning kan vara omkring en månad. Produktion och transport tillkommer; total leveranstid är ännu inte fastställd.';
+  }
+
   $('kitForm').addEventListener('submit',async event=>{
     event.preventDefault();
     $('error').hidden=true;$('success').hidden=true;

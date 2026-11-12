@@ -1,0 +1,70 @@
+name: Simply - protected P20 staging test
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        required: true
+        type: string
+        description: 'DEPLOY_PROTECTED_P20_TEST'
+permissions:
+  contents: read
+concurrency:
+  group: simply-tranas-bois-p9-staging
+  cancel-in-progress: false
+jobs:
+  deploy:
+    if: github.event.inputs.confirm == 'DEPLOY_PROTECTED_P20_TEST'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      SSH_USER: ${{ secrets.SIMPLY_SSH_USER }}
+      SSH_KEY: ${{ secrets.SIMPLY_SSH_PRIVATE_KEY }}
+      EXPECTED_FINGERPRINT: ${{ vars.SIMPLY_HOST_FINGERPRINT }}
+      DEMO_PASSWORD: ${{ secrets.BOIS_STAGING_DEMO_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v5
+      - name: Build exact closed release
+        run: |
+          node scripts/p18-release.cjs build . "$RUNNER_TEMP/package" "$GITHUB_SHA"
+          tar -czf "$RUNNER_TEMP/package.tar.gz" -C "$RUNNER_TEMP/package" .
+      - name: Verify SSH host and install with full backup
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          test -n "$SSH_USER" && test -n "$SSH_KEY" && test -n "$EXPECTED_FINGERPRINT"
+          mkdir -p "$RUNNER_TEMP/p20-ssh"
+          printf '%s\n' "$SSH_KEY" > "$RUNNER_TEMP/p20-ssh/key"
+          ssh-keyscan -T 12 -t ed25519 ssh.simply.com > "$RUNNER_TEMP/p20-ssh/scan" 2>/dev/null
+          export P20_SSH="$RUNNER_TEMP/p20-ssh"
+          python3 - <<'PY'
+          import os,base64,hashlib,pathlib
+          root=pathlib.Path(os.environ['P20_SSH'])
+          for line in (root/'scan').read_text().splitlines():
+              parts=line.split()
+              if len(parts)!=3: continue
+              fp='SHA256:'+base64.b64encode(hashlib.sha256(base64.b64decode(parts[2])).digest()).decode().rstrip('=')
+              if fp==os.environ['EXPECTED_FINGERPRINT'].strip():
+                  (root/'known_hosts').write_text(line+'\n');break
+          else: raise SystemExit('SSH host fingerprint mismatch')
+          PY
+          SSH=(-i "$P20_SSH/key" -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$P20_SSH/known_hosts" -o ConnectTimeout=15)
+          ssh "${SSH[@]}" "$SSH_USER@ssh.simply.com" "set -eu; umask 077; test \"\$HOME\" = /var/www/alberiq.se; mkdir -p \"\$HOME/.bois-p20/releases/$GITHUB_SHA\"; chmod 700 \"\$HOME/.bois-p20\""
+          cat "$RUNNER_TEMP/package.tar.gz" | ssh "${SSH[@]}" "$SSH_USER@ssh.simply.com" "tar -xzf - -C \"\$HOME/.bois-p20/releases/$GITHUB_SHA\""
+          ssh "${SSH[@]}" "$SSH_USER@ssh.simply.com" "php \"\$HOME/.bois-p20/releases/$GITHUB_SHA/private/ops/p20-staging-install.php\" $GITHUB_SHA"
+      - name: Protected HTTPS and catalogue
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import os,urllib.request,base64,json
+          base='https://alberiq.se/bois-shop-p3/'
+          auth=base64.b64encode(('bois-demo:'+os.environ['DEMO_PASSWORD']).encode()).decode()
+          for path in ['','membership.html','match-kit.html','admin.html','commerce-api.php?action=catalog']:
+              request=urllib.request.Request(base+path,headers={'Authorization':'Basic '+auth})
+              with urllib.request.urlopen(request,timeout=45) as response:
+                  data=response.read()
+                  if response.status!=200: raise SystemExit('Protected HTTPS failed')
+                  if 'action=catalog' in path and json.loads(data).get('ok') is not True: raise SystemExit('Catalogue failed')
+          print('P20_STAGING_PROTECTED_HTTPS_CATALOG:pass; no order/real payment/mail created')
+          PY
